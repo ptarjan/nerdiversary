@@ -2,15 +2,13 @@
  * Results page script - displays nerdiversary events
  */
 
-console.log('Nerdiversary results.js loaded');
-
 let allEvents = [];
 let currentFilter = 'all';
 let currentView = 'upcoming';
 let birthDate = null;
+let countdownInterval = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing...');
     // Get birth date from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const dateStr = urlParams.get('d');
@@ -113,7 +111,12 @@ function displayNextEvent() {
  * Start the countdown timer
  */
 function startCountdownTimer() {
-    setInterval(() => {
+    // Clear any existing interval
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    countdownInterval = setInterval(() => {
         const nextEvent = Nerdiversary.getNextEvent(allEvents);
         if (!nextEvent) return;
 
@@ -267,7 +270,6 @@ function setupActionButtons() {
     if (subscribeBtn) {
         subscribeBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Subscribe button clicked');
             subscribeToCalendar();
         });
     }
@@ -275,11 +277,8 @@ function setupActionButtons() {
     if (downloadBtn) {
         downloadBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Download button clicked');
             downloadICalendar();
         });
-    } else {
-        console.error('Download button not found!');
     }
 
     if (shareBtn) {
@@ -423,44 +422,6 @@ function downloadICalendar() {
     URL.revokeObjectURL(url);
 
     showToast('Downloaded nerdiversaries.ics');
-}
-
-/**
- * Show modal with import instructions
- */
-function showImportModal() {
-    const modal = document.createElement('div');
-    modal.className = 'import-modal';
-    modal.innerHTML = `
-        <div class="import-modal-content">
-            <h3>📅 Import to Your Calendar</h3>
-            <p>Your nerdiversaries.ics file is downloading. Now import it:</p>
-            <div class="import-options">
-                <a href="https://calendar.google.com/calendar/r/settings/export" target="_blank" class="import-option">
-                    <span class="import-icon">📱</span>
-                    <span>Google Calendar</span>
-                    <small>Settings → Import</small>
-                </a>
-                <a href="webcal://calendar.google.com" onclick="showToast('Open the downloaded .ics file with Apple Calendar')" class="import-option">
-                    <span class="import-icon">🍎</span>
-                    <span>Apple Calendar</span>
-                    <small>Double-click the file</small>
-                </a>
-                <a href="#" onclick="showToast('Open the downloaded .ics file with Outlook')" class="import-option">
-                    <span class="import-icon">📧</span>
-                    <span>Outlook</span>
-                    <small>Double-click the file</small>
-                </a>
-            </div>
-            <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it!</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Close on backdrop click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.remove();
-    });
 }
 
 /**
