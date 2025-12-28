@@ -926,7 +926,7 @@ const Nerdiversary = {
                     title: `Palindrome Day ${pal.toLocaleString()}`,
                     description: `Day ${pal} reads the same forwards and backwards!`,
                     date: eventDate,
-                    category: 'pop-culture',
+                    category: 'mathematical',
                     icon: '🪞',
                     milestone: `${pal} days (palindrome)`
                 });
@@ -943,7 +943,7 @@ const Nerdiversary = {
                     title: `Palindrome Hour ${pal.toLocaleString()}`,
                     description: `Hour ${pal.toLocaleString()} is a palindrome!`,
                     date: eventDate,
-                    category: 'pop-culture',
+                    category: 'mathematical',
                     icon: '🪞',
                     milestone: `${pal.toLocaleString()} hours (palindrome)`
                 });
