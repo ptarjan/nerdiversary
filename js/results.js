@@ -329,7 +329,7 @@ function showSubscribeModal(calendarUrl) {
                     <span>Google Calendar</span>
                     <small>One-click subscribe</small>
                 </a>
-                <a href="#" class="import-option" id="apple-subscribe">
+                <a href="${webcalUrl}" class="import-option" id="apple-subscribe">
                     <span class="import-icon">🍎</span>
                     <span>Apple Calendar</span>
                     <small>Opens Calendar app</small>
@@ -352,11 +352,14 @@ function showSubscribeModal(calendarUrl) {
     `;
     document.body.appendChild(modal);
 
-    // Handle Apple Calendar - use direct navigation for iOS compatibility
-    modal.querySelector('#apple-subscribe').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = webcalUrl;
-    });
+    // Handle Apple Calendar - use JavaScript navigation only on iOS (href works on desktop)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+        modal.querySelector('#apple-subscribe').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = webcalUrl;
+        });
+    }
 
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
