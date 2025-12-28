@@ -1,6 +1,6 @@
 # Nerdiversary
 
-**[Try it now at nerdiversary.com](https://nerdiversary.com)**
+**[Try it now!](https://paultarjan.com/nerdiversary/)**
 
 Calculate and celebrate your nerdy anniversaries! Discover when you've lived a billion seconds, completed a Mars year, or reached other geeky milestones.
 
