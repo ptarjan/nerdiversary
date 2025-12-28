@@ -168,8 +168,9 @@ function displayTimeline() {
         filteredEvents = filteredEvents.filter(e => e.date < now).reverse();
     }
 
-    // Limit to reasonable number
-    const displayEvents = filteredEvents.slice(0, 100);
+    // Limit upcoming events (past events show all since they're finite)
+    const limit = currentView === 'upcoming' ? 100 : filteredEvents.length;
+    const displayEvents = filteredEvents.slice(0, limit);
 
     if (displayEvents.length === 0) {
         timeline.innerHTML = '<div class="empty-state"><p>No events found for this filter.</p></div>';
