@@ -313,7 +313,8 @@ function subscribeToCalendar() {
  */
 function showSubscribeModal(calendarUrl) {
     const webcalUrl = calendarUrl.replace('https://', 'webcal://');
-    const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+    // Encode the webcal URL so query params don't get parsed as part of Google's URL
+    const googleCalUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
 
     const modal = document.createElement('div');
     modal.className = 'import-modal';
