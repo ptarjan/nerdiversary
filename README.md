@@ -11,7 +11,7 @@ Calculate and celebrate your nerdy anniversaries! Discover when you've lived a b
 - **Binary & Hex** - Celebrate 2^20 minutes or 0x1000000 seconds like a true nerd
 - **Mathematical Constants** - Mark π × 10^9 seconds, e × 10^8 seconds, and other mathematical milestones
 - **Fibonacci Time** - Fibonacci sequence milestones in seconds, minutes, and days
-- **Pop Culture** - Hitchhiker's Guide (42), 1337 (leet), Star Wars (501st, Order 66)
+- **Pop Culture** - Hitchhiker's Guide (42), 1337 (leet)
 - **Nerdy Holidays** - Pi Day (Mar 14), May the 4th, Tau Day (Jun 28) milestones
 
 ## Calendar Integration
