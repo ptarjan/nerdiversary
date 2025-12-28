@@ -2,12 +2,15 @@
  * Results page script - displays nerdiversary events
  */
 
+console.log('Nerdiversary results.js loaded');
+
 let allEvents = [];
 let currentFilter = 'all';
 let currentView = 'upcoming';
 let birthDate = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing...');
     // Get birth date from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const dateStr = urlParams.get('d');
@@ -257,13 +260,22 @@ function setupActionButtons() {
     const downloadBtn = document.getElementById('download-ical');
     const shareBtn = document.getElementById('share-results');
 
-    downloadBtn.addEventListener('click', () => {
-        downloadICalendar();
-    });
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Download button clicked');
+            downloadICalendar();
+        });
+    } else {
+        console.error('Download button not found!');
+    }
 
-    shareBtn.addEventListener('click', () => {
-        shareResults();
-    });
+    if (shareBtn) {
+        shareBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareResults();
+        });
+    }
 }
 
 /**
