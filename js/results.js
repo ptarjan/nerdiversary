@@ -315,6 +315,8 @@ function showSubscribeModal(calendarUrl) {
     const webcalUrl = calendarUrl.replace('https://', 'webcal://');
     // Encode the webcal URL so query params don't get parsed as part of Google's URL
     const googleCalUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
+    // Outlook uses its own URL format
+    const outlookUrl = `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(calendarUrl)}`;
 
     const modal = document.createElement('div');
     modal.className = 'import-modal';
@@ -333,10 +335,10 @@ function showSubscribeModal(calendarUrl) {
                     <span>Apple Calendar</span>
                     <small>Opens Calendar app</small>
                 </a>
-                <a href="#" class="import-option" id="outlook-subscribe">
+                <a href="${outlookUrl}" target="_blank" class="import-option" id="outlook-subscribe">
                     <span class="import-icon">📧</span>
                     <span>Outlook</span>
-                    <small>Opens Outlook</small>
+                    <small>Outlook.com</small>
                 </a>
             </div>
             <div class="subscribe-url-section">
@@ -353,12 +355,6 @@ function showSubscribeModal(calendarUrl) {
 
     // Handle Apple Calendar - use direct navigation for iOS compatibility
     modal.querySelector('#apple-subscribe').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = webcalUrl;
-    });
-
-    // Handle Outlook - same approach
-    modal.querySelector('#outlook-subscribe').addEventListener('click', (e) => {
         e.preventDefault();
         window.location.href = webcalUrl;
     });
