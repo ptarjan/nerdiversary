@@ -427,6 +427,28 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
+  // Earth birthdays
+  const maxBirthdayYears = 120;
+  for (let year = 1; year <= maxBirthdayYears; year++) {
+    const birthdayDate = new Date(
+      birthDate.getFullYear() + year,
+      birthDate.getMonth(),
+      birthDate.getDate(),
+      birthDate.getHours(),
+      birthDate.getMinutes()
+    );
+    if (birthdayDate > birthDate && birthdayDate <= maxDate && birthdayDate > now) {
+      const ordinal = getOrdinal(year);
+      events.push({
+        id: `earth-birthday-${year}`,
+        title: `🎂 ${ordinal} Birthday`,
+        description: `Happy ${ordinal} birthday on Earth!`,
+        date: birthdayDate,
+        category: 'planetary'
+      });
+    }
+  }
+
   // Sort by date
   events.sort((a, b) => a.date - b.date);
 

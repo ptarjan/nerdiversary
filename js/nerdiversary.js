@@ -67,6 +67,9 @@ const Nerdiversary = {
         // Add nerdy holidays (Pi Day, May 4th, Tau Day)
         events.push(...this.calculateNerdyHolidays(birthDate, maxDate));
 
+        // Add Earth birthdays
+        events.push(...this.calculateEarthBirthdays(birthDate, maxDate));
+
         // Sort by date
         events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -647,6 +650,39 @@ const Nerdiversary = {
                         milestone: `${year} years of ${holiday.name}`
                     });
                 }
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate Earth birthday milestones
+     */
+    calculateEarthBirthdays(birthDate, maxDate) {
+        const events = [];
+        const maxYears = 120;
+
+        for (let year = 1; year <= maxYears; year++) {
+            const birthdayDate = new Date(
+                birthDate.getFullYear() + year,
+                birthDate.getMonth(),
+                birthDate.getDate(),
+                birthDate.getHours(),
+                birthDate.getMinutes()
+            );
+
+            if (birthdayDate > birthDate && birthdayDate <= maxDate) {
+                const ordinal = this.getOrdinal(year);
+                events.push({
+                    id: `earth-birthday-${year}`,
+                    title: `${ordinal} Birthday`,
+                    description: `Happy ${ordinal} birthday on Earth!`,
+                    date: birthdayDate,
+                    category: 'planetary',
+                    icon: '🎂',
+                    milestone: `${year} Earth years`
+                });
             }
         }
 
