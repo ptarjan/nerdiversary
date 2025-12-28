@@ -34,8 +34,8 @@ const PI = Math.PI;
 const E = Math.E;
 const PHI = (1 + Math.sqrt(5)) / 2;
 
-// Fibonacci sequence
-const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025];
+// Fibonacci sequence (extended for seconds milestones)
+const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073];
 
 // Powers of 2 for binary milestones
 const POWERS_OF_2 = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
@@ -428,12 +428,54 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
+  // Fibonacci milestones (seconds - larger ones spanning lifetime)
+  for (const fib of FIBONACCI.filter(n => n >= 1e6 && n <= 3e9)) {
+    const eventDate = new Date(birthDate.getTime() + fib * MS_PER_SECOND);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `fib-seconds-${fib}`,
+        title: `🌀 Fibonacci Second ${fib.toLocaleString()}`,
+        description: `Second ${fib.toLocaleString()} is a Fibonacci number!`,
+        date: eventDate,
+        category: 'fibonacci'
+      });
+    }
+  }
+
+  // Fibonacci milestones (minutes)
+  for (const fib of FIBONACCI.filter(n => n >= 1e5 && n <= 5e7)) {
+    const eventDate = new Date(birthDate.getTime() + fib * MS_PER_MINUTE);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `fib-minutes-${fib}`,
+        title: `🌀 Fibonacci Minute ${fib.toLocaleString()}`,
+        description: `Minute ${fib.toLocaleString()} is a Fibonacci number!`,
+        date: eventDate,
+        category: 'fibonacci'
+      });
+    }
+  }
+
+  // Fibonacci milestones (hours)
+  for (const fib of FIBONACCI.filter(n => n >= 10000 && n <= 1000000)) {
+    const eventDate = new Date(birthDate.getTime() + fib * MS_PER_HOUR);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `fib-hours-${fib}`,
+        title: `🌀 Fibonacci Hour ${fib.toLocaleString()}`,
+        description: `Hour ${fib.toLocaleString()} is a Fibonacci number!`,
+        date: eventDate,
+        category: 'fibonacci'
+      });
+    }
+  }
+
   // Fibonacci milestones (days)
-  for (const fib of FIBONACCI.filter(n => n >= 1000)) {
+  for (const fib of FIBONACCI.filter(n => n >= 100 && n <= 40000)) {
     const eventDate = new Date(birthDate.getTime() + fib * MS_PER_DAY);
     if (eventDate <= maxDate && eventDate > now) {
       events.push({
-        id: `fib-${fib}`,
+        id: `fib-days-${fib}`,
         title: `🌀 Fibonacci Day ${fib.toLocaleString()}`,
         description: `Day ${fib.toLocaleString()} is a Fibonacci number!`,
         date: eventDate,

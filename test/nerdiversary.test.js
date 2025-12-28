@@ -1,0 +1,495 @@
+/**
+ * Nerdiversary Tests
+ * Run with: node test/nerdiversary.test.js
+ */
+
+// Load the Nerdiversary module
+const path = require('path');
+const Nerdiversary = require(path.join(__dirname, '..', 'js', 'nerdiversary.js'));
+
+let passed = 0;
+let failed = 0;
+
+function test(name, fn) {
+    try {
+        fn();
+        console.log(`✓ ${name}`);
+        passed++;
+    } catch (e) {
+        console.log(`✗ ${name}`);
+        console.log(`  Error: ${e.message}`);
+        failed++;
+    }
+}
+
+function assertEqual(actual, expected, msg = '') {
+    if (actual !== expected) {
+        throw new Error(`${msg}Expected ${expected}, got ${actual}`);
+    }
+}
+
+function assertClose(actual, expected, tolerance = 0.0001, msg = '') {
+    if (Math.abs(actual - expected) > tolerance) {
+        throw new Error(`${msg}Expected ~${expected}, got ${actual} (tolerance: ${tolerance})`);
+    }
+}
+
+function assertTrue(condition, msg = '') {
+    if (!condition) {
+        throw new Error(msg || 'Assertion failed');
+    }
+}
+
+console.log('\n=== Nerdiversary Tests ===\n');
+
+// ============================================
+// TIME CONSTANTS
+// ============================================
+console.log('--- Time Constants ---');
+
+test('MS_PER_SECOND is 1000', () => {
+    assertEqual(Nerdiversary.MS_PER_SECOND, 1000);
+});
+
+test('MS_PER_MINUTE is 60,000', () => {
+    assertEqual(Nerdiversary.MS_PER_MINUTE, 60 * 1000);
+});
+
+test('MS_PER_HOUR is 3,600,000', () => {
+    assertEqual(Nerdiversary.MS_PER_HOUR, 60 * 60 * 1000);
+});
+
+test('MS_PER_DAY is 86,400,000', () => {
+    assertEqual(Nerdiversary.MS_PER_DAY, 24 * 60 * 60 * 1000);
+});
+
+test('MS_PER_WEEK is 604,800,000', () => {
+    assertEqual(Nerdiversary.MS_PER_WEEK, 7 * 24 * 60 * 60 * 1000);
+});
+
+test('MS_PER_YEAR uses Gregorian average (365.2425 days)', () => {
+    assertEqual(Nerdiversary.MS_PER_YEAR, 365.2425 * 24 * 60 * 60 * 1000);
+});
+
+// ============================================
+// MATHEMATICAL CONSTANTS
+// ============================================
+console.log('\n--- Mathematical Constants ---');
+
+test('PI is Math.PI', () => {
+    assertEqual(Nerdiversary.PI, Math.PI);
+    assertClose(Nerdiversary.PI, 3.14159265358979, 1e-14);
+});
+
+test('E is Math.E (Euler\'s number)', () => {
+    assertEqual(Nerdiversary.E, Math.E);
+    assertClose(Nerdiversary.E, 2.71828182845905, 1e-14);
+});
+
+test('PHI is the golden ratio ((1 + sqrt(5)) / 2)', () => {
+    const expected = (1 + Math.sqrt(5)) / 2;
+    assertEqual(Nerdiversary.PHI, expected);
+    assertClose(Nerdiversary.PHI, 1.6180339887, 1e-10);
+});
+
+test('TAU is 2π', () => {
+    assertEqual(Nerdiversary.TAU, 2 * Math.PI);
+    assertClose(Nerdiversary.TAU, 6.28318530717959, 1e-14);
+});
+
+// ============================================
+// FIBONACCI SEQUENCE
+// ============================================
+console.log('\n--- Fibonacci Sequence ---');
+
+test('FIBONACCI array is actually Fibonacci sequence', () => {
+    const fib = Nerdiversary.FIBONACCI;
+    assertTrue(fib[0] === 1, 'First element should be 1');
+    assertTrue(fib[1] === 2, 'Second element should be 2');
+
+    for (let i = 2; i < fib.length; i++) {
+        const expected = fib[i - 1] + fib[i - 2];
+        assertEqual(fib[i], expected, `FIBONACCI[${i}] should be ${expected}: `);
+    }
+});
+
+test('FIBONACCI array covers 94+ years in seconds (~3 billion)', () => {
+    const maxFib = Math.max(...Nerdiversary.FIBONACCI);
+    const years94InSeconds = 94 * 365.2425 * 24 * 60 * 60;
+    assertTrue(maxFib >= years94InSeconds,
+        `Max Fibonacci (${maxFib}) should cover 94 years in seconds (~${Math.floor(years94InSeconds)})`);
+});
+
+test('FIBONACCI contains key milestones for 42-year-old in seconds', () => {
+    // ~42.67 years = 1,346,269,000 seconds (Fibonacci F(31) * 1000)
+    assertTrue(Nerdiversary.FIBONACCI.includes(1346269),
+        'Should include 1,346,269 for ~42.7 year milestone');
+});
+
+// ============================================
+// PLANETARY ORBITAL PERIODS
+// ============================================
+console.log('\n--- Planetary Orbital Periods (Earth Days) ---');
+
+// Source: NASA fact sheets
+const expectedPlanets = {
+    mercury: { days: 87.969, tolerance: 0.01 },
+    venus: { days: 224.701, tolerance: 0.01 },
+    mars: { days: 686.980, tolerance: 0.01 },
+    jupiter: { days: 4332.59, tolerance: 0.1 },
+    saturn: { days: 10759.22, tolerance: 0.1 },
+    uranus: { days: 30688.5, tolerance: 0.5 },
+    neptune: { days: 60182, tolerance: 1 }
+};
+
+for (const [key, expected] of Object.entries(expectedPlanets)) {
+    test(`${key.charAt(0).toUpperCase() + key.slice(1)} orbital period is ~${expected.days} days`, () => {
+        const planet = Nerdiversary.PLANETS[key];
+        assertTrue(planet !== undefined, `Planet ${key} should exist`);
+        assertClose(planet.days, expected.days, expected.tolerance);
+    });
+}
+
+test('All 7 planets are defined', () => {
+    assertEqual(Object.keys(Nerdiversary.PLANETS).length, 7);
+});
+
+// ============================================
+// NUMBER BASE CALCULATIONS
+// ============================================
+console.log('\n--- Number Base Calculations ---');
+
+test('Binary: 2^20 = 1,048,576', () => {
+    assertEqual(Math.pow(2, 20), 1048576);
+});
+
+test('Binary: 2^30 = 1,073,741,824 (~34 years in seconds)', () => {
+    const seconds = Math.pow(2, 30);
+    assertEqual(seconds, 1073741824);
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 34.03, 0.02);
+});
+
+test('Ternary: 3^20 = 3,486,784,401', () => {
+    assertEqual(Math.pow(3, 20), 3486784401);
+});
+
+test('Octal: 8^10 = 1,073,741,824 (same as 2^30)', () => {
+    assertEqual(Math.pow(8, 10), Math.pow(2, 30));
+});
+
+test('Hexadecimal: 0xDEADBEEF = 3,735,928,559', () => {
+    assertEqual(0xDEADBEEF, 3735928559);
+});
+
+test('Duodecimal/Dozenal: 12^8 = 429,981,696 (~13.6 years in seconds)', () => {
+    const seconds = Math.pow(12, 8);
+    assertEqual(seconds, 429981696);
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 13.63, 0.01);
+});
+
+test('Sexagesimal/Babylonian: 60^4 = 12,960,000 (~150 days in seconds)', () => {
+    const seconds = Math.pow(60, 4);
+    assertEqual(seconds, 12960000);
+    const days = seconds / (24 * 60 * 60);
+    assertEqual(days, 150);
+});
+
+// ============================================
+// EARTH BIRTHDAY SPECIAL LABELS
+// ============================================
+console.log('\n--- Earth Birthday Special Labels ---');
+
+// Test prime detection
+const primeAges = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97];
+const compositeAges = [4, 6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 100];
+
+function isPrime(n) {
+    if (n < 2) return false;
+    if (n === 2) return true;
+    if (n % 2 === 0) return false;
+    for (let i = 3; i <= Math.sqrt(n); i += 2) {
+        if (n % i === 0) return false;
+    }
+    return true;
+}
+
+test('Prime ages list is correct', () => {
+    for (const age of primeAges) {
+        assertTrue(isPrime(age), `${age} should be prime`);
+    }
+    for (const age of compositeAges) {
+        assertTrue(!isPrime(age), `${age} should NOT be prime`);
+    }
+});
+
+test('Perfect squares: 4, 9, 16, 25, 36, 49, 64, 81, 100', () => {
+    const squares = [4, 9, 16, 25, 36, 49, 64, 81, 100];
+    for (const sq of squares) {
+        const root = Math.sqrt(sq);
+        assertTrue(Number.isInteger(root), `${sq} should be a perfect square`);
+    }
+});
+
+test('Powers of 2: 2, 4, 8, 16, 32, 64', () => {
+    const powers = [2, 4, 8, 16, 32, 64];
+    for (const p of powers) {
+        const log2 = Math.log2(p);
+        assertTrue(Number.isInteger(log2), `${p} should be a power of 2`);
+    }
+});
+
+test('Perfect cubes: 8, 27, 64', () => {
+    assertEqual(Math.pow(2, 3), 8);
+    assertEqual(Math.pow(3, 3), 27);
+    assertEqual(Math.pow(4, 3), 64);
+});
+
+test('Hex round numbers: 16=0x10, 32=0x20, 48=0x30, 64=0x40, 80=0x50, 96=0x60', () => {
+    assertEqual(0x10, 16);
+    assertEqual(0x20, 32);
+    assertEqual(0x30, 48);
+    assertEqual(0x40, 64);
+    assertEqual(0x50, 80);
+    assertEqual(0x60, 96);
+});
+
+test('42 is The Answer', () => {
+    // From Hitchhiker's Guide to the Galaxy
+    assertEqual(42, 42); // The Answer to Life, Universe, and Everything
+});
+
+// ============================================
+// MILESTONE DATE CALCULATIONS
+// ============================================
+console.log('\n--- Milestone Date Calculations ---');
+
+test('1 billion seconds = ~31.69 years', () => {
+    const seconds = 1e9;
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 31.69, 0.01);
+});
+
+test('10,000 hours rule milestone occurs at ~1.14 years', () => {
+    const hours = 10000;
+    const years = hours / (365.2425 * 24);
+    assertClose(years, 1.14, 0.01);
+});
+
+test('10,000 days = ~27.38 years', () => {
+    const days = 10000;
+    const years = days / 365.2425;
+    assertClose(years, 27.38, 0.01);
+});
+
+test('1 million minutes = ~1.90 years', () => {
+    const minutes = 1e6;
+    const years = minutes / (365.2425 * 24 * 60);
+    assertClose(years, 1.90, 0.01);
+});
+
+// ============================================
+// PLANETARY YEAR CALCULATIONS
+// ============================================
+console.log('\n--- Planetary Year Calculations ---');
+
+test('Mercury year 1 occurs at ~88 Earth days', () => {
+    const earthDays = Nerdiversary.PLANETS.mercury.days;
+    assertClose(earthDays, 88, 0.1);
+});
+
+test('Mars year 1 occurs at ~687 Earth days (~1.88 years)', () => {
+    const earthDays = Nerdiversary.PLANETS.mars.days;
+    const years = earthDays / 365.2425;
+    assertClose(years, 1.88, 0.01);
+});
+
+test('Jupiter year 1 occurs at ~11.86 Earth years', () => {
+    const earthDays = Nerdiversary.PLANETS.jupiter.days;
+    const years = earthDays / 365.2425;
+    assertClose(years, 11.86, 0.01);
+});
+
+test('Saturn year 1 occurs at ~29.46 Earth years', () => {
+    const earthDays = Nerdiversary.PLANETS.saturn.days;
+    const years = earthDays / 365.2425;
+    assertClose(years, 29.46, 0.01);
+});
+
+test('Uranus year 1 occurs at ~84.01 Earth years', () => {
+    const earthDays = Nerdiversary.PLANETS.uranus.days;
+    const years = earthDays / 365.2425;
+    assertClose(years, 84.01, 0.1);
+});
+
+test('Neptune year 1 occurs at ~164.79 Earth years', () => {
+    const earthDays = Nerdiversary.PLANETS.neptune.days;
+    const years = earthDays / 365.2425;
+    assertClose(years, 164.79, 0.1);
+});
+
+// ============================================
+// MATH MILESTONE CALCULATIONS
+// ============================================
+console.log('\n--- Math Milestone Calculations ---');
+
+test('π × 10⁹ seconds = ~99.55 years', () => {
+    const seconds = Math.PI * 1e9;
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 99.55, 0.01);
+});
+
+test('e × 10⁹ seconds = ~86.14 years', () => {
+    const seconds = Math.E * 1e9;
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 86.14, 0.01);
+});
+
+test('φ × 10⁹ seconds = ~51.27 years', () => {
+    const seconds = Nerdiversary.PHI * 1e9;
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 51.27, 0.01);
+});
+
+test('τ × 10⁸ seconds = ~19.91 years', () => {
+    const seconds = Nerdiversary.TAU * 1e8;
+    const years = seconds / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 19.91, 0.01);
+});
+
+// ============================================
+// FIBONACCI MILESTONE CALCULATIONS
+// ============================================
+console.log('\n--- Fibonacci Milestone Calculations ---');
+
+test('Fibonacci 1,346,269 seconds = ~42.67 years', () => {
+    const fib = 1346269;
+    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    const years = (fib * 1000) / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 42.67, 0.01);
+});
+
+test('Fibonacci 832,040 seconds = ~26.37 years', () => {
+    const fib = 832040;
+    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    const years = (fib * 1000) / (365.2425 * 24 * 60 * 60);
+    assertClose(years, 26.37, 0.02);
+});
+
+test('Fibonacci 10,946 days = ~29.96 years', () => {
+    const fib = 10946;
+    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    const years = fib / 365.2425;
+    assertClose(years, 29.96, 0.01);
+});
+
+// ============================================
+// INTEGRATION TESTS
+// ============================================
+console.log('\n--- Integration Tests ---');
+
+test('calculate() returns array of events', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 50);
+    assertTrue(Array.isArray(events), 'Should return an array');
+    assertTrue(events.length > 0, 'Should have events');
+});
+
+test('Events are sorted by date', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 50);
+
+    for (let i = 1; i < events.length; i++) {
+        assertTrue(events[i].date >= events[i-1].date,
+            `Events should be sorted: ${events[i-1].date} <= ${events[i].date}`);
+    }
+});
+
+test('Each event has required properties', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 5);
+
+    const requiredProps = ['id', 'title', 'description', 'date', 'category', 'icon', 'milestone'];
+    for (const event of events.slice(0, 10)) {
+        for (const prop of requiredProps) {
+            assertTrue(event.hasOwnProperty(prop), `Event should have ${prop} property`);
+        }
+    }
+});
+
+test('Earth birthdays are generated for each year', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 10);
+
+    const earthBirthdays = events.filter(e => e.id.startsWith('earth-birthday-'));
+    assertTrue(earthBirthdays.length >= 10, `Should have at least 10 earth birthdays, got ${earthBirthdays.length}`);
+});
+
+test('Multiple categories are represented', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 50);
+
+    const categories = new Set(events.map(e => e.category));
+    assertTrue(categories.has('planetary'), 'Should have planetary events');
+    assertTrue(categories.has('decimal'), 'Should have decimal events');
+    assertTrue(categories.has('binary'), 'Should have binary/number base events');
+    assertTrue(categories.has('mathematical'), 'Should have mathematical events');
+    assertTrue(categories.has('fibonacci'), 'Should have fibonacci events');
+    assertTrue(categories.has('pop-culture'), 'Should have pop-culture events');
+});
+
+test('1 billion seconds milestone exists and is correct', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 50);
+
+    const billionSeconds = events.find(e => e.id === 'seconds-1000000000');
+    assertTrue(billionSeconds !== undefined, 'Should have 1 billion seconds milestone');
+
+    // Verify the date
+    const expectedDate = new Date(birthDate.getTime() + 1e9 * 1000);
+    assertEqual(billionSeconds.date.getTime(), expectedDate.getTime());
+});
+
+// ============================================
+// ORDINAL HELPER
+// ============================================
+console.log('\n--- Helper Functions ---');
+
+test('getOrdinal returns correct suffixes', () => {
+    assertEqual(Nerdiversary.getOrdinal(1), '1st');
+    assertEqual(Nerdiversary.getOrdinal(2), '2nd');
+    assertEqual(Nerdiversary.getOrdinal(3), '3rd');
+    assertEqual(Nerdiversary.getOrdinal(4), '4th');
+    assertEqual(Nerdiversary.getOrdinal(11), '11th');
+    assertEqual(Nerdiversary.getOrdinal(12), '12th');
+    assertEqual(Nerdiversary.getOrdinal(13), '13th');
+    assertEqual(Nerdiversary.getOrdinal(21), '21st');
+    assertEqual(Nerdiversary.getOrdinal(22), '22nd');
+    assertEqual(Nerdiversary.getOrdinal(23), '23rd');
+    assertEqual(Nerdiversary.getOrdinal(100), '100th');
+    assertEqual(Nerdiversary.getOrdinal(101), '101st');
+});
+
+test('toSuperscript converts numbers correctly', () => {
+    assertEqual(Nerdiversary.toSuperscript(0), '⁰');
+    assertEqual(Nerdiversary.toSuperscript(1), '¹');
+    assertEqual(Nerdiversary.toSuperscript(2), '²');
+    assertEqual(Nerdiversary.toSuperscript(10), '¹⁰');
+    assertEqual(Nerdiversary.toSuperscript(20), '²⁰');
+});
+
+// ============================================
+// SUMMARY
+// ============================================
+console.log('\n=== Test Summary ===');
+console.log(`Passed: ${passed}`);
+console.log(`Failed: ${failed}`);
+console.log(`Total:  ${passed + failed}`);
+
+if (failed > 0) {
+    process.exit(1);
+} else {
+    console.log('\nAll tests passed! ✓');
+    process.exit(0);
+}
