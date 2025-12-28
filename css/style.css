@@ -865,13 +865,14 @@ body {
 }
 
 .footer-link a {
-    color: var(--text-muted);
+    color: var(--accent-secondary);
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 .footer-link a:hover {
     color: var(--accent-primary);
+    text-decoration: underline;
 }
 
 /* Empty State */
