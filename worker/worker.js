@@ -206,6 +206,16 @@ export default {
 };
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function getOrdinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// ============================================================================
 // EVENT CALCULATION
 // ============================================================================
 
@@ -384,6 +394,36 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
         date: eventDate,
         category: 'popculture'
       });
+    }
+  }
+
+  // Nerdy holidays (Pi Day, May 4th, Tau Day)
+  const nerdyHolidays = [
+    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)' },
+    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day' },
+    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
+  ];
+  const milestoneYears = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+
+  for (const holiday of nerdyHolidays) {
+    for (const year of milestoneYears) {
+      const holidayDate = new Date(
+        birthDate.getFullYear() + year,
+        holiday.month,
+        holiday.day,
+        birthDate.getHours(),
+        birthDate.getMinutes()
+      );
+      if (holidayDate > birthDate && holidayDate <= maxDate && holidayDate > now) {
+        const ordinal = getOrdinal(year);
+        events.push({
+          id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${year}`,
+          title: `${holiday.icon} ${ordinal} ${holiday.name}`,
+          description: `Your ${ordinal} ${holiday.name}! (${holiday.desc})`,
+          date: holidayDate,
+          category: 'popculture'
+        });
+      }
     }
   }
 

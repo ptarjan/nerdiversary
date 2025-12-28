@@ -64,6 +64,9 @@ const Nerdiversary = {
         // Add pop culture milestones
         events.push(...this.calculatePopCultureMilestones(birthDate, maxDate));
 
+        // Add nerdy holidays (Pi Day, May 4th, Tau Day)
+        events.push(...this.calculateNerdyHolidays(birthDate, maxDate));
+
         // Sort by date
         events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -634,6 +637,59 @@ const Nerdiversary = {
         }
 
         return events;
+    },
+
+    /**
+     * Calculate nerdy holiday milestones (Pi Day, May 4th, Tau Day)
+     */
+    calculateNerdyHolidays(birthDate, maxDate) {
+        const events = [];
+        const holidays = [
+            { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)' },
+            { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day' },
+            { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
+        ];
+
+        // Milestone years to celebrate (not every year)
+        const milestoneYears = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+
+        for (const holiday of holidays) {
+            for (const year of milestoneYears) {
+                // Calculate the date of this holiday in the milestone year
+                const holidayDate = new Date(
+                    birthDate.getFullYear() + year,
+                    holiday.month,
+                    holiday.day,
+                    birthDate.getHours(),
+                    birthDate.getMinutes()
+                );
+
+                // Check if this date is after birth and before max
+                if (holidayDate > birthDate && holidayDate <= maxDate) {
+                    const ordinal = this.getOrdinal(year);
+                    events.push({
+                        id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${year}`,
+                        title: `${ordinal} ${holiday.name}`,
+                        description: `Your ${ordinal} ${holiday.name}! (${holiday.desc})`,
+                        date: holidayDate,
+                        category: 'pop-culture',
+                        icon: holiday.icon,
+                        milestone: `${year} years of ${holiday.name}`
+                    });
+                }
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
+     */
+    getOrdinal(n) {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
     },
 
     /**
