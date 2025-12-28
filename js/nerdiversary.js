@@ -10,7 +10,7 @@ const Nerdiversary = {
     MS_PER_HOUR: 60 * 60 * 1000,
     MS_PER_DAY: 24 * 60 * 60 * 1000,
     MS_PER_WEEK: 7 * 24 * 60 * 60 * 1000,
-    MS_PER_YEAR: 365.25 * 24 * 60 * 60 * 1000,
+    MS_PER_YEAR: 365.2425 * 24 * 60 * 60 * 1000, // Gregorian calendar average
 
     // Planetary orbital periods in Earth days
     PLANETS: {
