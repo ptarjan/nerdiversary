@@ -1,0 +1,8 @@
+name = "nerdiversary-calendar"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Optional: Add a custom domain later
+# routes = [
+#   { pattern = "calendar.nerdiversary.com", custom_domain = true }
+# ]

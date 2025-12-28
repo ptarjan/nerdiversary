@@ -253,12 +253,24 @@ function setupTimelineToggle() {
     });
 }
 
+// Cloudflare Worker URL - UPDATE THIS after deploying your worker
+const CALENDAR_WORKER_URL = 'https://nerdiversary-calendar.YOUR_SUBDOMAIN.workers.dev';
+
 /**
- * Set up action buttons (download iCal, share)
+ * Set up action buttons (subscribe, download iCal, share)
  */
 function setupActionButtons() {
+    const subscribeBtn = document.getElementById('subscribe-calendar');
     const downloadBtn = document.getElementById('download-ical');
     const shareBtn = document.getElementById('share-results');
+
+    if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Subscribe button clicked');
+            subscribeToCalendar();
+        });
+    }
 
     if (downloadBtn) {
         downloadBtn.addEventListener('click', (e) => {
@@ -276,6 +288,85 @@ function setupActionButtons() {
             shareResults();
         });
     }
+}
+
+/**
+ * Subscribe to calendar via Cloudflare Worker
+ */
+function subscribeToCalendar() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateStr = urlParams.get('d');
+    const timeStr = urlParams.get('t');
+
+    // Build the calendar URL
+    let calendarUrl = `${CALENDAR_WORKER_URL}/?d=${dateStr}`;
+    if (timeStr) {
+        calendarUrl += `&t=${timeStr}`;
+    }
+
+    // Show subscription modal
+    showSubscribeModal(calendarUrl);
+}
+
+/**
+ * Show modal with subscription options
+ */
+function showSubscribeModal(calendarUrl) {
+    const webcalUrl = calendarUrl.replace('https://', 'webcal://');
+    const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(calendarUrl)}`;
+
+    const modal = document.createElement('div');
+    modal.className = 'import-modal';
+    modal.innerHTML = `
+        <div class="import-modal-content">
+            <h3>🔔 Subscribe to Your Nerdiversaries</h3>
+            <p>Your calendar will auto-update with new events!</p>
+            <div class="import-options">
+                <a href="${googleCalUrl}" target="_blank" class="import-option" onclick="showToast('Opening Google Calendar...')">
+                    <span class="import-icon">📅</span>
+                    <span>Google Calendar</span>
+                    <small>One-click subscribe</small>
+                </a>
+                <a href="${webcalUrl}" class="import-option">
+                    <span class="import-icon">🍎</span>
+                    <span>Apple Calendar</span>
+                    <small>Opens Calendar app</small>
+                </a>
+                <a href="${webcalUrl}" class="import-option">
+                    <span class="import-icon">📧</span>
+                    <span>Outlook</span>
+                    <small>Opens Outlook</small>
+                </a>
+            </div>
+            <div class="subscribe-url-section">
+                <p class="subscribe-url-label">Or copy the calendar URL:</p>
+                <div class="subscribe-url-box">
+                    <input type="text" value="${calendarUrl}" readonly id="calendar-url-input">
+                    <button onclick="copyCalendarUrl()" class="copy-btn">📋 Copy</button>
+                </div>
+            </div>
+            <button class="import-close" onclick="this.closest('.import-modal').remove()">Done</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+/**
+ * Copy calendar URL to clipboard
+ */
+function copyCalendarUrl() {
+    const input = document.getElementById('calendar-url-input');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('Calendar URL copied!');
+    }).catch(() => {
+        document.execCommand('copy');
+        showToast('Calendar URL copied!');
+    });
 }
 
 /**
