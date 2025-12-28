@@ -8,7 +8,7 @@ Calculate and celebrate your nerdy anniversaries! Discover when you've lived a b
 
 - **Planetary Years** - Celebrate birthdays on Mercury, Venus, Mars, Jupiter, Saturn, Uranus, and Neptune
 - **Decimal Milestones** - 1 billion seconds, 10,000 days, 1 million minutes, and more
-- **Binary & Hex** - Celebrate 2^20 minutes or 0x1000000 seconds like a true nerd
+- **Number Bases** - Binary, octal, hex, ternary, duodecimal, and sexagesimal (Babylonian!) milestones
 - **Mathematical Constants** - Mark π × 10^9 seconds, e × 10^8 seconds, and other mathematical milestones
 - **Fibonacci Time** - Fibonacci sequence milestones in seconds, minutes, and days
 - **Pop Culture** - Hitchhiker's Guide (42), 1337 (leet)

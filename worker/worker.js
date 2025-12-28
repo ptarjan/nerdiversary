@@ -341,6 +341,66 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
+  // Octal (base 8) milestones
+  for (const power of [7, 8, 9, 10]) {
+    const value = Math.pow(8, power);
+    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `octal-${power}`,
+        title: `🐙 8^${power} Seconds`,
+        description: `You've lived for 8^${power} = ${value.toLocaleString()} seconds (octal milestone)!`,
+        date: eventDate,
+        category: 'binary'
+      });
+    }
+  }
+
+  // Ternary (base 3) milestones
+  for (const power of [17, 18, 19, 20]) {
+    const value = Math.pow(3, power);
+    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `ternary-${power}`,
+        title: `🔺 3^${power} Seconds`,
+        description: `You've lived for 3^${power} = ${value.toLocaleString()} seconds (ternary milestone)!`,
+        date: eventDate,
+        category: 'binary'
+      });
+    }
+  }
+
+  // Duodecimal (base 12) milestones
+  for (const power of [7, 8]) {
+    const value = Math.pow(12, power);
+    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `duodecimal-${power}`,
+        title: `🕛 12^${power} Seconds`,
+        description: `You've lived for 12^${power} = ${value.toLocaleString()} seconds (dozenal milestone)!`,
+        date: eventDate,
+        category: 'binary'
+      });
+    }
+  }
+
+  // Sexagesimal (base 60) milestones - Babylonian!
+  for (const power of [4, 5]) {
+    const value = Math.pow(60, power);
+    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `sexagesimal-${power}`,
+        title: `🏛️ 60^${power} Seconds`,
+        description: `You've lived for 60^${power} = ${value.toLocaleString()} seconds (Babylonian milestone)!`,
+        date: eventDate,
+        category: 'binary'
+      });
+    }
+  }
+
   // Mathematical constants
   const mathMilestones = [
     { value: PI * 1e8, label: 'π × 10⁸ Seconds', icon: 'π' },

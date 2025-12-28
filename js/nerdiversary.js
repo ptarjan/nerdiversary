@@ -372,6 +372,78 @@ const Nerdiversary = {
             }
         }
 
+        // Octal (base 8) milestones
+        const octalPowers = [7, 8, 9, 10];
+        for (const power of octalPowers) {
+            const value = Math.pow(8, power);
+            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `octal-${power}`,
+                    title: `8^${power} Seconds`,
+                    description: `You've lived for 8${this.toSuperscript(power)} = ${value.toLocaleString()} seconds (octal milestone)!`,
+                    date: eventDate,
+                    category: 'binary',
+                    icon: '🐙',
+                    milestone: `8^${power} seconds`
+                });
+            }
+        }
+
+        // Ternary (base 3) milestones
+        const ternaryPowers = [17, 18, 19, 20];
+        for (const power of ternaryPowers) {
+            const value = Math.pow(3, power);
+            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `ternary-${power}`,
+                    title: `3^${power} Seconds`,
+                    description: `You've lived for 3${this.toSuperscript(power)} = ${value.toLocaleString()} seconds (ternary milestone)!`,
+                    date: eventDate,
+                    category: 'binary',
+                    icon: '🔺',
+                    milestone: `3^${power} seconds`
+                });
+            }
+        }
+
+        // Duodecimal (base 12) milestones
+        const duodecimalPowers = [7, 8];
+        for (const power of duodecimalPowers) {
+            const value = Math.pow(12, power);
+            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `duodecimal-${power}`,
+                    title: `12^${power} Seconds`,
+                    description: `You've lived for 12${this.toSuperscript(power)} = ${value.toLocaleString()} seconds (dozenal milestone)!`,
+                    date: eventDate,
+                    category: 'binary',
+                    icon: '🕛',
+                    milestone: `12^${power} seconds`
+                });
+            }
+        }
+
+        // Sexagesimal (base 60) milestones - Babylonian!
+        const sexagesimalPowers = [4, 5];
+        for (const power of sexagesimalPowers) {
+            const value = Math.pow(60, power);
+            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `sexagesimal-${power}`,
+                    title: `60^${power} Seconds`,
+                    description: `You've lived for 60${this.toSuperscript(power)} = ${value.toLocaleString()} seconds (Babylonian milestone)!`,
+                    date: eventDate,
+                    category: 'binary',
+                    icon: '🏛️',
+                    milestone: `60^${power} seconds`
+                });
+            }
+        }
+
         return events;
     },
 
