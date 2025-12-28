@@ -413,8 +413,7 @@ function downloadICalendar() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // Show import instructions modal
-    showImportModal();
+    showToast('Downloaded nerdiversaries.ics');
 }
 
 /**
