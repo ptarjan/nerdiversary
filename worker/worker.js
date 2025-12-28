@@ -84,7 +84,7 @@ export default {
     }
 
     // Generate events
-    const events = calculateNerdiversaries(birthDate, 50); // 50 years of events
+    const events = calculateNerdiversaries(birthDate, 120); // 120 years of events
 
     // Generate iCal content
     const icalContent = generateICal(events);

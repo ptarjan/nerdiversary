@@ -410,8 +410,8 @@ function formatGoogleDate(date) {
  * Download iCalendar file
  */
 function downloadICalendar() {
-    // Get upcoming events (next 50)
-    const upcomingEvents = allEvents.filter(e => !e.isPast).slice(0, 50);
+    // Get all upcoming events
+    const upcomingEvents = allEvents.filter(e => !e.isPast);
     const icalContent = ICalGenerator.generate(upcomingEvents, birthDate);
 
     // Create download
