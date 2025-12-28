@@ -342,62 +342,94 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
   }
 
   // Octal (base 8) milestones
-  for (const power of [7, 8, 9, 10]) {
-    const value = Math.pow(8, power);
-    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
-    if (eventDate <= maxDate && eventDate > now) {
-      events.push({
-        id: `octal-${power}`,
-        title: `🐙 8^${power} Seconds`,
-        description: `You've lived for 8^${power} = ${value.toLocaleString()} seconds (octal milestone)!`,
-        date: eventDate,
-        category: 'binary'
-      });
+  const octalMilestones = [
+    { powers: [7, 8, 9, 10], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+    { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+    { powers: [4, 5, 6], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+    { powers: [3, 4, 5], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+  ];
+  for (const { powers, unit, label, ms } of octalMilestones) {
+    for (const power of powers) {
+      const value = Math.pow(8, power);
+      const eventDate = new Date(birthDate.getTime() + value * ms);
+      if (eventDate <= maxDate && eventDate > now && eventDate > birthDate) {
+        events.push({
+          id: `octal-${power}-${unit}`,
+          title: `🐙 8^${power} ${label}`,
+          description: `You've lived for 8^${power} = ${value.toLocaleString()} ${unit} (octal)!`,
+          date: eventDate,
+          category: 'binary'
+        });
+      }
     }
   }
 
   // Ternary (base 3) milestones
-  for (const power of [17, 18, 19, 20]) {
-    const value = Math.pow(3, power);
-    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
-    if (eventDate <= maxDate && eventDate > now) {
-      events.push({
-        id: `ternary-${power}`,
-        title: `🔺 3^${power} Seconds`,
-        description: `You've lived for 3^${power} = ${value.toLocaleString()} seconds (ternary milestone)!`,
-        date: eventDate,
-        category: 'binary'
-      });
+  const ternaryMilestones = [
+    { powers: [17, 18, 19, 20], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+    { powers: [12, 13, 14, 15], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+    { powers: [9, 10, 11, 12], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+    { powers: [7, 8, 9], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+  ];
+  for (const { powers, unit, label, ms } of ternaryMilestones) {
+    for (const power of powers) {
+      const value = Math.pow(3, power);
+      const eventDate = new Date(birthDate.getTime() + value * ms);
+      if (eventDate <= maxDate && eventDate > now && eventDate > birthDate) {
+        events.push({
+          id: `ternary-${power}-${unit}`,
+          title: `🔺 3^${power} ${label}`,
+          description: `You've lived for 3^${power} = ${value.toLocaleString()} ${unit} (ternary)!`,
+          date: eventDate,
+          category: 'binary'
+        });
+      }
     }
   }
 
   // Duodecimal (base 12) milestones
-  for (const power of [7, 8]) {
-    const value = Math.pow(12, power);
-    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
-    if (eventDate <= maxDate && eventDate > now) {
-      events.push({
-        id: `duodecimal-${power}`,
-        title: `🕛 12^${power} Seconds`,
-        description: `You've lived for 12^${power} = ${value.toLocaleString()} seconds (dozenal milestone)!`,
-        date: eventDate,
-        category: 'binary'
-      });
+  const duodecimalMilestones = [
+    { powers: [7, 8], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+    { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+    { powers: [4, 5], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+    { powers: [3, 4], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+  ];
+  for (const { powers, unit, label, ms } of duodecimalMilestones) {
+    for (const power of powers) {
+      const value = Math.pow(12, power);
+      const eventDate = new Date(birthDate.getTime() + value * ms);
+      if (eventDate <= maxDate && eventDate > now && eventDate > birthDate) {
+        events.push({
+          id: `duodecimal-${power}-${unit}`,
+          title: `🕛 12^${power} ${label}`,
+          description: `You've lived for 12^${power} = ${value.toLocaleString()} ${unit} (dozenal)!`,
+          date: eventDate,
+          category: 'binary'
+        });
+      }
     }
   }
 
   // Sexagesimal (base 60) milestones - Babylonian!
-  for (const power of [4, 5]) {
-    const value = Math.pow(60, power);
-    const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
-    if (eventDate <= maxDate && eventDate > now) {
-      events.push({
-        id: `sexagesimal-${power}`,
-        title: `🏛️ 60^${power} Seconds`,
-        description: `You've lived for 60^${power} = ${value.toLocaleString()} seconds (Babylonian milestone)!`,
-        date: eventDate,
-        category: 'binary'
-      });
+  const sexagesimalMilestones = [
+    { powers: [4, 5], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+    { powers: [3, 4], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+    { powers: [2, 3], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+    { powers: [2], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+  ];
+  for (const { powers, unit, label, ms } of sexagesimalMilestones) {
+    for (const power of powers) {
+      const value = Math.pow(60, power);
+      const eventDate = new Date(birthDate.getTime() + value * ms);
+      if (eventDate <= maxDate && eventDate > now && eventDate > birthDate) {
+        events.push({
+          id: `sexagesimal-${power}-${unit}`,
+          title: `🏛️ 60^${power} ${label}`,
+          description: `You've lived for 60^${power} = ${value.toLocaleString()} ${unit} (Babylonian)!`,
+          date: eventDate,
+          category: 'binary'
+        });
+      }
     }
   }
 
