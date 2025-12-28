@@ -650,11 +650,11 @@ const Nerdiversary = {
             { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
         ];
 
-        // Milestone years to celebrate (not every year)
-        const milestoneYears = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+        // Calculate max years based on date range
+        const maxYears = 120;
 
         for (const holiday of holidays) {
-            for (const year of milestoneYears) {
+            for (let year = 1; year <= maxYears; year++) {
                 // Calculate the date of this holiday in the milestone year
                 const holidayDate = new Date(
                     birthDate.getFullYear() + year,

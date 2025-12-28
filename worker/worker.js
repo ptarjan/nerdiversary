@@ -403,10 +403,10 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day' },
     { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
   ];
-  const milestoneYears = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+  const maxYears = 120;
 
   for (const holiday of nerdyHolidays) {
-    for (const year of milestoneYears) {
+    for (let year = 1; year <= maxYears; year++) {
       const holidayDate = new Date(
         birthDate.getFullYear() + year,
         holiday.month,
