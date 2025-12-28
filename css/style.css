@@ -640,6 +640,23 @@ body {
     font-size: 0.75rem;
 }
 
+.event-add-btn {
+    background: var(--bg-secondary);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.event-add-btn:hover {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    transform: scale(1.1);
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;

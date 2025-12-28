@@ -191,9 +191,22 @@ function displayTimeline() {
                         <span class="event-category">${categoryInfo.icon} ${categoryInfo.name}</span>
                     </div>
                 </div>
+                ${!isPast ? `<button class="event-add-btn" data-event-id="${event.id}" title="Add to Google Calendar">📅</button>` : ''}
             </div>
         `;
     }).join('');
+
+    // Add click handlers for individual calendar buttons
+    timeline.querySelectorAll('.event-add-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const eventId = btn.dataset.eventId;
+            const event = allEvents.find(ev => ev.id === eventId);
+            if (event) {
+                window.open(createGoogleCalendarUrl(event), '_blank');
+            }
+        });
+    });
 }
 
 /**
@@ -234,11 +247,16 @@ function setupTimelineToggle() {
 }
 
 /**
- * Set up action buttons (download iCal, share)
+ * Set up action buttons (Google Calendar, download iCal, share)
  */
 function setupActionButtons() {
+    const gcalBtn = document.getElementById('add-to-gcal');
     const downloadBtn = document.getElementById('download-ical');
     const shareBtn = document.getElementById('share-results');
+
+    gcalBtn.addEventListener('click', () => {
+        addToGoogleCalendar();
+    });
 
     downloadBtn.addEventListener('click', () => {
         downloadICalendar();
@@ -247,6 +265,53 @@ function setupActionButtons() {
     shareBtn.addEventListener('click', () => {
         shareResults();
     });
+}
+
+/**
+ * Add events to Google Calendar
+ */
+function addToGoogleCalendar() {
+    // Get upcoming events (next 20 for Google Calendar)
+    const upcomingEvents = allEvents.filter(e => !e.isPast).slice(0, 20);
+
+    if (upcomingEvents.length === 0) {
+        showToast('No upcoming events to add!');
+        return;
+    }
+
+    // Google Calendar can only add one event at a time via URL
+    // So we'll open the first/next event and show instructions
+    const nextEvent = upcomingEvents[0];
+    const gcalUrl = createGoogleCalendarUrl(nextEvent);
+
+    window.open(gcalUrl, '_blank');
+
+    showToast('Adding next nerdiversary to Google Calendar. For multiple events, download the iCal file.');
+}
+
+/**
+ * Create Google Calendar URL for an event
+ */
+function createGoogleCalendarUrl(event) {
+    const startDate = formatGoogleDate(event.date);
+    const endDate = formatGoogleDate(new Date(event.date.getTime() + 60 * 60 * 1000)); // 1 hour
+
+    const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: `${event.icon} ${event.title}`,
+        dates: `${startDate}/${endDate}`,
+        details: event.description,
+        sf: 'true'
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/**
+ * Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
+ */
+function formatGoogleDate(date) {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
 /**
