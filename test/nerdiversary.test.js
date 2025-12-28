@@ -126,6 +126,56 @@ test('FIBONACCI contains key milestones for 42-year-old in seconds', () => {
         'Should include 1,346,269 for ~42.7 year milestone');
 });
 
+test('LUCAS array is actually Lucas sequence (starts 2, 1)', () => {
+    const luc = Nerdiversary.LUCAS;
+    assertTrue(luc[0] === 2, 'First element should be 2');
+    assertTrue(luc[1] === 1, 'Second element should be 1');
+
+    for (let i = 2; i < luc.length; i++) {
+        const expected = luc[i - 1] + luc[i - 2];
+        assertEqual(luc[i], expected, `LUCAS[${i}] should be ${expected}: `);
+    }
+});
+
+test('Perfect numbers are correct', () => {
+    const perfectNumbers = Nerdiversary.PERFECT_NUMBERS;
+    // 6 = 1 + 2 + 3
+    assertEqual(1 + 2 + 3, 6);
+    // 28 = 1 + 2 + 4 + 7 + 14
+    assertEqual(1 + 2 + 4 + 7 + 14, 28);
+    // 496 = 1 + 2 + 4 + 8 + 16 + 31 + 62 + 124 + 248
+    assertEqual(1 + 2 + 4 + 8 + 16 + 31 + 62 + 124 + 248, 496);
+    assertTrue(perfectNumbers.includes(6));
+    assertTrue(perfectNumbers.includes(28));
+    assertTrue(perfectNumbers.includes(496));
+    assertTrue(perfectNumbers.includes(8128));
+});
+
+test('Triangular numbers are correct (T(n) = n*(n+1)/2)', () => {
+    const tri = Nerdiversary.TRIANGULAR;
+    for (let i = 0; i < Math.min(tri.length, 50); i++) {
+        const n = i + 1;
+        const expected = n * (n + 1) / 2;
+        assertEqual(tri[i], expected, `TRIANGULAR[${i}] should be T(${n}) = ${expected}: `);
+    }
+});
+
+test('Palindromes read the same forwards and backwards', () => {
+    for (const pal of Nerdiversary.PALINDROMES.slice(0, 50)) {
+        const str = String(pal);
+        const reversed = str.split('').reverse().join('');
+        assertEqual(str, reversed, `${pal} should be a palindrome: `);
+    }
+});
+
+test('Repunits are all 1s', () => {
+    for (const rep of Nerdiversary.REPUNITS) {
+        const str = String(rep);
+        assertTrue(str.split('').every(c => c === '1'),
+            `${rep} should be all 1s`);
+    }
+});
+
 // ============================================
 // PLANETARY ORBITAL PERIODS
 // ============================================

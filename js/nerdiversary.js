@@ -32,6 +32,21 @@ const Nerdiversary = {
     // Fibonacci sequence (useful range for time milestones - extended for seconds)
     FIBONACCI: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073],
 
+    // Lucas numbers (like Fibonacci but starts 2, 1)
+    LUCAS: [2, 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, 199, 322, 521, 843, 1364, 2207, 3571, 5778, 9349, 15127, 24476, 39603, 64079, 103682, 167761, 271443, 439204, 710647, 1149851, 1860498, 3010349, 4870847, 7881196, 12752043, 20633239, 33385282, 54018521, 87403803, 141422324, 228826127, 370248451, 599074578, 969323029, 1568397607, 2537720636],
+
+    // Perfect numbers (equal to sum of proper divisors)
+    PERFECT_NUMBERS: [6, 28, 496, 8128],
+
+    // Triangular numbers (1+2+3+...+n)
+    TRIANGULAR: [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78, 91, 105, 120, 136, 153, 171, 190, 210, 231, 253, 276, 300, 325, 351, 378, 406, 435, 465, 496, 528, 561, 595, 630, 666, 703, 741, 780, 820, 861, 903, 946, 990, 1035, 1081, 1128, 1176, 1225, 1275, 1326, 1378, 1431, 1485, 1540, 1596, 1653, 1711, 1770, 1830, 1891, 1953, 2016, 2080, 2145, 2211, 2278, 2346, 2415, 2485, 2556, 2628, 2701, 2775, 2850, 2926, 3003, 3081, 3160, 3240, 3321, 3403, 3486, 3570, 3655, 3741, 3828, 3916, 4005, 4095, 4186, 4278, 4371, 4465, 4560, 4656, 4753, 4851, 4950, 5050, 5151, 5253, 5356, 5460, 5565, 5671, 5778, 5886, 5995, 6105, 6216, 6328, 6441, 6555, 6670, 6786, 6903, 7021, 7140, 7260, 7381, 7503, 7626, 7750, 7875, 8001, 8128, 8256, 8385, 8515, 8646, 8778, 8911, 9045, 9180, 9316, 9453, 9591, 9730, 9870, 10011, 10153, 10296, 10440, 10585, 10731, 10878, 11026, 11175, 11325, 11476, 11628, 11781, 11935, 12090, 12246, 12403, 12561, 12720, 12880],
+
+    // Palindrome milestones
+    PALINDROMES: [11, 22, 33, 44, 55, 66, 77, 88, 99, 101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 202, 212, 222, 232, 242, 252, 262, 272, 282, 292, 303, 313, 323, 333, 343, 353, 363, 373, 383, 393, 404, 414, 424, 434, 444, 454, 464, 474, 484, 494, 505, 515, 525, 535, 545, 555, 565, 575, 585, 595, 606, 616, 626, 636, 646, 656, 666, 676, 686, 696, 707, 717, 727, 737, 747, 757, 767, 777, 787, 797, 808, 818, 828, 838, 848, 858, 868, 878, 888, 898, 909, 919, 929, 939, 949, 959, 969, 979, 989, 999, 1001, 1111, 1221, 1331, 1441, 1551, 1661, 1771, 1881, 1991, 2002, 2112, 2222, 2332, 2442, 2552, 2662, 2772, 2882, 2992, 3003, 3113, 3223, 3333, 3443, 3553, 3663, 3773, 3883, 3993, 4004, 4114, 4224, 4334, 4444, 4554, 4664, 4774, 4884, 4994, 5005, 5115, 5225, 5335, 5445, 5555, 5665, 5775, 5885, 5995, 6006, 6116, 6226, 6336, 6446, 6556, 6666, 6776, 6886, 6996, 7007, 7117, 7227, 7337, 7447, 7557, 7667, 7777, 7887, 7997, 8008, 8118, 8228, 8338, 8448, 8558, 8668, 8778, 8888, 8998, 9009, 9119, 9229, 9339, 9449, 9559, 9669, 9779, 9889, 9999, 10001, 10101, 10201, 10301, 10401, 10501, 10601, 10701, 10801, 10901, 11011, 11111, 11211, 11311, 11411, 11511, 11611, 11711, 11811, 11911, 12021, 12121, 12221, 12321, 12421, 12521, 12621, 12721, 12821, 12921],
+
+    // Repunits (all 1s)
+    REPUNITS: [11, 111, 1111, 11111, 111111, 1111111, 11111111, 111111111],
+
     // Powers of 2 for binary milestones
     POWERS_OF_2: [10, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
 
@@ -60,6 +75,24 @@ const Nerdiversary = {
 
         // Add Fibonacci milestones
         events.push(...this.calculateFibonacciMilestones(birthDate, maxDate));
+
+        // Add Lucas number milestones
+        events.push(...this.calculateLucasMilestones(birthDate, maxDate));
+
+        // Add perfect number milestones
+        events.push(...this.calculatePerfectNumberMilestones(birthDate, maxDate));
+
+        // Add triangular number milestones
+        events.push(...this.calculateTriangularMilestones(birthDate, maxDate));
+
+        // Add palindrome milestones
+        events.push(...this.calculatePalindromeMilestones(birthDate, maxDate));
+
+        // Add repunit milestones
+        events.push(...this.calculateRepunitMilestones(birthDate, maxDate));
+
+        // Add scientific constant milestones
+        events.push(...this.calculateScientificMilestones(birthDate, maxDate));
 
         // Add pop culture milestones
         events.push(...this.calculatePopCultureMilestones(birthDate, maxDate));
@@ -683,6 +716,375 @@ const Nerdiversary = {
                     category: 'fibonacci',
                     icon: '🌀',
                     milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} days`
+                });
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate Lucas number milestones (like Fibonacci but starts 2, 1)
+     */
+    calculateLucasMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Lucas seconds
+        const lucasSeconds = this.LUCAS.filter(n => n >= 1e6 && n <= 3e9);
+        for (const luc of lucasSeconds) {
+            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `lucas-seconds-${luc}`,
+                    title: `Lucas Second ${luc.toLocaleString()}`,
+                    description: `Second ${luc.toLocaleString()} is a Lucas number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🔷',
+                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} seconds`
+                });
+            }
+        }
+
+        // Lucas minutes
+        const lucasMinutes = this.LUCAS.filter(n => n >= 1e5 && n <= 5e7);
+        for (const luc of lucasMinutes) {
+            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_MINUTE);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `lucas-minutes-${luc}`,
+                    title: `Lucas Minute ${luc.toLocaleString()}`,
+                    description: `Minute ${luc.toLocaleString()} is a Lucas number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🔷',
+                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} minutes`
+                });
+            }
+        }
+
+        // Lucas hours
+        const lucasHours = this.LUCAS.filter(n => n >= 10000 && n <= 1000000);
+        for (const luc of lucasHours) {
+            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_HOUR);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `lucas-hours-${luc}`,
+                    title: `Lucas Hour ${luc.toLocaleString()}`,
+                    description: `Hour ${luc.toLocaleString()} is a Lucas number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🔷',
+                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} hours`
+                });
+            }
+        }
+
+        // Lucas days
+        const lucasDays = this.LUCAS.filter(n => n >= 100 && n <= 40000);
+        for (const luc of lucasDays) {
+            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_DAY);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `lucas-days-${luc}`,
+                    title: `Lucas Day ${luc.toLocaleString()}`,
+                    description: `Day ${luc.toLocaleString()} is a Lucas number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🔷',
+                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} days`
+                });
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate perfect number milestones (numbers equal to sum of proper divisors)
+     */
+    calculatePerfectNumberMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Perfect number days (6, 28, 496, 8128)
+        for (const perfect of this.PERFECT_NUMBERS) {
+            const eventDate = new Date(birthDate.getTime() + perfect * this.MS_PER_DAY);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `perfect-days-${perfect}`,
+                    title: `Perfect Day ${perfect}`,
+                    description: `Day ${perfect} is a perfect number! (${perfect} = sum of its divisors)`,
+                    date: eventDate,
+                    category: 'mathematical',
+                    icon: '💎',
+                    milestone: `${perfect} days (perfect number)`
+                });
+            }
+        }
+
+        // Perfect number hours (for larger ones)
+        for (const perfect of [496, 8128]) {
+            const eventDate = new Date(birthDate.getTime() + perfect * this.MS_PER_HOUR);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `perfect-hours-${perfect}`,
+                    title: `Perfect Hour ${perfect.toLocaleString()}`,
+                    description: `Hour ${perfect.toLocaleString()} is a perfect number!`,
+                    date: eventDate,
+                    category: 'mathematical',
+                    icon: '💎',
+                    milestone: `${perfect.toLocaleString()} hours (perfect number)`
+                });
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate triangular number milestones (1+2+3+...+n)
+     */
+    calculateTriangularMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Only use interesting triangular numbers (every 10th or special ones)
+        const interestingTriangular = this.TRIANGULAR.filter((t, i) =>
+            (i + 1) % 10 === 0 || // Every 10th triangular number (T10, T20, T30...)
+            t === 666 ||  // Number of the beast
+            t === 5050 || // Famous 1+2+...+100
+            t === 1225 || // T49 (7²)
+            t === 2016 || // Recent year
+            t === 3003 || // Symmetric
+            t === 5778 || // Also Lucas!
+            t === 8128    // Also perfect!
+        );
+
+        for (const tri of interestingTriangular) {
+            if (tri >= 100 && tri <= 15000) {
+                const eventDate = new Date(birthDate.getTime() + tri * this.MS_PER_DAY);
+                if (eventDate <= maxDate) {
+                    const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
+                    events.push({
+                        id: `triangular-days-${tri}`,
+                        title: `Triangular Day ${tri.toLocaleString()}`,
+                        description: `Day ${tri.toLocaleString()} is triangular! (1+2+3+...+${n} = ${tri})`,
+                        date: eventDate,
+                        category: 'mathematical',
+                        icon: '🔺',
+                        milestone: `T(${n}) = ${tri.toLocaleString()} days`
+                    });
+                }
+            }
+        }
+
+        // Triangular hours for larger numbers
+        const triangularHours = this.TRIANGULAR.filter(t => t >= 10000 && t <= 100000 &&
+            this.TRIANGULAR.indexOf(t) % 5 === 0);
+        for (const tri of triangularHours) {
+            const eventDate = new Date(birthDate.getTime() + tri * this.MS_PER_HOUR);
+            if (eventDate <= maxDate) {
+                const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
+                events.push({
+                    id: `triangular-hours-${tri}`,
+                    title: `Triangular Hour ${tri.toLocaleString()}`,
+                    description: `Hour ${tri.toLocaleString()} is triangular! (1+2+...+${n})`,
+                    date: eventDate,
+                    category: 'mathematical',
+                    icon: '🔺',
+                    milestone: `T(${n}) = ${tri.toLocaleString()} hours`
+                });
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate palindrome milestones
+     */
+    calculatePalindromeMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Palindrome days (only interesting ones)
+        const interestingPalindromes = this.PALINDROMES.filter(p =>
+            p >= 1000 && p <= 15000 && (
+                p % 1111 === 0 || // Like 1111, 2222, 3333...
+                String(p).split('').every((c, i, a) => c === a[0]) || // All same digits
+                p === 1001 || p === 1221 || p === 1331 || p === 1441 ||
+                p === 2112 || p === 2552 || p === 3003 || p === 5005 ||
+                p === 5775 || p === 7007 || p === 7337 || p === 9009 ||
+                p === 10001 || p === 10101 || p === 11011 || p === 11111 ||
+                p === 12321 || p === 12921
+            )
+        );
+
+        for (const pal of interestingPalindromes) {
+            const eventDate = new Date(birthDate.getTime() + pal * this.MS_PER_DAY);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `palindrome-days-${pal}`,
+                    title: `Palindrome Day ${pal.toLocaleString()}`,
+                    description: `Day ${pal} reads the same forwards and backwards!`,
+                    date: eventDate,
+                    category: 'pop-culture',
+                    icon: '🪞',
+                    milestone: `${pal} days (palindrome)`
+                });
+            }
+        }
+
+        // Palindrome hours
+        const palindromeHours = [10001, 10101, 10201, 11011, 11111, 11211, 12021, 12121, 12221, 12321];
+        for (const pal of palindromeHours) {
+            const eventDate = new Date(birthDate.getTime() + pal * this.MS_PER_HOUR);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `palindrome-hours-${pal}`,
+                    title: `Palindrome Hour ${pal.toLocaleString()}`,
+                    description: `Hour ${pal.toLocaleString()} is a palindrome!`,
+                    date: eventDate,
+                    category: 'pop-culture',
+                    icon: '🪞',
+                    milestone: `${pal.toLocaleString()} hours (palindrome)`
+                });
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate repunit milestones (numbers with all 1s)
+     */
+    calculateRepunitMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Repunit days
+        for (const rep of this.REPUNITS) {
+            if (rep >= 111 && rep <= 11111) {
+                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_DAY);
+                if (eventDate <= maxDate) {
+                    events.push({
+                        id: `repunit-days-${rep}`,
+                        title: `Repunit Day ${rep.toLocaleString()}`,
+                        description: `Day ${rep.toLocaleString()} is all 1s!`,
+                        date: eventDate,
+                        category: 'binary',
+                        icon: '1️⃣',
+                        milestone: `${rep.toLocaleString()} days (repunit)`
+                    });
+                }
+            }
+        }
+
+        // Repunit hours
+        for (const rep of this.REPUNITS) {
+            if (rep >= 1111 && rep <= 111111) {
+                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_HOUR);
+                if (eventDate <= maxDate) {
+                    events.push({
+                        id: `repunit-hours-${rep}`,
+                        title: `Repunit Hour ${rep.toLocaleString()}`,
+                        description: `Hour ${rep.toLocaleString()} is all 1s!`,
+                        date: eventDate,
+                        category: 'binary',
+                        icon: '1️⃣',
+                        milestone: `${rep.toLocaleString()} hours (repunit)`
+                    });
+                }
+            }
+        }
+
+        // Repunit minutes
+        for (const rep of this.REPUNITS) {
+            if (rep >= 111111 && rep <= 11111111) {
+                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_MINUTE);
+                if (eventDate <= maxDate) {
+                    events.push({
+                        id: `repunit-minutes-${rep}`,
+                        title: `Repunit Minute ${rep.toLocaleString()}`,
+                        description: `Minute ${rep.toLocaleString()} is all 1s!`,
+                        date: eventDate,
+                        category: 'binary',
+                        icon: '1️⃣',
+                        milestone: `${rep.toLocaleString()} minutes (repunit)`
+                    });
+                }
+            }
+        }
+
+        // Repunit seconds
+        for (const rep of this.REPUNITS) {
+            if (rep >= 11111111 && rep <= 1111111111) {
+                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_SECOND);
+                if (eventDate <= maxDate) {
+                    events.push({
+                        id: `repunit-seconds-${rep}`,
+                        title: `Repunit Second ${rep.toLocaleString()}`,
+                        description: `Second ${rep.toLocaleString()} is all 1s!`,
+                        date: eventDate,
+                        category: 'binary',
+                        icon: '1️⃣',
+                        milestone: `${rep.toLocaleString()} seconds (repunit)`
+                    });
+                }
+            }
+        }
+
+        return events;
+    },
+
+    /**
+     * Calculate scientific constant milestones
+     */
+    calculateScientificMilestones(birthDate, maxDate) {
+        const events = [];
+
+        // Speed of light: 299,792,458 m/s - use as seconds!
+        const speedOfLight = 299792458;
+        const solEvent = new Date(birthDate.getTime() + speedOfLight * this.MS_PER_SECOND);
+        if (solEvent <= maxDate) {
+            events.push({
+                id: 'speed-of-light-seconds',
+                title: 'Speed of Light Seconds',
+                description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the speed of light in m/s!`,
+                date: solEvent,
+                category: 'mathematical',
+                icon: '💡',
+                milestone: `c = ${speedOfLight.toLocaleString()} seconds`
+            });
+        }
+
+        // Seconds in a year (astronomical): 31,557,600
+        const astroYear = 31557600;
+        for (const mult of [10, 20, 30, 40, 50, 60, 70, 80, 90]) {
+            const eventDate = new Date(birthDate.getTime() + astroYear * mult * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `astro-years-${mult}`,
+                    title: `${mult} Astronomical Years`,
+                    description: `You've lived for exactly ${mult} × 31,557,600 seconds (astronomical year definition)!`,
+                    date: eventDate,
+                    category: 'mathematical',
+                    icon: '🔭',
+                    milestone: `${mult} × 31,557,600 seconds`
+                });
+            }
+        }
+
+        // Euler's identity related: e^π ≈ 23.14
+        const ePi = Math.pow(Math.E, Math.PI);
+        for (const [mult, label] of [[1e6, 'Million'], [1e7, '10 Million'], [1e8, '100 Million']]) {
+            const eventDate = new Date(birthDate.getTime() + ePi * mult * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `e-pi-${mult}`,
+                    title: `e^π × ${label} Seconds`,
+                    description: `You've lived for e^π × ${mult.toLocaleString()} ≈ ${Math.floor(ePi * mult).toLocaleString()} seconds!`,
+                    date: eventDate,
+                    category: 'mathematical',
+                    icon: '🧮',
+                    milestone: `e^π × ${mult.toLocaleString()} seconds`
                 });
             }
         }
