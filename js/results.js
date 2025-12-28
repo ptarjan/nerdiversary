@@ -323,17 +323,17 @@ function showSubscribeModal(calendarUrl) {
             <h3>🔔 Subscribe to Your Nerdiversaries</h3>
             <p>Your calendar will auto-update with new events!</p>
             <div class="import-options">
-                <a href="${googleCalUrl}" target="_blank" class="import-option" onclick="showToast('Opening Google Calendar...')">
+                <a href="${googleCalUrl}" target="_blank" class="import-option" id="gcal-subscribe">
                     <span class="import-icon">📅</span>
                     <span>Google Calendar</span>
                     <small>One-click subscribe</small>
                 </a>
-                <a href="${webcalUrl}" class="import-option">
+                <a href="#" class="import-option" id="apple-subscribe">
                     <span class="import-icon">🍎</span>
                     <span>Apple Calendar</span>
                     <small>Opens Calendar app</small>
                 </a>
-                <a href="${webcalUrl}" class="import-option">
+                <a href="#" class="import-option" id="outlook-subscribe">
                     <span class="import-icon">📧</span>
                     <span>Outlook</span>
                     <small>Opens Outlook</small>
@@ -350,6 +350,18 @@ function showSubscribeModal(calendarUrl) {
         </div>
     `;
     document.body.appendChild(modal);
+
+    // Handle Apple Calendar - use direct navigation for iOS compatibility
+    modal.querySelector('#apple-subscribe').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = webcalUrl;
+    });
+
+    // Handle Outlook - same approach
+    modal.querySelector('#outlook-subscribe').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = webcalUrl;
+    });
 
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
