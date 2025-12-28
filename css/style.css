@@ -932,15 +932,21 @@ body {
     }
 
     .countdown-timer {
-        gap: 0.75rem;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
     }
 
     .countdown-unit {
-        min-width: 55px;
+        min-width: auto;
     }
 
     .countdown-value {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .countdown-label {
+        font-size: 0.65rem;
     }
 
     /* Event cards */
