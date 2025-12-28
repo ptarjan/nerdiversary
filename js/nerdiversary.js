@@ -619,6 +619,57 @@ const Nerdiversary = {
     calculateFibonacciMilestones(birthDate, maxDate) {
         const events = [];
 
+        // Fibonacci seconds (larger ones that span a lifetime)
+        const fibSeconds = this.FIBONACCI.filter(n => n >= 1e6 && n <= 3e9);
+        for (const fib of fibSeconds) {
+            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_SECOND);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `fib-seconds-${fib}`,
+                    title: `Fibonacci Second ${fib.toLocaleString()}`,
+                    description: `Second ${fib.toLocaleString()} is a Fibonacci number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🌀',
+                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} seconds`
+                });
+            }
+        }
+
+        // Fibonacci minutes
+        const fibMinutes = this.FIBONACCI.filter(n => n >= 1e5 && n <= 5e7);
+        for (const fib of fibMinutes) {
+            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_MINUTE);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `fib-minutes-${fib}`,
+                    title: `Fibonacci Minute ${fib.toLocaleString()}`,
+                    description: `Minute ${fib.toLocaleString()} is a Fibonacci number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🌀',
+                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} minutes`
+                });
+            }
+        }
+
+        // Fibonacci hours
+        const fibHours = this.FIBONACCI.filter(n => n >= 10000 && n <= 1000000);
+        for (const fib of fibHours) {
+            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_HOUR);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `fib-hours-${fib}`,
+                    title: `Fibonacci Hour ${fib.toLocaleString()}`,
+                    description: `Hour ${fib.toLocaleString()} is a Fibonacci number!`,
+                    date: eventDate,
+                    category: 'fibonacci',
+                    icon: '🌀',
+                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} hours`
+                });
+            }
+        }
+
         // Fibonacci days
         const fibDays = this.FIBONACCI.filter(n => n >= 100 && n <= 40000);
         for (const fib of fibDays) {
@@ -632,23 +683,6 @@ const Nerdiversary = {
                     category: 'fibonacci',
                     icon: '🌀',
                     milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} days`
-                });
-            }
-        }
-
-        // Fibonacci hours (larger ones)
-        const fibHours = this.FIBONACCI.filter(n => n >= 10000 && n <= 1000000);
-        for (const fib of fibHours) {
-            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_HOUR);
-            if (eventDate <= maxDate) {
-                events.push({
-                    id: `fib-hours-${fib}`,
-                    title: `Fibonacci Hour ${fib.toLocaleString()}`,
-                    description: `Hour ${fib.toLocaleString()} is a Fibonacci number!`,
-                    date: eventDate,
-                    category: 'fibonacci',
-                    icon: '🌀',
-                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} hours`
                 });
             }
         }
