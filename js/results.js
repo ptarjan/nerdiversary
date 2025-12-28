@@ -566,3 +566,17 @@ function checkForCelebration(event) {
     }
     return false;
 }
+
+// Expose for console testing: testCelebration()
+window.testCelebration = function() {
+    const nextEvent = Nerdiversary.getNextEvent(allEvents);
+    if (nextEvent) {
+        showCelebration(nextEvent);
+    } else {
+        showCelebration({
+            icon: '🎉',
+            title: 'Test Celebration!',
+            description: 'This is what happens when a nerdiversary occurs!'
+        });
+    }
+};
