@@ -125,15 +125,46 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
   }
 
   // Decimal milestones
+  const MS_PER_MONTH = MS_PER_DAY * 30.4375;
   const decimalMilestones = [
+    // Seconds
+    { value: 5e8, unit: MS_PER_SECOND, label: '500 Million Seconds', icon: '🔢' },
+    { value: 7.5e8, unit: MS_PER_SECOND, label: '750 Million Seconds', icon: '🔢' },
     { value: 1e9, unit: MS_PER_SECOND, label: '1 Billion Seconds', icon: '🔢' },
+    { value: 1.5e9, unit: MS_PER_SECOND, label: '1.5 Billion Seconds', icon: '🔢' },
     { value: 2e9, unit: MS_PER_SECOND, label: '2 Billion Seconds', icon: '🔢' },
+    { value: 2.5e9, unit: MS_PER_SECOND, label: '2.5 Billion Seconds', icon: '🔢' },
+    { value: 3e9, unit: MS_PER_SECOND, label: '3 Billion Seconds', icon: '🔢' },
+    // Minutes
     { value: 1e6, unit: MS_PER_MINUTE, label: '1 Million Minutes', icon: '⏱️' },
+    { value: 1e7, unit: MS_PER_MINUTE, label: '10 Million Minutes', icon: '⏱️' },
+    // Hours
     { value: 1e5, unit: MS_PER_HOUR, label: '100,000 Hours', icon: '⏰' },
+    { value: 2e5, unit: MS_PER_HOUR, label: '200,000 Hours', icon: '⏰' },
+    { value: 3e5, unit: MS_PER_HOUR, label: '300,000 Hours', icon: '⏰' },
+    { value: 5e5, unit: MS_PER_HOUR, label: '500,000 Hours', icon: '⏰' },
+    { value: 7.5e5, unit: MS_PER_HOUR, label: '750,000 Hours', icon: '⏰' },
+    { value: 1e6, unit: MS_PER_HOUR, label: '1 Million Hours', icon: '⏰' },
+    // Days
+    { value: 5000, unit: MS_PER_DAY, label: '5,000 Days', icon: '📆' },
+    { value: 7500, unit: MS_PER_DAY, label: '7,500 Days', icon: '📆' },
     { value: 10000, unit: MS_PER_DAY, label: '10,000 Days', icon: '📆' },
+    { value: 12345, unit: MS_PER_DAY, label: '12,345 Days', icon: '📆' },
+    { value: 15000, unit: MS_PER_DAY, label: '15,000 Days', icon: '📆' },
     { value: 20000, unit: MS_PER_DAY, label: '20,000 Days', icon: '📆' },
+    { value: 25000, unit: MS_PER_DAY, label: '25,000 Days', icon: '📆' },
+    { value: 30000, unit: MS_PER_DAY, label: '30,000 Days', icon: '📆' },
+    // Weeks
     { value: 1000, unit: MS_PER_WEEK, label: '1,000 Weeks', icon: '📅' },
+    { value: 1500, unit: MS_PER_WEEK, label: '1,500 Weeks', icon: '📅' },
     { value: 2000, unit: MS_PER_WEEK, label: '2,000 Weeks', icon: '📅' },
+    { value: 2500, unit: MS_PER_WEEK, label: '2,500 Weeks', icon: '📅' },
+    { value: 3000, unit: MS_PER_WEEK, label: '3,000 Weeks', icon: '📅' },
+    // Months
+    { value: 500, unit: MS_PER_MONTH, label: '500 Months', icon: '🗓️' },
+    { value: 600, unit: MS_PER_MONTH, label: '600 Months', icon: '🗓️' },
+    { value: 750, unit: MS_PER_MONTH, label: '750 Months', icon: '🗓️' },
+    { value: 1000, unit: MS_PER_MONTH, label: '1,000 Months', icon: '🗓️' },
   ];
 
   for (const m of decimalMilestones) {

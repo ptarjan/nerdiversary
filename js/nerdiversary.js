@@ -116,9 +116,15 @@ const Nerdiversary = {
         const secondMilestones = [
             { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds' },
             { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds' },
+            { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds' },
             { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds' },
+            { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds' },
+            { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds' },
+            { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds' },
             { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds' },
+            { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds' },
             { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds' },
+            { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds' },
             { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds' }
         ];
 
@@ -162,8 +168,18 @@ const Nerdiversary = {
         // Hours milestones
         const hourMilestones = [
             { value: 1e4, label: '10,000 Hours', short: '10⁴ hours' },
+            { value: 2.5e4, label: '25,000 Hours', short: '2.5×10⁴ hours' },
+            { value: 5e4, label: '50,000 Hours', short: '5×10⁴ hours' },
+            { value: 7.5e4, label: '75,000 Hours', short: '7.5×10⁴ hours' },
             { value: 1e5, label: '100,000 Hours', short: '10⁵ hours' },
+            { value: 1.5e5, label: '150,000 Hours', short: '1.5×10⁵ hours' },
+            { value: 2e5, label: '200,000 Hours', short: '2×10⁵ hours' },
+            { value: 2.5e5, label: '250,000 Hours', short: '2.5×10⁵ hours' },
+            { value: 3e5, label: '300,000 Hours', short: '3×10⁵ hours' },
+            { value: 4e5, label: '400,000 Hours', short: '4×10⁵ hours' },
             { value: 5e5, label: '500,000 Hours', short: '5×10⁵ hours' },
+            { value: 6e5, label: '600,000 Hours', short: '6×10⁵ hours' },
+            { value: 7.5e5, label: '750,000 Hours', short: '7.5×10⁵ hours' },
             { value: 1e6, label: '1 Million Hours', short: '10⁶ hours' }
         ];
 
@@ -185,14 +201,28 @@ const Nerdiversary = {
         // Days milestones
         const dayMilestones = [
             { value: 1000, label: '1,000 Days', short: '10³ days' },
+            { value: 1500, label: '1,500 Days', short: '1.5×10³ days' },
             { value: 2000, label: '2,000 Days', short: '2×10³ days' },
+            { value: 2500, label: '2,500 Days', short: '2.5×10³ days' },
+            { value: 3000, label: '3,000 Days', short: '3×10³ days' },
+            { value: 4000, label: '4,000 Days', short: '4×10³ days' },
             { value: 5000, label: '5,000 Days', short: '5×10³ days' },
+            { value: 6000, label: '6,000 Days', short: '6×10³ days' },
+            { value: 7000, label: '7,000 Days', short: '7×10³ days' },
+            { value: 7500, label: '7,500 Days', short: '7.5×10³ days' },
+            { value: 8000, label: '8,000 Days', short: '8×10³ days' },
+            { value: 9000, label: '9,000 Days', short: '9×10³ days' },
             { value: 10000, label: '10,000 Days', short: '10⁴ days' },
+            { value: 11111, label: '11,111 Days', short: '11,111 days' },
             { value: 12345, label: '12,345 Days', short: '12,345 days' },
             { value: 15000, label: '15,000 Days', short: '1.5×10⁴ days' },
+            { value: 17500, label: '17,500 Days', short: '1.75×10⁴ days' },
             { value: 20000, label: '20,000 Days', short: '2×10⁴ days' },
+            { value: 22222, label: '22,222 Days', short: '22,222 days' },
             { value: 25000, label: '25,000 Days', short: '2.5×10⁴ days' },
-            { value: 30000, label: '30,000 Days', short: '3×10⁴ days' }
+            { value: 27500, label: '27,500 Days', short: '2.75×10⁴ days' },
+            { value: 30000, label: '30,000 Days', short: '3×10⁴ days' },
+            { value: 33333, label: '33,333 Days', short: '33,333 days' }
         ];
 
         for (const milestone of dayMilestones) {
@@ -212,9 +242,15 @@ const Nerdiversary = {
 
         // Weeks milestones
         const weekMilestones = [
+            { value: 250, label: '250 Weeks', short: '250 weeks' },
             { value: 500, label: '500 Weeks', short: '500 weeks' },
+            { value: 750, label: '750 Weeks', short: '750 weeks' },
             { value: 1000, label: '1,000 Weeks', short: '10³ weeks' },
+            { value: 1250, label: '1,250 Weeks', short: '1,250 weeks' },
+            { value: 1500, label: '1,500 Weeks', short: '1,500 weeks' },
+            { value: 1750, label: '1,750 Weeks', short: '1,750 weeks' },
             { value: 2000, label: '2,000 Weeks', short: '2×10³ weeks' },
+            { value: 2500, label: '2,500 Weeks', short: '2,500 weeks' },
             { value: 3000, label: '3,000 Weeks', short: '3×10³ weeks' }
         ];
 
@@ -228,6 +264,35 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'decimal',
                     icon: '📅',
+                    milestone: milestone.short
+                });
+            }
+        }
+
+        // Months milestones (using average month length)
+        const MS_PER_MONTH = this.MS_PER_DAY * 30.4375;
+        const monthMilestones = [
+            { value: 100, label: '100 Months', short: '100 months' },
+            { value: 200, label: '200 Months', short: '200 months' },
+            { value: 250, label: '250 Months', short: '250 months' },
+            { value: 300, label: '300 Months', short: '300 months' },
+            { value: 400, label: '400 Months', short: '400 months' },
+            { value: 500, label: '500 Months', short: '500 months' },
+            { value: 600, label: '600 Months', short: '600 months' },
+            { value: 750, label: '750 Months', short: '750 months' },
+            { value: 1000, label: '1,000 Months', short: '10³ months' }
+        ];
+
+        for (const milestone of monthMilestones) {
+            const eventDate = new Date(birthDate.getTime() + milestone.value * MS_PER_MONTH);
+            if (eventDate <= maxDate) {
+                events.push({
+                    id: `months-${milestone.value}`,
+                    title: milestone.label,
+                    description: `You've experienced ${milestone.short} of life!`,
+                    date: eventDate,
+                    category: 'decimal',
+                    icon: '🗓️',
                     milestone: milestone.short
                 });
             }
