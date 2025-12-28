@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Nerdiversaries - Nerdiversary</title>
+    <meta name="description" content="Your personalized nerdy anniversaries and milestones.">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="twinkling"></div>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-logo">
+            <img src="assets/logo.svg" alt="Nerdiversary" class="nav-logo-img">
+            <span>Nerdiversary</span>
+        </a>
+        <a href="index.html" class="nav-link">← New Calculation</a>
+    </nav>
+
+    <main class="container results-container">
+        <header class="results-header">
+            <h1>Your Nerdiversaries</h1>
+            <p class="birth-info" id="birth-info">Born: Loading...</p>
+            <div class="action-buttons">
+                <button id="download-ical" class="action-btn">
+                    <span class="btn-icon">📅</span>
+                    <span>Download iCal</span>
+                </button>
+                <button id="share-results" class="action-btn">
+                    <span class="btn-icon">🔗</span>
+                    <span>Share Link</span>
+                </button>
+            </div>
+        </header>
+
+        <section class="next-celebration" id="next-celebration">
+            <h2>🎉 Next Nerdiversary</h2>
+            <div class="countdown-card" id="next-event">
+                <div class="countdown-loading">Calculating...</div>
+            </div>
+        </section>
+
+        <section class="filter-section">
+            <h2>Filter Events</h2>
+            <div class="filter-buttons" id="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="planetary">🪐 Planetary</button>
+                <button class="filter-btn" data-filter="decimal">🔢 Decimal</button>
+                <button class="filter-btn" data-filter="binary">💻 Binary/Hex</button>
+                <button class="filter-btn" data-filter="mathematical">π Mathematical</button>
+                <button class="filter-btn" data-filter="fibonacci">🌀 Fibonacci</button>
+                <button class="filter-btn" data-filter="pop-culture">🎬 Pop Culture</button>
+            </div>
+        </section>
+
+        <section class="timeline-section">
+            <div class="timeline-toggle">
+                <button class="timeline-btn active" data-view="upcoming">Upcoming</button>
+                <button class="timeline-btn" data-view="past">Past</button>
+                <button class="timeline-btn" data-view="all">All</button>
+            </div>
+
+            <div class="timeline" id="timeline">
+                <div class="timeline-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Calculating your nerdiversaries across the cosmos...</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Made with 💜 for nerds everywhere</p>
+            <p class="footer-note">Because celebrating every 365.25 days is so mainstream</p>
+        </footer>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/nerdiversary.js"></script>
+    <script src="js/ical.js"></script>
+    <script src="js/results.js"></script>
+</body>
+</html>
