@@ -663,6 +663,13 @@ const Nerdiversary = {
         const events = [];
         const maxYears = 120;
 
+        // Special age labels
+        const primes = new Set([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113]);
+        const squares = { 4: '2²', 9: '3²', 16: '4²', 25: '5²', 36: '6²', 49: '7²', 64: '8²', 81: '9²', 100: '10²' };
+        const powersOf2 = { 2: '2¹', 4: '2²', 8: '2³', 16: '2⁴', 32: '2⁵', 64: '2⁶' };
+        const cubes = { 8: '2³', 27: '3³', 64: '4³' };
+        const hexRound = { 16: '0x10', 32: '0x20', 48: '0x30', 64: '0x40', 80: '0x50', 96: '0x60', 112: '0x70' };
+
         for (let year = 1; year <= maxYears; year++) {
             const birthdayDate = new Date(
                 birthDate.getFullYear() + year,
@@ -674,10 +681,22 @@ const Nerdiversary = {
 
             if (birthdayDate > birthDate && birthdayDate <= maxDate) {
                 const ordinal = this.getOrdinal(year);
+
+                // Build special labels
+                const labels = [];
+                if (year === 42) labels.push('The Answer! 🌌');
+                if (primes.has(year)) labels.push('Prime');
+                if (squares[year]) labels.push(`Perfect Square (${squares[year]})`);
+                if (powersOf2[year]) labels.push(`Power of 2 (${powersOf2[year]})`);
+                if (cubes[year]) labels.push(`Perfect Cube (${cubes[year]})`);
+                if (hexRound[year]) labels.push(`Hex Round (${hexRound[year]})`);
+
+                const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
+
                 events.push({
                     id: `earth-birthday-${year}`,
                     title: `${ordinal} Birthday`,
-                    description: `Happy ${ordinal} birthday on Earth!`,
+                    description: `Happy ${ordinal} birthday on Earth!${specialLabel}`,
                     date: birthdayDate,
                     category: 'planetary',
                     icon: '🎂',
