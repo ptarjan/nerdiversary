@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nerdiversary-v2';
+const CACHE_NAME = 'nerdiversary-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,8 @@ const ASSETS = [
   './js/results.js',
   './manifest.json',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/apple-touch-icon.png'
 ];
 
 // Install - cache assets
