@@ -251,16 +251,11 @@ function setupTimelineToggle() {
 }
 
 /**
- * Set up action buttons (Google Calendar, download iCal, share)
+ * Set up action buttons (download iCal, share)
  */
 function setupActionButtons() {
-    const gcalBtn = document.getElementById('add-to-gcal');
     const downloadBtn = document.getElementById('download-ical');
     const shareBtn = document.getElementById('share-results');
-
-    gcalBtn.addEventListener('click', () => {
-        addToGoogleCalendar();
-    });
 
     downloadBtn.addEventListener('click', () => {
         downloadICalendar();
@@ -269,32 +264,6 @@ function setupActionButtons() {
     shareBtn.addEventListener('click', () => {
         shareResults();
     });
-}
-
-/**
- * Add events to Google Calendar
- */
-function addToGoogleCalendar() {
-    // Get upcoming events (next 20 for Google Calendar)
-    const upcomingEvents = allEvents.filter(e => !e.isPast).slice(0, 20);
-
-    if (upcomingEvents.length === 0) {
-        showToast('No upcoming events to add!');
-        return;
-    }
-
-    // Google Calendar can only add one event at a time via URL
-    const nextEvent = upcomingEvents[0];
-    const gcalUrl = createGoogleCalendarUrl(nextEvent);
-
-    // Use location.href as fallback if popup blocked
-    const newWindow = window.open(gcalUrl, '_blank');
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        // Popup was blocked, redirect instead
-        window.location.href = gcalUrl;
-    } else {
-        showToast('Adding next nerdiversary to Google Calendar!');
-    }
 }
 
 /**
@@ -341,7 +310,46 @@ function downloadICalendar() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('Calendar downloaded! Import it into your calendar app.');
+    // Show import instructions modal
+    showImportModal();
+}
+
+/**
+ * Show modal with import instructions
+ */
+function showImportModal() {
+    const modal = document.createElement('div');
+    modal.className = 'import-modal';
+    modal.innerHTML = `
+        <div class="import-modal-content">
+            <h3>📅 Import to Your Calendar</h3>
+            <p>Your nerdiversaries.ics file is downloading. Now import it:</p>
+            <div class="import-options">
+                <a href="https://calendar.google.com/calendar/r/settings/export" target="_blank" class="import-option">
+                    <span class="import-icon">📱</span>
+                    <span>Google Calendar</span>
+                    <small>Settings → Import</small>
+                </a>
+                <a href="webcal://calendar.google.com" onclick="showToast('Open the downloaded .ics file with Apple Calendar')" class="import-option">
+                    <span class="import-icon">🍎</span>
+                    <span>Apple Calendar</span>
+                    <small>Double-click the file</small>
+                </a>
+                <a href="#" onclick="showToast('Open the downloaded .ics file with Outlook')" class="import-option">
+                    <span class="import-icon">📧</span>
+                    <span>Outlook</span>
+                    <small>Double-click the file</small>
+                </a>
+            </div>
+            <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it!</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
 }
 
 /**
