@@ -905,16 +905,20 @@ body {
 
     /* Action buttons */
     .action-buttons {
+        flex-direction: column;
         gap: 0.5rem;
+        width: 100%;
     }
 
     .action-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8rem;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        justify-content: center;
+        width: 100%;
     }
 
     .action-btn .btn-icon {
-        display: none;
+        display: inline;
     }
 
     /* Results header */
