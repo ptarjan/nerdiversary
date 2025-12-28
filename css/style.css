@@ -1060,6 +1060,27 @@ body {
     }
 }
 
+/* Extra small screens (iPhone SE, etc) */
+@media (max-width: 400px) {
+    .countdown-timer {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.15rem !important;
+    }
+
+    .countdown-value {
+        font-size: 0.95rem !important;
+    }
+
+    .countdown-label {
+        font-size: 0.5rem !important;
+    }
+
+    .countdown-title {
+        font-size: 0.85rem;
+    }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
