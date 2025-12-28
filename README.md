@@ -1,5 +1,7 @@
 # Nerdiversary
 
+**[Try it now at nerdiversary.com](https://nerdiversary.com)**
+
 Calculate and celebrate your nerdy anniversaries! Discover when you've lived a billion seconds, completed a Mars year, or reached other geeky milestones.
 
 ## Features
