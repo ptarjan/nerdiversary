@@ -253,8 +253,8 @@ function setupTimelineToggle() {
     });
 }
 
-// Cloudflare Worker URL - UPDATE THIS after deploying your worker
-const CALENDAR_WORKER_URL = 'https://nerdiversary-calendar.YOUR_SUBDOMAIN.workers.dev';
+// Cloudflare Worker URL - Update this with your deployed worker URL
+const CALENDAR_WORKER_URL = 'https://nerdiversary-calendar.ptarjan.workers.dev';
 
 /**
  * Set up action buttons (subscribe, download iCal, share)
