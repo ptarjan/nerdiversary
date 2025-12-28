@@ -606,36 +606,6 @@ const Nerdiversary = {
             }
         }
 
-        // Star Wars 501st
-        const starWarsEvents = [
-            { value: 501, unit: 'days', label: '501 Days', desc: '501st Legion tribute!' },
-            { value: 5010, unit: 'hours', label: '5,010 Hours', desc: '501st Legion tribute!' },
-            { value: 66, unit: 'weeks', label: '66 Weeks', desc: 'Order 66... hopefully nothing bad happens!' }
-        ];
-
-        for (const milestone of starWarsEvents) {
-            let eventDate;
-            if (milestone.unit === 'days') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_DAY);
-            } else if (milestone.unit === 'hours') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_HOUR);
-            } else if (milestone.unit === 'weeks') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_WEEK);
-            }
-
-            if (eventDate <= maxDate) {
-                events.push({
-                    id: `starwars-${milestone.value}-${milestone.unit}`,
-                    title: milestone.label,
-                    description: milestone.desc,
-                    date: eventDate,
-                    category: 'pop-culture',
-                    icon: '⚔️',
-                    milestone: `${milestone.value.toLocaleString()} ${milestone.unit}`
-                });
-            }
-        }
-
         return events;
     },
 
