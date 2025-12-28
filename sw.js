@@ -1,16 +1,16 @@
-const CACHE_NAME = 'nerdiversary-v1';
+const CACHE_NAME = 'nerdiversary-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/results.html',
-  '/css/style.css',
-  '/js/nerdiversary.js',
-  '/js/ical.js',
-  '/js/main.js',
-  '/js/results.js',
-  '/manifest.json',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png'
+  './',
+  './index.html',
+  './results.html',
+  './css/style.css',
+  './js/nerdiversary.js',
+  './js/ical.js',
+  './js/main.js',
+  './js/results.js',
+  './manifest.json',
+  './assets/icon-192.png',
+  './assets/icon-512.png'
 ];
 
 // Install - cache assets
