@@ -5,6 +5,10 @@
  * Deployed via GitHub Actions
  */
 
+// ============================================================================
+// SHARED CONSTANTS - Keep in sync with js/nerdiversary.js
+// ============================================================================
+
 // Time constants
 const MS_PER_SECOND = 1000;
 const MS_PER_MINUTE = 60 * 1000;
@@ -12,6 +16,7 @@ const MS_PER_HOUR = 60 * 60 * 1000;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MS_PER_YEAR = 365.2425 * 24 * 60 * 60 * 1000; // Gregorian calendar average
+const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 
 // Planetary orbital periods in Earth days
 const PLANETS = {
@@ -28,10 +33,109 @@ const PLANETS = {
 const PI = Math.PI;
 const E = Math.E;
 const PHI = (1 + Math.sqrt(5)) / 2;
-const TAU = 2 * Math.PI;
 
 // Fibonacci sequence
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025];
+
+// Powers of 2 for binary milestones
+const POWERS_OF_2 = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+
+// ============================================================================
+// SHARED MILESTONES - Keep in sync with js/nerdiversary.js
+// ============================================================================
+
+const secondMilestones = [
+  { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds' },
+  { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds' },
+  { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds' },
+  { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds' },
+  { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds' },
+  { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds' },
+  { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds' },
+  { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds' },
+  { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds' },
+  { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds' },
+  { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds' },
+  { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds' }
+];
+
+const minuteMilestones = [
+  { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes' },
+  { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes' },
+  { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' }
+];
+
+const hourMilestones = [
+  { value: 1e4, label: '10,000 Hours', short: '10⁴ hours' },
+  { value: 2.5e4, label: '25,000 Hours', short: '2.5×10⁴ hours' },
+  { value: 5e4, label: '50,000 Hours', short: '5×10⁴ hours' },
+  { value: 7.5e4, label: '75,000 Hours', short: '7.5×10⁴ hours' },
+  { value: 1e5, label: '100,000 Hours', short: '10⁵ hours' },
+  { value: 1.5e5, label: '150,000 Hours', short: '1.5×10⁵ hours' },
+  { value: 2e5, label: '200,000 Hours', short: '2×10⁵ hours' },
+  { value: 2.5e5, label: '250,000 Hours', short: '2.5×10⁵ hours' },
+  { value: 3e5, label: '300,000 Hours', short: '3×10⁵ hours' },
+  { value: 4e5, label: '400,000 Hours', short: '4×10⁵ hours' },
+  { value: 5e5, label: '500,000 Hours', short: '5×10⁵ hours' },
+  { value: 6e5, label: '600,000 Hours', short: '6×10⁵ hours' },
+  { value: 7.5e5, label: '750,000 Hours', short: '7.5×10⁵ hours' },
+  { value: 1e6, label: '1 Million Hours', short: '10⁶ hours' }
+];
+
+const dayMilestones = [
+  { value: 1000, label: '1,000 Days', short: '10³ days' },
+  { value: 1500, label: '1,500 Days', short: '1.5×10³ days' },
+  { value: 2000, label: '2,000 Days', short: '2×10³ days' },
+  { value: 2500, label: '2,500 Days', short: '2.5×10³ days' },
+  { value: 3000, label: '3,000 Days', short: '3×10³ days' },
+  { value: 4000, label: '4,000 Days', short: '4×10³ days' },
+  { value: 5000, label: '5,000 Days', short: '5×10³ days' },
+  { value: 6000, label: '6,000 Days', short: '6×10³ days' },
+  { value: 7000, label: '7,000 Days', short: '7×10³ days' },
+  { value: 7500, label: '7,500 Days', short: '7.5×10³ days' },
+  { value: 8000, label: '8,000 Days', short: '8×10³ days' },
+  { value: 9000, label: '9,000 Days', short: '9×10³ days' },
+  { value: 10000, label: '10,000 Days', short: '10⁴ days' },
+  { value: 11111, label: '11,111 Days', short: '11,111 days' },
+  { value: 12345, label: '12,345 Days', short: '12,345 days' },
+  { value: 15000, label: '15,000 Days', short: '1.5×10⁴ days' },
+  { value: 17500, label: '17,500 Days', short: '1.75×10⁴ days' },
+  { value: 20000, label: '20,000 Days', short: '2×10⁴ days' },
+  { value: 22222, label: '22,222 Days', short: '22,222 days' },
+  { value: 25000, label: '25,000 Days', short: '2.5×10⁴ days' },
+  { value: 27500, label: '27,500 Days', short: '2.75×10⁴ days' },
+  { value: 30000, label: '30,000 Days', short: '3×10⁴ days' },
+  { value: 33333, label: '33,333 Days', short: '33,333 days' }
+];
+
+const weekMilestones = [
+  { value: 250, label: '250 Weeks', short: '250 weeks' },
+  { value: 500, label: '500 Weeks', short: '500 weeks' },
+  { value: 750, label: '750 Weeks', short: '750 weeks' },
+  { value: 1000, label: '1,000 Weeks', short: '10³ weeks' },
+  { value: 1250, label: '1,250 Weeks', short: '1,250 weeks' },
+  { value: 1500, label: '1,500 Weeks', short: '1,500 weeks' },
+  { value: 1750, label: '1,750 Weeks', short: '1,750 weeks' },
+  { value: 2000, label: '2,000 Weeks', short: '2×10³ weeks' },
+  { value: 2500, label: '2,500 Weeks', short: '2,500 weeks' },
+  { value: 3000, label: '3,000 Weeks', short: '3×10³ weeks' }
+];
+
+const monthMilestones = [
+  { value: 100, label: '100 Months', short: '100 months' },
+  { value: 200, label: '200 Months', short: '200 months' },
+  { value: 250, label: '250 Months', short: '250 months' },
+  { value: 300, label: '300 Months', short: '300 months' },
+  { value: 400, label: '400 Months', short: '400 months' },
+  { value: 500, label: '500 Months', short: '500 months' },
+  { value: 600, label: '600 Months', short: '600 months' },
+  { value: 750, label: '750 Months', short: '750 months' },
+  { value: 1000, label: '1,000 Months', short: '10³ months' }
+];
+
+// ============================================================================
+// WORKER HANDLER
+// ============================================================================
 
 export default {
   async fetch(request, env, ctx) {
@@ -101,6 +205,10 @@ export default {
   },
 };
 
+// ============================================================================
+// EVENT CALCULATION
+// ============================================================================
+
 function calculateNerdiversaries(birthDate, yearsAhead) {
   const events = [];
   const now = new Date();
@@ -109,10 +217,10 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
   // Planetary years
   for (const [key, planet] of Object.entries(PLANETS)) {
     const periodMs = planet.days * MS_PER_DAY;
-    for (let yearNum = 1; yearNum <= 100; yearNum++) {
+    for (let yearNum = 1; yearNum <= 200; yearNum++) {
       const eventDate = new Date(birthDate.getTime() + yearNum * periodMs);
       if (eventDate > maxDate) break;
-      if (eventDate < now) continue; // Skip past events for subscriptions
+      if (eventDate < now) continue;
 
       events.push({
         id: `${key}-${yearNum}`,
@@ -124,65 +232,92 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // Decimal milestones
-  const MS_PER_MONTH = MS_PER_DAY * 30.4375;
-  const decimalMilestones = [
-    // Seconds
-    { value: 5e8, unit: MS_PER_SECOND, label: '500 Million Seconds', icon: '🔢' },
-    { value: 7.5e8, unit: MS_PER_SECOND, label: '750 Million Seconds', icon: '🔢' },
-    { value: 1e9, unit: MS_PER_SECOND, label: '1 Billion Seconds', icon: '🔢' },
-    { value: 1.5e9, unit: MS_PER_SECOND, label: '1.5 Billion Seconds', icon: '🔢' },
-    { value: 2e9, unit: MS_PER_SECOND, label: '2 Billion Seconds', icon: '🔢' },
-    { value: 2.5e9, unit: MS_PER_SECOND, label: '2.5 Billion Seconds', icon: '🔢' },
-    { value: 3e9, unit: MS_PER_SECOND, label: '3 Billion Seconds', icon: '🔢' },
-    // Minutes
-    { value: 1e6, unit: MS_PER_MINUTE, label: '1 Million Minutes', icon: '⏱️' },
-    { value: 1e7, unit: MS_PER_MINUTE, label: '10 Million Minutes', icon: '⏱️' },
-    // Hours
-    { value: 1e5, unit: MS_PER_HOUR, label: '100,000 Hours', icon: '⏰' },
-    { value: 2e5, unit: MS_PER_HOUR, label: '200,000 Hours', icon: '⏰' },
-    { value: 3e5, unit: MS_PER_HOUR, label: '300,000 Hours', icon: '⏰' },
-    { value: 5e5, unit: MS_PER_HOUR, label: '500,000 Hours', icon: '⏰' },
-    { value: 7.5e5, unit: MS_PER_HOUR, label: '750,000 Hours', icon: '⏰' },
-    { value: 1e6, unit: MS_PER_HOUR, label: '1 Million Hours', icon: '⏰' },
-    // Days
-    { value: 5000, unit: MS_PER_DAY, label: '5,000 Days', icon: '📆' },
-    { value: 7500, unit: MS_PER_DAY, label: '7,500 Days', icon: '📆' },
-    { value: 10000, unit: MS_PER_DAY, label: '10,000 Days', icon: '📆' },
-    { value: 12345, unit: MS_PER_DAY, label: '12,345 Days', icon: '📆' },
-    { value: 15000, unit: MS_PER_DAY, label: '15,000 Days', icon: '📆' },
-    { value: 20000, unit: MS_PER_DAY, label: '20,000 Days', icon: '📆' },
-    { value: 25000, unit: MS_PER_DAY, label: '25,000 Days', icon: '📆' },
-    { value: 30000, unit: MS_PER_DAY, label: '30,000 Days', icon: '📆' },
-    // Weeks
-    { value: 1000, unit: MS_PER_WEEK, label: '1,000 Weeks', icon: '📅' },
-    { value: 1500, unit: MS_PER_WEEK, label: '1,500 Weeks', icon: '📅' },
-    { value: 2000, unit: MS_PER_WEEK, label: '2,000 Weeks', icon: '📅' },
-    { value: 2500, unit: MS_PER_WEEK, label: '2,500 Weeks', icon: '📅' },
-    { value: 3000, unit: MS_PER_WEEK, label: '3,000 Weeks', icon: '📅' },
-    // Months
-    { value: 500, unit: MS_PER_MONTH, label: '500 Months', icon: '🗓️' },
-    { value: 600, unit: MS_PER_MONTH, label: '600 Months', icon: '🗓️' },
-    { value: 750, unit: MS_PER_MONTH, label: '750 Months', icon: '🗓️' },
-    { value: 1000, unit: MS_PER_MONTH, label: '1,000 Months', icon: '🗓️' },
-  ];
-
-  for (const m of decimalMilestones) {
-    const eventDate = new Date(birthDate.getTime() + m.value * m.unit);
+  // Seconds milestones
+  for (const m of secondMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_SECOND);
     if (eventDate <= maxDate && eventDate > now) {
       events.push({
-        id: `decimal-${m.label.replace(/\s/g, '-')}`,
-        title: `${m.icon} ${m.label}`,
-        description: `You've been alive for exactly ${m.label}!`,
+        id: `seconds-${m.value}`,
+        title: `🔢 ${m.label}`,
+        description: `You've been alive for exactly ${m.short}!`,
         date: eventDate,
         category: 'decimal'
       });
     }
   }
 
-  // Binary milestones
-  const binaryPowers = [25, 26, 27, 28, 29, 30, 31, 32];
-  for (const power of binaryPowers) {
+  // Minutes milestones
+  for (const m of minuteMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_MINUTE);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `minutes-${m.value}`,
+        title: `⏱️ ${m.label}`,
+        description: `You've experienced exactly ${m.short}!`,
+        date: eventDate,
+        category: 'decimal'
+      });
+    }
+  }
+
+  // Hours milestones
+  for (const m of hourMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_HOUR);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `hours-${m.value}`,
+        title: `⏰ ${m.label}`,
+        description: `You've lived for exactly ${m.short}!`,
+        date: eventDate,
+        category: 'decimal'
+      });
+    }
+  }
+
+  // Days milestones
+  for (const m of dayMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_DAY);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `days-${m.value}`,
+        title: `📆 ${m.label}`,
+        description: `You've experienced ${m.short} on Earth!`,
+        date: eventDate,
+        category: 'decimal'
+      });
+    }
+  }
+
+  // Weeks milestones
+  for (const m of weekMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_WEEK);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `weeks-${m.value}`,
+        title: `📅 ${m.label}`,
+        description: `You've lived for ${m.short}!`,
+        date: eventDate,
+        category: 'decimal'
+      });
+    }
+  }
+
+  // Months milestones
+  for (const m of monthMilestones) {
+    const eventDate = new Date(birthDate.getTime() + m.value * MS_PER_MONTH);
+    if (eventDate <= maxDate && eventDate > now) {
+      events.push({
+        id: `months-${m.value}`,
+        title: `🗓️ ${m.label}`,
+        description: `You've experienced ${m.short} of life!`,
+        date: eventDate,
+        category: 'decimal'
+      });
+    }
+  }
+
+  // Binary milestones (powers of 2 in seconds)
+  for (const power of POWERS_OF_2) {
     const value = Math.pow(2, power);
     const eventDate = new Date(birthDate.getTime() + value * MS_PER_SECOND);
     if (eventDate <= maxDate && eventDate > now) {
@@ -233,13 +368,13 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // Pop culture
-  const popCulture = [
+  // Pop culture milestones
+  const popCultureMilestones = [
     { value: 42e6, unit: MS_PER_SECOND, label: '42 Million Seconds', icon: '🌌', desc: 'The Answer to Life, the Universe, and Everything!' },
     { value: 1337, unit: MS_PER_DAY, label: '1,337 Days', icon: '🎮', desc: 'You are now officially 1337 (elite)!' },
   ];
 
-  for (const m of popCulture) {
+  for (const m of popCultureMilestones) {
     const eventDate = new Date(birthDate.getTime() + m.value * m.unit);
     if (eventDate <= maxDate && eventDate > now) {
       events.push({
@@ -247,68 +382,59 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
         title: `${m.icon} ${m.label}`,
         description: m.desc,
         date: eventDate,
-        category: 'pop-culture'
+        category: 'popculture'
       });
     }
   }
 
   // Sort by date
-  events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  events.sort((a, b) => a.date - b.date);
 
   return events;
 }
+
+// ============================================================================
+// ICAL GENERATION
+// ============================================================================
 
 function generateICal(events) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Nerdiversary//Calendar//EN',
+    'PRODID:-//Nerdiversary//Nerdy Anniversaries//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:My Nerdiversaries',
-    'X-WR-CALDESC:Nerdy anniversary milestones',
-    'REFRESH-INTERVAL;VALUE=DURATION:P1D',
-    'X-PUBLISHED-TTL:P1D',
+    'X-WR-CALNAME:Nerdiversaries',
+    'X-WR-CALDESC:Your nerdy anniversary milestones',
   ];
 
   for (const event of events) {
-    const uid = `${event.id}@nerdiversary.app`;
-    const dtstamp = formatICalDate(new Date());
-    const dtstart = formatICalDate(event.date);
-    const dtend = formatICalDate(new Date(event.date.getTime() + MS_PER_HOUR));
+    const dateStr = formatICalDate(event.date);
+    const uid = `${event.id}@nerdiversary.com`;
 
-    lines.push(
-      'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${dtstamp}`,
-      `DTSTART:${dtstart}`,
-      `DTEND:${dtend}`,
-      `SUMMARY:${escapeICalText(event.title)}`,
-      `DESCRIPTION:${escapeICalText(event.description)}`,
-      `CATEGORIES:Nerdiversary`,
-      'STATUS:CONFIRMED',
-      'TRANSP:TRANSPARENT',
-      'BEGIN:VALARM',
-      'TRIGGER:-P1D',
-      'ACTION:DISPLAY',
-      `DESCRIPTION:Tomorrow: ${escapeICalText(event.title)}`,
-      'END:VALARM',
-      'END:VEVENT'
-    );
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uid}`);
+    lines.push(`DTSTAMP:${formatICalDate(new Date())}`);
+    lines.push(`DTSTART:${dateStr}`);
+    lines.push(`DTEND:${dateStr}`);
+    lines.push(`SUMMARY:${escapeICalText(event.title)}`);
+    lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
+    lines.push(`CATEGORIES:${event.category}`);
+    lines.push('BEGIN:VALARM');
+    lines.push('TRIGGER:-P1D');
+    lines.push('ACTION:DISPLAY');
+    lines.push(`DESCRIPTION:Tomorrow: ${escapeICalText(event.title)}`);
+    lines.push('END:VALARM');
+    lines.push('END:VEVENT');
   }
 
   lines.push('END:VCALENDAR');
+
   return lines.join('\r\n');
 }
 
 function formatICalDate(date) {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
 function escapeICalText(text) {
