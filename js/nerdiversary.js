@@ -121,14 +121,26 @@ const Nerdiversary = {
         // Seconds milestones
         const secondMilestones = [
             { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds' },
+            { value: 2e6, label: '2 Million Seconds', short: '2×10⁶ seconds' },
+            { value: 5e6, label: '5 Million Seconds', short: '5×10⁶ seconds' },
             { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds' },
+            { value: 2e7, label: '20 Million Seconds', short: '2×10⁷ seconds' },
+            { value: 2.5e7, label: '25 Million Seconds', short: '2.5×10⁷ seconds' },
             { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds' },
+            { value: 7.5e7, label: '75 Million Seconds', short: '7.5×10⁷ seconds' },
             { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds' },
+            { value: 1.5e8, label: '150 Million Seconds', short: '1.5×10⁸ seconds' },
+            { value: 2e8, label: '200 Million Seconds', short: '2×10⁸ seconds' },
             { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds' },
+            { value: 3e8, label: '300 Million Seconds', short: '3×10⁸ seconds' },
+            { value: 4e8, label: '400 Million Seconds', short: '4×10⁸ seconds' },
             { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds' },
+            { value: 6e8, label: '600 Million Seconds', short: '6×10⁸ seconds' },
             { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds' },
             { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds' },
+            { value: 1.25e9, label: '1.25 Billion Seconds', short: '1.25×10⁹ seconds' },
             { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds' },
+            { value: 1.75e9, label: '1.75 Billion Seconds', short: '1.75×10⁹ seconds' },
             { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds' },
             { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds' },
             { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds' }
@@ -151,8 +163,17 @@ const Nerdiversary = {
 
         // Minutes milestones
         const minuteMilestones = [
+            { value: 1e4, label: '10,000 Minutes', short: '10⁴ minutes' },
+            { value: 2.5e4, label: '25,000 Minutes', short: '2.5×10⁴ minutes' },
+            { value: 5e4, label: '50,000 Minutes', short: '5×10⁴ minutes' },
+            { value: 7.5e4, label: '75,000 Minutes', short: '7.5×10⁴ minutes' },
             { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes' },
+            { value: 2.5e5, label: '250,000 Minutes', short: '2.5×10⁵ minutes' },
+            { value: 5e5, label: '500,000 Minutes', short: '5×10⁵ minutes' },
+            { value: 7.5e5, label: '750,000 Minutes', short: '7.5×10⁵ minutes' },
             { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes' },
+            { value: 2e6, label: '2 Million Minutes', short: '2×10⁶ minutes' },
+            { value: 5e6, label: '5 Million Minutes', short: '5×10⁶ minutes' },
             { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' }
         ];
 
@@ -372,102 +393,75 @@ const Nerdiversary = {
             }
         }
 
-        // Octal (base 8) milestones
-        const octalMilestones = [
-            { powers: [7, 8, 9, 10], unit: 'seconds', ms: this.MS_PER_SECOND },
-            { powers: [5, 6, 7], unit: 'minutes', ms: this.MS_PER_MINUTE },
-            { powers: [4, 5, 6], unit: 'hours', ms: this.MS_PER_HOUR },
-            { powers: [3, 4, 5], unit: 'days', ms: this.MS_PER_DAY }
+        // All number base milestones
+        const baseMilestones = [
+            // Ternary (base 3)
+            { base: 3, name: 'ternary', icon: '🔺', units: [
+                { powers: [15, 16, 17, 18, 19, 20], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [11, 12, 13, 14, 15], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [8, 9, 10, 11, 12], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [6, 7, 8, 9], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Quinary (base 5)
+            { base: 5, name: 'quinary', icon: '🖐️', units: [
+                { powers: [10, 11, 12, 13, 14], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [8, 9, 10, 11], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [6, 7, 8, 9], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [5, 6, 7], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Senary (base 6)
+            { base: 6, name: 'senary', icon: '🎲', units: [
+                { powers: [9, 10, 11, 12, 13], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [7, 8, 9, 10], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [5, 6, 7, 8], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Septenary (base 7)
+            { base: 7, name: 'septenary', icon: '🌈', units: [
+                { powers: [8, 9, 10, 11, 12], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [6, 7, 8, 9], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [5, 6, 7, 8], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Octal (base 8)
+            { base: 8, name: 'octal', icon: '🐙', units: [
+                { powers: [7, 8, 9, 10, 11], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [5, 6, 7, 8], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [4, 5, 6, 7], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [3, 4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Duodecimal (base 12)
+            { base: 12, name: 'dozenal', icon: '🕛', units: [
+                { powers: [6, 7, 8, 9], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [5, 6, 7], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [4, 5, 6], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [3, 4, 5], unit: 'days', ms: this.MS_PER_DAY }
+            ]},
+            // Sexagesimal (base 60) - Babylonian!
+            { base: 60, name: 'Babylonian', icon: '🏛️', units: [
+                { powers: [4, 5], unit: 'seconds', ms: this.MS_PER_SECOND },
+                { powers: [3, 4], unit: 'minutes', ms: this.MS_PER_MINUTE },
+                { powers: [2, 3], unit: 'hours', ms: this.MS_PER_HOUR },
+                { powers: [2], unit: 'days', ms: this.MS_PER_DAY }
+            ]}
         ];
-        for (const { powers, unit, ms } of octalMilestones) {
-            for (const power of powers) {
-                const value = Math.pow(8, power);
-                const eventDate = new Date(birthDate.getTime() + value * ms);
-                if (eventDate <= maxDate && eventDate > birthDate) {
-                    events.push({
-                        id: `octal-${power}-${unit}`,
-                        title: `8^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                        description: `You've lived for 8${this.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (octal)!`,
-                        date: eventDate,
-                        category: 'binary',
-                        icon: '🐙',
-                        milestone: `8^${power} ${unit}`
-                    });
-                }
-            }
-        }
 
-        // Ternary (base 3) milestones
-        const ternaryMilestones = [
-            { powers: [17, 18, 19, 20], unit: 'seconds', ms: this.MS_PER_SECOND },
-            { powers: [12, 13, 14, 15], unit: 'minutes', ms: this.MS_PER_MINUTE },
-            { powers: [9, 10, 11, 12], unit: 'hours', ms: this.MS_PER_HOUR },
-            { powers: [7, 8, 9], unit: 'days', ms: this.MS_PER_DAY }
-        ];
-        for (const { powers, unit, ms } of ternaryMilestones) {
-            for (const power of powers) {
-                const value = Math.pow(3, power);
-                const eventDate = new Date(birthDate.getTime() + value * ms);
-                if (eventDate <= maxDate && eventDate > birthDate) {
-                    events.push({
-                        id: `ternary-${power}-${unit}`,
-                        title: `3^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                        description: `You've lived for 3${this.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (ternary)!`,
-                        date: eventDate,
-                        category: 'binary',
-                        icon: '🔺',
-                        milestone: `3^${power} ${unit}`
-                    });
-                }
-            }
-        }
-
-        // Duodecimal (base 12) milestones
-        const duodecimalMilestones = [
-            { powers: [7, 8], unit: 'seconds', ms: this.MS_PER_SECOND },
-            { powers: [5, 6, 7], unit: 'minutes', ms: this.MS_PER_MINUTE },
-            { powers: [4, 5], unit: 'hours', ms: this.MS_PER_HOUR },
-            { powers: [3, 4], unit: 'days', ms: this.MS_PER_DAY }
-        ];
-        for (const { powers, unit, ms } of duodecimalMilestones) {
-            for (const power of powers) {
-                const value = Math.pow(12, power);
-                const eventDate = new Date(birthDate.getTime() + value * ms);
-                if (eventDate <= maxDate && eventDate > birthDate) {
-                    events.push({
-                        id: `duodecimal-${power}-${unit}`,
-                        title: `12^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                        description: `You've lived for 12${this.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (dozenal)!`,
-                        date: eventDate,
-                        category: 'binary',
-                        icon: '🕛',
-                        milestone: `12^${power} ${unit}`
-                    });
-                }
-            }
-        }
-
-        // Sexagesimal (base 60) milestones - Babylonian!
-        const sexagesimalMilestones = [
-            { powers: [4, 5], unit: 'seconds', ms: this.MS_PER_SECOND },
-            { powers: [3, 4], unit: 'minutes', ms: this.MS_PER_MINUTE },
-            { powers: [2, 3], unit: 'hours', ms: this.MS_PER_HOUR },
-            { powers: [2], unit: 'days', ms: this.MS_PER_DAY }
-        ];
-        for (const { powers, unit, ms } of sexagesimalMilestones) {
-            for (const power of powers) {
-                const value = Math.pow(60, power);
-                const eventDate = new Date(birthDate.getTime() + value * ms);
-                if (eventDate <= maxDate && eventDate > birthDate) {
-                    events.push({
-                        id: `sexagesimal-${power}-${unit}`,
-                        title: `60^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                        description: `You've lived for 60${this.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (Babylonian)!`,
-                        date: eventDate,
-                        category: 'binary',
-                        icon: '🏛️',
-                        milestone: `60^${power} ${unit}`
-                    });
+        for (const { base, name, icon, units } of baseMilestones) {
+            for (const { powers, unit, ms } of units) {
+                for (const power of powers) {
+                    const value = Math.pow(base, power);
+                    const eventDate = new Date(birthDate.getTime() + value * ms);
+                    if (eventDate <= maxDate && eventDate > birthDate) {
+                        events.push({
+                            id: `base${base}-${power}-${unit}`,
+                            title: `${base}^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
+                            description: `You've lived for ${base}${this.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${name})!`,
+                            date: eventDate,
+                            category: 'binary',
+                            icon: icon,
+                            milestone: `${base}^${power} ${unit}`
+                        });
+                    }
                 }
             }
         }
