@@ -116,6 +116,8 @@ function startCountdownTimer() {
         clearInterval(countdownInterval);
     }
 
+    let celebrationTriggered = false;
+
     countdownInterval = setInterval(() => {
         const nextEvent = Nerdiversary.getNextEvent(allEvents);
         if (!nextEvent) return;
@@ -124,8 +126,12 @@ function startCountdownTimer() {
         const diff = nextEvent.date - now;
 
         if (diff <= 0) {
-            // Event has passed, recalculate
-            calculateAndDisplayEvents();
+            // Event is happening! Trigger celebration (only once)
+            if (!celebrationTriggered) {
+                celebrationTriggered = true;
+                clearInterval(countdownInterval);
+                showCelebration(nextEvent);
+            }
             return;
         }
 
@@ -477,4 +483,86 @@ function showToast(message) {
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+/**
+ * Show celebration overlay when a nerdiversary happens
+ */
+function showCelebration(event) {
+    // Create confetti container
+    const confettiContainer = document.createElement('div');
+    confettiContainer.className = 'confetti-container';
+    document.body.appendChild(confettiContainer);
+
+    // Generate confetti particles
+    const colors = ['#7c3aed', '#a855f7', '#c084fc', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#f43f5e'];
+    const shapes = ['square', 'circle'];
+
+    for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confetti.style.animationDelay = (Math.random() * 2) + 's';
+        confetti.style.width = (Math.random() * 8 + 6) + 'px';
+        confetti.style.height = confetti.style.width;
+
+        if (shapes[Math.floor(Math.random() * shapes.length)] === 'circle') {
+            confetti.style.borderRadius = '50%';
+        }
+
+        confettiContainer.appendChild(confetti);
+    }
+
+    // Create celebration overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'celebration-overlay';
+    overlay.innerHTML = `
+        <div class="celebration-content">
+            <span class="celebration-emoji">${event.icon}</span>
+            <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
+            <p class="celebration-event">${event.title}</p>
+            <p class="celebration-description">${event.description}</p>
+            <button class="celebration-dismiss">Continue to Next Event</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Handle dismiss
+    const dismissBtn = overlay.querySelector('.celebration-dismiss');
+    dismissBtn.addEventListener('click', () => {
+        overlay.style.animation = 'celebration-fade-in 0.3s ease-out reverse';
+        confettiContainer.style.opacity = '0';
+        confettiContainer.style.transition = 'opacity 0.3s ease';
+
+        setTimeout(() => {
+            overlay.remove();
+            confettiContainer.remove();
+            // Recalculate and display events
+            calculateAndDisplayEvents();
+        }, 300);
+    });
+
+    // Also dismiss on overlay click (outside content)
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            dismissBtn.click();
+        }
+    });
+}
+
+/**
+ * Check if the current event is happening and trigger celebration
+ */
+function checkForCelebration(event) {
+    const now = new Date();
+    const diff = event.date - now;
+
+    // If within 1 second of the event, trigger celebration
+    if (diff <= 0 && diff > -1000) {
+        showCelebration(event);
+        return true;
+    }
+    return false;
 }
