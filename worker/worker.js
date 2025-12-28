@@ -2,8 +2,7 @@
  * Nerdiversary Cloudflare Worker
  * Generates .ics calendar files for nerdiversary events
  *
- * Deploy: npx wrangler deploy
- * Test locally: npx wrangler dev
+ * Deployed via GitHub Actions
  */
 
 // Time constants
