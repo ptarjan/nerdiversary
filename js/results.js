@@ -203,7 +203,11 @@ function displayTimeline() {
             const eventId = btn.dataset.eventId;
             const event = allEvents.find(ev => ev.id === eventId);
             if (event) {
-                window.open(createGoogleCalendarUrl(event), '_blank');
+                const gcalUrl = createGoogleCalendarUrl(event);
+                const newWindow = window.open(gcalUrl, '_blank');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                    window.location.href = gcalUrl;
+                }
             }
         });
     });
@@ -280,13 +284,17 @@ function addToGoogleCalendar() {
     }
 
     // Google Calendar can only add one event at a time via URL
-    // So we'll open the first/next event and show instructions
     const nextEvent = upcomingEvents[0];
     const gcalUrl = createGoogleCalendarUrl(nextEvent);
 
-    window.open(gcalUrl, '_blank');
-
-    showToast('Adding next nerdiversary to Google Calendar. For multiple events, download the iCal file.');
+    // Use location.href as fallback if popup blocked
+    const newWindow = window.open(gcalUrl, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Popup was blocked, redirect instead
+        window.location.href = gcalUrl;
+    } else {
+        showToast('Adding next nerdiversary to Google Calendar!');
+    }
 }
 
 /**
