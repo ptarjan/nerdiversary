@@ -12,11 +12,17 @@
     "type": "git",
     "url": "https://github.com/ptarjan/nerdiversary"
   },
-  "keywords": ["birthday", "anniversary", "nerdy", "calculator"],
+  "keywords": [
+    "birthday",
+    "anniversary",
+    "nerdy",
+    "calculator"
+  ],
   "author": "Paul Tarjan",
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "serve": "^14.2.5"
+    "serve": "^14.2.5",
+    "sharp": "^0.34.5"
   }
 }
