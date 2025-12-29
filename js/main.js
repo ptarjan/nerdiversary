@@ -7,7 +7,6 @@ let memberCount = 1;
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('birthday-form');
     const addMemberBtn = document.getElementById('add-member');
-    const familyMembers = document.getElementById('family-members');
 
     // Set date constraints for first member
     setupDateConstraints(0);
@@ -19,15 +18,19 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFromUrlParams();
 
     // Add family member button
-    addMemberBtn.addEventListener('click', function() {
-        addFamilyMember();
-    });
+    if (addMemberBtn) {
+        addMemberBtn.addEventListener('click', function() {
+            addFamilyMember();
+        });
+    }
 
     // Form submission
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        submitForm();
-    });
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitForm();
+        });
+    }
 
     // Add some interactive effects
     addStarfieldInteractivity();
@@ -61,11 +64,13 @@ function loadStoredData() {
             if (Array.isArray(family) && family.length > 0) {
                 // Load first member
                 const first = family[0];
-                document.getElementById('name-0').value = first.name || '';
-                document.getElementById('birthdate-0').value = first.date || '';
-                if (first.time) {
-                    document.getElementById('birthtime-0').value = first.time;
-                }
+                const nameEl = document.getElementById('name-0');
+                const dateEl = document.getElementById('birthdate-0');
+                const timeEl = document.getElementById('birthtime-0');
+
+                if (nameEl) nameEl.value = first.name || '';
+                if (dateEl) dateEl.value = first.date || '';
+                if (timeEl && first.time) timeEl.value = first.time;
 
                 // Add and load additional members
                 for (let i = 1; i < family.length; i++) {
@@ -99,11 +104,13 @@ function loadFromUrlParams() {
 
             if (members.length > 0) {
                 // Load first member
-                document.getElementById('name-0').value = members[0].name;
-                document.getElementById('birthdate-0').value = members[0].date;
-                if (members[0].time) {
-                    document.getElementById('birthtime-0').value = members[0].time;
-                }
+                const nameEl = document.getElementById('name-0');
+                const dateEl = document.getElementById('birthdate-0');
+                const timeEl = document.getElementById('birthtime-0');
+
+                if (nameEl) nameEl.value = members[0].name;
+                if (dateEl) dateEl.value = members[0].date;
+                if (timeEl && members[0].time) timeEl.value = members[0].time;
 
                 // Add additional members
                 for (let i = 1; i < members.length; i++) {
@@ -120,10 +127,10 @@ function loadFromUrlParams() {
     const sharedDate = urlParams.get('d');
     const sharedTime = urlParams.get('t');
     if (sharedDate) {
-        document.getElementById('birthdate-0').value = sharedDate;
-        if (sharedTime) {
-            document.getElementById('birthtime-0').value = sharedTime;
-        }
+        const dateEl = document.getElementById('birthdate-0');
+        const timeEl = document.getElementById('birthtime-0');
+        if (dateEl) dateEl.value = sharedDate;
+        if (timeEl && sharedTime) timeEl.value = sharedTime;
     }
 }
 
@@ -132,15 +139,17 @@ function loadFromUrlParams() {
  */
 function addFamilyMember(data = null) {
     const familyMembers = document.getElementById('family-members');
+    if (!familyMembers) return;
+
     const index = memberCount++;
 
-    const memberDiv = document.createElement('div');
-    memberDiv.className = 'family-member';
-    memberDiv.dataset.index = index;
     const name = data && data.name ? data.name : '';
     const date = data && data.date ? data.date : '';
     const time = data && data.time ? data.time : '';
 
+    const memberDiv = document.createElement('div');
+    memberDiv.className = 'family-member';
+    memberDiv.dataset.index = index;
     memberDiv.innerHTML = `
         <div class="member-header">
             <span class="member-label">Person ${index + 1}</span>
@@ -165,8 +174,9 @@ function addFamilyMember(data = null) {
     familyMembers.appendChild(memberDiv);
     setupDateConstraints(index);
 
-    // Show remove button on first member if we now have multiple
+    // Show remove button on first member and make first name required
     updateRemoveButtons();
+    updateNameRequired();
 }
 
 /**
@@ -178,6 +188,7 @@ function removeFamilyMember(index) {
         memberDiv.remove();
         updateRemoveButtons();
         renumberMembers();
+        updateNameRequired();
     }
 }
 
@@ -187,6 +198,7 @@ function removeFamilyMember(index) {
 function updateRemoveButtons() {
     const members = document.querySelectorAll('.family-member');
     const firstMember = members[0];
+    if (!firstMember) return;
 
     if (members.length > 1) {
         // Add remove button to first member if not present
@@ -202,8 +214,21 @@ function updateRemoveButtons() {
         }
     } else {
         // Remove the button from first member if only one left
-        const btn = firstMember?.querySelector('.remove-member-btn');
+        const btn = firstMember.querySelector('.remove-member-btn');
         if (btn) btn.remove();
+    }
+}
+
+/**
+ * Update name required status - only required when multiple members
+ */
+function updateNameRequired() {
+    const members = document.querySelectorAll('.family-member');
+    const firstNameInput = document.getElementById('name-0');
+
+    if (firstNameInput) {
+        // Name is required only when there are multiple members
+        firstNameInput.required = members.length > 1;
     }
 }
 
@@ -229,17 +254,31 @@ function submitForm() {
 
     members.forEach(member => {
         const index = member.dataset.index;
-        const name = document.getElementById(`name-${index}`).value.trim();
-        const birthdate = document.getElementById(`birthdate-${index}`).value;
-        const birthtime = document.getElementById(`birthtime-${index}`).value || '';
+        const nameEl = document.getElementById(`name-${index}`);
+        const dateEl = document.getElementById(`birthdate-${index}`);
+        const timeEl = document.getElementById(`birthtime-${index}`);
 
-        if (name && birthdate) {
-            family.push({ name, date: birthdate, time: birthtime });
+        if (!dateEl) return;
+
+        const name = nameEl ? nameEl.value.trim() : '';
+        const birthdate = dateEl.value;
+        const birthtime = timeEl ? timeEl.value : '';
+
+        if (birthdate) {
+            // Use "You" as default name for single person
+            const displayName = name || (members.length === 1 ? 'You' : '');
+            if (displayName) {
+                family.push({
+                    name: displayName,
+                    date: birthdate,
+                    time: birthtime
+                });
+            }
         }
     });
 
     if (family.length === 0) {
-        alert('Please enter at least one person!');
+        alert('Please enter at least one birthday!');
         return;
     }
 
@@ -251,7 +290,9 @@ function submitForm() {
         `${encodeURIComponent(m.name)}|${m.date}${m.time ? '|' + m.time : ''}`
     ).join(',');
 
-    window.location.href = `results.html?family=${familyParam}`;
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    window.location.href = `${basePath}results.html?family=${familyParam}`;
 }
 
 // Make removeFamilyMember available globally for onclick
@@ -263,6 +304,8 @@ window.removeFamilyMember = removeFamilyMember;
 function addStarfieldInteractivity() {
     const stars = document.querySelector('.stars');
     const twinkling = document.querySelector('.twinkling');
+
+    if (!stars && !twinkling) return;
 
     document.addEventListener('mousemove', (e) => {
         const x = e.clientX / window.innerWidth;

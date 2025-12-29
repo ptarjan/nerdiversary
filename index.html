@@ -16,6 +16,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Nerdiversary">
@@ -58,8 +59,8 @@
                             <span class="member-label">Person 1</span>
                         </div>
                         <div class="form-group">
-                            <label for="name-0">Name</label>
-                            <input type="text" id="name-0" name="name" placeholder="Your name" required>
+                            <label for="name-0">Name <span class="optional-label">(optional)</span></label>
+                            <input type="text" id="name-0" name="name" placeholder="Your name">
                         </div>
                         <div class="form-group">
                             <label for="birthdate-0">Birthday</label>

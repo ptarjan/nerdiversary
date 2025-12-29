@@ -1,0 +1,22 @@
+{
+  "name": "nerdiversary",
+  "version": "1.0.0",
+  "description": "Calculate and celebrate your nerdy anniversaries",
+  "scripts": {
+    "test": "node test/nerdiversary.test.js",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "serve": "npx serve -l 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ptarjan/nerdiversary"
+  },
+  "keywords": ["birthday", "anniversary", "nerdy", "calculator"],
+  "author": "Paul Tarjan",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "serve": "^14.2.5"
+  }
+}
