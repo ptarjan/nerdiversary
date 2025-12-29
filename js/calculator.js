@@ -10,6 +10,25 @@ if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
     globalThis.Milestones = require('./milestones.js');
 }
 
+// Wikipedia links for educational terms
+const WIKI_LINKS = {
+    fibonacci: '<a href="https://en.wikipedia.org/wiki/Fibonacci_sequence" target="_blank">Fibonacci number</a>',
+    lucas: '<a href="https://en.wikipedia.org/wiki/Lucas_number" target="_blank">Lucas number</a>',
+    perfect: '<a href="https://en.wikipedia.org/wiki/Perfect_number" target="_blank">perfect number</a>',
+    triangular: '<a href="https://en.wikipedia.org/wiki/Triangular_number" target="_blank">triangular</a>',
+    palindrome: '<a href="https://en.wikipedia.org/wiki/Palindromic_number" target="_blank">palindrome</a>',
+    repunit: '<a href="https://en.wikipedia.org/wiki/Repunit" target="_blank">repunit</a>',
+    phi: '<a href="https://en.wikipedia.org/wiki/Golden_ratio" target="_blank">golden ratio</a>',
+    pi: '<a href="https://en.wikipedia.org/wiki/Pi" target="_blank">π</a>',
+    e: '<a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)" target="_blank">e</a>',
+    tau: '<a href="https://en.wikipedia.org/wiki/Tau_(mathematics)" target="_blank">τ (2π)</a>',
+    speedOfLight: '<a href="https://en.wikipedia.org/wiki/Speed_of_light" target="_blank">speed of light</a>',
+    tenKHours: '<a href="https://en.wikipedia.org/wiki/Outliers_(book)" target="_blank">10,000-hour rule</a>',
+    answer42: '<a href="https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42" target="_blank">The Answer</a>',
+    binary: '<a href="https://en.wikipedia.org/wiki/Binary_number" target="_blank">binary</a>',
+    hexadecimal: '<a href="https://en.wikipedia.org/wiki/Hexadecimal" target="_blank">hexadecimal</a>',
+};
+
 const Calculator = {
     /**
      * Calculate all nerdiversary milestones
@@ -115,7 +134,7 @@ const Calculator = {
 
         // Hours
         for (const m of Milestones.hourMilestones) {
-            const extra = m.value === 10000 ? ' You\'ve mastered life according to the 10,000-hour rule!' : '';
+            const extra = m.value === 10000 ? ` You've mastered life according to the ${WIKI_LINKS.tenKHours}!` : '';
             addEvent({
                 id: `hours-${m.value}`,
                 title: m.label,
@@ -244,10 +263,10 @@ const Calculator = {
 
     _addMathMilestones(birthDate, addEvent) {
         const constants = [
-            { symbol: 'π', value: Milestones.PI, name: 'pi' },
-            { symbol: 'e', value: Milestones.E, name: 'e' },
-            { symbol: 'φ', value: Milestones.PHI, name: 'phi', desc: 'golden ratio' },
-            { symbol: 'τ', value: Milestones.TAU, name: 'tau', desc: '2π' }
+            { symbol: 'π', value: Milestones.PI, name: 'pi', wiki: WIKI_LINKS.pi },
+            { symbol: 'e', value: Milestones.E, name: 'e', wiki: WIKI_LINKS.e },
+            { symbol: 'φ', value: Milestones.PHI, name: 'phi', wiki: WIKI_LINKS.phi },
+            { symbol: 'τ', value: Milestones.TAU, name: 'tau', wiki: WIKI_LINKS.tau }
         ];
 
         const multipliers = [1e7, 1e8, 1e9];
@@ -257,12 +276,11 @@ const Calculator = {
                 if (c.name === 'tau' && mult === 1e9) continue; // Too far in future
                 const superMult = mult === 1e7 ? '⁷' : mult === 1e8 ? '⁸' : '⁹';
                 const label = `${c.symbol} × 10${superMult} Seconds`;
-                const descExtra = c.desc ? ` (${c.desc})` : '';
 
                 addEvent({
                     id: `${c.name}-${mult}`,
                     title: label,
-                    description: `You've lived for ${c.symbol}${descExtra} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds!`,
+                    description: `You've lived for ${c.wiki} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds!`,
                     date: new Date(birthDate.getTime() + c.value * mult * Milestones.MS_PER_SECOND),
                     category: 'mathematical',
                     icon: c.symbol,
@@ -286,7 +304,7 @@ const Calculator = {
                 addEvent({
                     id: `fib-${unit}-${fib}`,
                     title: `Fibonacci ${label} ${fib.toLocaleString()}`,
-                    description: `${label} ${fib.toLocaleString()} is a Fibonacci number!`,
+                    description: `${label} ${fib.toLocaleString()} is a ${WIKI_LINKS.fibonacci}!`,
                     date: new Date(birthDate.getTime() + fib * ms),
                     category: 'fibonacci',
                     icon: '🌀',
@@ -310,7 +328,7 @@ const Calculator = {
                 addEvent({
                     id: `lucas-${unit}-${luc}`,
                     title: `Lucas ${label} ${luc.toLocaleString()}`,
-                    description: `${label} ${luc.toLocaleString()} is a Lucas number!`,
+                    description: `${label} ${luc.toLocaleString()} is a ${WIKI_LINKS.lucas}!`,
                     date: new Date(birthDate.getTime() + luc * ms),
                     category: 'fibonacci',
                     icon: '🔷',
@@ -326,7 +344,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-days-${perfect}`,
                 title: `Perfect Day ${perfect}`,
-                description: `Day ${perfect} is a perfect number! (${perfect} = sum of its divisors)`,
+                description: `Day ${perfect} is a ${WIKI_LINKS.perfect}! (${perfect} = sum of its divisors)`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '💎',
@@ -339,7 +357,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-hours-${perfect}`,
                 title: `Perfect Hour ${perfect.toLocaleString()}`,
-                description: `Hour ${perfect.toLocaleString()} is a perfect number!`,
+                description: `Hour ${perfect.toLocaleString()} is a ${WIKI_LINKS.perfect}!`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '💎',
@@ -362,7 +380,7 @@ const Calculator = {
                 addEvent({
                     id: `triangular-days-${tri}`,
                     title: `Triangular Day ${tri.toLocaleString()}`,
-                    description: `Day ${tri.toLocaleString()} is triangular! (1+2+3+...+${n} = ${tri})`,
+                    description: `Day ${tri.toLocaleString()} is ${WIKI_LINKS.triangular}! (1+2+3+...+${n} = ${tri})`,
                     date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_DAY),
                     category: 'mathematical',
                     icon: '🔺',
@@ -380,7 +398,7 @@ const Calculator = {
             addEvent({
                 id: `triangular-hours-${tri}`,
                 title: `Triangular Hour ${tri.toLocaleString()}`,
-                description: `Hour ${tri.toLocaleString()} is triangular! (1+2+...+${n})`,
+                description: `Hour ${tri.toLocaleString()} is ${WIKI_LINKS.triangular}! (1+2+...+${n})`,
                 date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🔺',
@@ -404,7 +422,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-days-${pal}`,
                 title: `Palindrome Day ${pal.toLocaleString()}`,
-                description: `Day ${pal} reads the same forwards and backwards!`,
+                description: `Day ${pal} is a ${WIKI_LINKS.palindrome} - reads the same forwards and backwards!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '🪞',
@@ -418,7 +436,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-hours-${pal}`,
                 title: `Palindrome Hour ${pal.toLocaleString()}`,
-                description: `Hour ${pal.toLocaleString()} is a palindrome!`,
+                description: `Hour ${pal.toLocaleString()} is a ${WIKI_LINKS.palindrome}!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🪞',
@@ -440,7 +458,7 @@ const Calculator = {
                 addEvent({
                     id: `repunit-${unit}-${rep}`,
                     title: `Repunit ${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()}`,
-                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is all 1s!`,
+                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is a ${WIKI_LINKS.repunit} (all 1s)!`,
                     date: new Date(birthDate.getTime() + rep * ms),
                     category: 'binary',
                     icon: '1️⃣',
@@ -456,7 +474,7 @@ const Calculator = {
         addEvent({
             id: 'speed-of-light-seconds',
             title: 'Speed of Light Seconds',
-            description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the speed of light in m/s!`,
+            description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the ${WIKI_LINKS.speedOfLight} in m/s!`,
             date: new Date(birthDate.getTime() + speedOfLight * Milestones.MS_PER_SECOND),
             category: 'mathematical',
             icon: '💡',
@@ -538,7 +556,7 @@ const Calculator = {
                 const ordinal = Milestones.getOrdinal(year);
                 const labels = [];
 
-                if (year === 42) labels.push('The Answer! 🌌');
+                if (year === 42) labels.push(`${WIKI_LINKS.answer42}! 🌌`);
                 if (Milestones.primeAges.has(year)) labels.push('Prime');
                 if (Milestones.squareAges[year]) labels.push(`Perfect Square (${Milestones.squareAges[year]})`);
                 if (Milestones.powerOf2Ages[year]) labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`);
