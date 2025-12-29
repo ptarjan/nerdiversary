@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nerdiversary-v30';
+const CACHE_NAME = 'nerdiversary-v31';
 const ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,8 @@ const ASSETS = [
   './manifest.json',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/apple-touch-icon.png'
+  './assets/apple-touch-icon.png',
+  './favicon.ico'
 ];
 
 // Install - cache assets
