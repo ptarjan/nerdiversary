@@ -1,3 +1,12 @@
+/* Font loading - prevent FOUT */
+.fonts-loading body {
+    opacity: 0;
+}
+
+body {
+    transition: opacity 0.1s ease-in;
+}
+
 /* CSS Variables */
 :root {
     --bg-primary: #0a0a1a;

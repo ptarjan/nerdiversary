@@ -30,6 +30,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        // Prevent FOUT by hiding content until fonts load
+        document.documentElement.classList.add('fonts-loading');
+        Promise.all([
+            document.fonts.load('400 1em Orbitron'),
+            document.fonts.load('700 1em Orbitron'),
+            document.fonts.load('400 1em "Space Mono"')
+        ]).then(() => {
+            document.documentElement.classList.remove('fonts-loading');
+            document.documentElement.classList.add('fonts-loaded');
+        }).catch(() => {
+            document.documentElement.classList.remove('fonts-loading');
+        });
+        // Fallback: show content after 1s even if fonts haven't loaded
+        setTimeout(() => document.documentElement.classList.remove('fonts-loading'), 1000);
+    </script>
 </head>
 <body>
     <div class="stars"></div>
