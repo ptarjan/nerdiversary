@@ -5,43 +5,43 @@
  * Requires: js/milestones.js to be loaded first (provides shared constants)
  */
 
-// Get shared constants (from Milestones global in browser, or require in Node.js)
-const _M = (typeof Milestones !== 'undefined') ? Milestones : require('./milestones.js');
+// Load Milestones in Node.js if not already global
+if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
+    globalThis.Milestones = require('./milestones.js');
+}
 
 const Nerdiversary = {
-    // Time constants (from shared module)
-    MS_PER_SECOND: _M.MS_PER_SECOND,
-    MS_PER_MINUTE: _M.MS_PER_MINUTE,
-    MS_PER_HOUR: _M.MS_PER_HOUR,
-    MS_PER_DAY: _M.MS_PER_DAY,
-    MS_PER_WEEK: _M.MS_PER_WEEK,
-    MS_PER_YEAR: _M.MS_PER_YEAR,
+    // Re-export shared constants for backward compatibility
+    get MS_PER_SECOND() { return Milestones.MS_PER_SECOND; },
+    get MS_PER_MINUTE() { return Milestones.MS_PER_MINUTE; },
+    get MS_PER_HOUR() { return Milestones.MS_PER_HOUR; },
+    get MS_PER_DAY() { return Milestones.MS_PER_DAY; },
+    get MS_PER_WEEK() { return Milestones.MS_PER_WEEK; },
+    get MS_PER_YEAR() { return Milestones.MS_PER_YEAR; },
+    get PI() { return Milestones.PI; },
+    get E() { return Milestones.E; },
+    get PHI() { return Milestones.PHI; },
+    get TAU() { return Milestones.TAU; },
+    get FIBONACCI() { return Milestones.FIBONACCI; },
+    get LUCAS() { return Milestones.LUCAS; },
+    get PERFECT_NUMBERS() { return Milestones.PERFECT_NUMBERS; },
+    get TRIANGULAR() { return Milestones.TRIANGULAR; },
+    get PALINDROMES() { return Milestones.PALINDROMES; },
+    get REPUNITS() { return Milestones.REPUNITS; },
+    get POWERS_OF_2() { return Milestones.POWERS_OF_2; },
 
-    // Planetary orbital periods (from shared module, with colors for website)
-    PLANETS: {
-        mercury: { ..._M.PLANETS.mercury, color: '#8c8c8c' },
-        venus: { ..._M.PLANETS.venus, color: '#e6c229' },
-        mars: { ..._M.PLANETS.mars, color: '#e04f39' },
-        jupiter: { ..._M.PLANETS.jupiter, color: '#d8a066' },
-        saturn: { ..._M.PLANETS.saturn, color: '#f4d58d' },
-        uranus: { ..._M.PLANETS.uranus, color: '#4fd0e7' },
-        neptune: { ..._M.PLANETS.neptune, color: '#4b70dd' }
+    // Planetary data with colors for website
+    get PLANETS() {
+        return {
+            mercury: { ...Milestones.PLANETS.mercury, color: '#8c8c8c' },
+            venus: { ...Milestones.PLANETS.venus, color: '#e6c229' },
+            mars: { ...Milestones.PLANETS.mars, color: '#e04f39' },
+            jupiter: { ...Milestones.PLANETS.jupiter, color: '#d8a066' },
+            saturn: { ...Milestones.PLANETS.saturn, color: '#f4d58d' },
+            uranus: { ...Milestones.PLANETS.uranus, color: '#4fd0e7' },
+            neptune: { ...Milestones.PLANETS.neptune, color: '#4b70dd' }
+        };
     },
-
-    // Mathematical constants (from shared module)
-    PI: _M.PI,
-    E: _M.E,
-    PHI: _M.PHI,
-    TAU: _M.TAU,
-
-    // Number sequences (from shared module)
-    FIBONACCI: _M.FIBONACCI,
-    LUCAS: _M.LUCAS,
-    PERFECT_NUMBERS: _M.PERFECT_NUMBERS,
-    TRIANGULAR: _M.TRIANGULAR,
-    PALINDROMES: _M.PALINDROMES,
-    REPUNITS: _M.REPUNITS,
-    POWERS_OF_2: _M.POWERS_OF_2,
 
     /**
      * Calculate all nerdiversaries for a given birthdate
