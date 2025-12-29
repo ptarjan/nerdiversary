@@ -106,6 +106,22 @@ test.describe('Nerdiversary Main Flows', () => {
     await expect(secondNameInput).toHaveAttribute('required', '');
   });
 
+  test('form submission navigates to results page', async ({ page }) => {
+    await page.goto('/index.html');
+
+    // Fill in the form
+    await page.fill('#birthdate-0', '1990-05-15');
+
+    // Submit the form
+    await page.click('button[type="submit"]');
+
+    // Should navigate to results page
+    await expect(page).toHaveURL(/results\.html\?family=/);
+
+    // Results page should load successfully
+    await expect(page.locator('.family-info')).toBeVisible({ timeout: 10000 });
+  });
+
   test('results page loads with direct URL', async ({ page }) => {
     // Go directly to results page with family parameter
     await page.goto('/results.html?family=Test|1990-05-15');

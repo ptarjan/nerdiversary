@@ -303,9 +303,8 @@ function submitForm() {
         `${encodeURIComponent(m.name)}|${m.date}${m.time ? '|' + m.time : ''}`
     ).join(',');
 
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-    window.location.href = `${basePath}results.html?family=${familyParam}`;
+    // Use relative URL - works regardless of subdirectory
+    window.location.href = `results.html?family=${familyParam}`;
 }
 
 // Make removeFamilyMember available globally for onclick
