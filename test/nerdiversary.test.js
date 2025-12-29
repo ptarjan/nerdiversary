@@ -530,6 +530,147 @@ test('toSuperscript converts numbers correctly', () => {
 });
 
 // ============================================
+// WORKER.JS SYNC TESTS
+// ============================================
+console.log('\n--- Worker.js Sync Tests ---');
+
+// Read worker.js as text to extract its definitions
+const fs = require('fs');
+const workerPath = path.join(__dirname, '..', 'worker', 'worker.js');
+const workerCode = fs.readFileSync(workerPath, 'utf8');
+
+test('Worker has matching time constants', () => {
+    assertTrue(workerCode.includes('MS_PER_SECOND = 1000'), 'MS_PER_SECOND');
+    assertTrue(workerCode.includes('MS_PER_MINUTE = 60 * 1000'), 'MS_PER_MINUTE');
+    assertTrue(workerCode.includes('MS_PER_HOUR = 60 * 60 * 1000'), 'MS_PER_HOUR');
+    assertTrue(workerCode.includes('MS_PER_DAY = 24 * 60 * 60 * 1000'), 'MS_PER_DAY');
+    assertTrue(workerCode.includes('MS_PER_YEAR = 365.2425'), 'MS_PER_YEAR uses Gregorian');
+});
+
+test('Worker has matching planetary periods', () => {
+    assertTrue(workerCode.includes("mercury: { name: 'Mercury', days: 87.969"), 'Mercury');
+    assertTrue(workerCode.includes("venus: { name: 'Venus', days: 224.701"), 'Venus');
+    assertTrue(workerCode.includes("mars: { name: 'Mars', days: 686.980"), 'Mars');
+    assertTrue(workerCode.includes("jupiter: { name: 'Jupiter', days: 4332.59"), 'Jupiter');
+    assertTrue(workerCode.includes("saturn: { name: 'Saturn', days: 10759.22"), 'Saturn');
+    assertTrue(workerCode.includes("uranus: { name: 'Uranus', days: 30688.5"), 'Uranus');
+    assertTrue(workerCode.includes("neptune: { name: 'Neptune', days: 60182"), 'Neptune');
+});
+
+test('Worker has matching mathematical constants', () => {
+    assertTrue(workerCode.includes('const PI = Math.PI'), 'PI');
+    assertTrue(workerCode.includes('const E = Math.E'), 'E');
+    assertTrue(workerCode.includes('const PHI = (1 + Math.sqrt(5)) / 2'), 'PHI');
+    assertTrue(workerCode.includes('const TAU = 2 * Math.PI') || workerCode.includes('TAU'), 'TAU should exist');
+});
+
+test('Worker has matching FIBONACCI array', () => {
+    // Check that worker has the extended FIBONACCI covering 95 years
+    assertTrue(workerCode.includes('2971215073'), 'FIBONACCI should include 2971215073 for 94+ year coverage');
+    assertTrue(workerCode.includes('1346269'), 'FIBONACCI should include 1346269');
+});
+
+test('Worker has Lucas numbers', () => {
+    assertTrue(workerCode.includes('LUCAS') || workerCode.includes('Lucas'),
+        'Worker should have Lucas number milestones');
+});
+
+test('Worker has Perfect numbers', () => {
+    assertTrue(workerCode.includes('PERFECT') || workerCode.includes('Perfect'),
+        'Worker should have Perfect number milestones');
+});
+
+test('Worker has Triangular numbers', () => {
+    assertTrue(workerCode.includes('TRIANGULAR') || workerCode.includes('Triangular'),
+        'Worker should have Triangular number milestones');
+});
+
+test('Worker has Palindrome milestones', () => {
+    assertTrue(workerCode.includes('palindrome') || workerCode.includes('Palindrome'),
+        'Worker should have Palindrome milestones');
+});
+
+test('Worker has Repunit milestones', () => {
+    assertTrue(workerCode.includes('REPUNIT') || workerCode.includes('Repunit') || workerCode.includes('repunit'),
+        'Worker should have Repunit milestones');
+});
+
+test('Worker has scientific milestones (speed of light)', () => {
+    assertTrue(workerCode.includes('299792458') || workerCode.includes('speed of light') || workerCode.includes('Speed of Light'),
+        'Worker should have speed of light milestone');
+});
+
+test('Worker generates Fibonacci seconds milestones', () => {
+    assertTrue(workerCode.includes('fib-seconds') || workerCode.includes('Fibonacci Second'),
+        'Worker should generate Fibonacci seconds');
+});
+
+test('Worker generates Fibonacci minutes milestones', () => {
+    assertTrue(workerCode.includes('fib-minutes') || workerCode.includes('Fibonacci Minute'),
+        'Worker should generate Fibonacci minutes');
+});
+
+test('Worker generates Fibonacci hours milestones', () => {
+    assertTrue(workerCode.includes('fib-hours') || workerCode.includes('Fibonacci Hour'),
+        'Worker should generate Fibonacci hours');
+});
+
+// Load shared Milestones module for comparison
+const Milestones = require(path.join(__dirname, '..', 'js', 'milestones.js'));
+
+test('Shared module constants match Nerdiversary', () => {
+    // Time constants
+    assertEqual(Milestones.MS_PER_SECOND, Nerdiversary.MS_PER_SECOND, 'MS_PER_SECOND: ');
+    assertEqual(Milestones.MS_PER_MINUTE, Nerdiversary.MS_PER_MINUTE, 'MS_PER_MINUTE: ');
+    assertEqual(Milestones.MS_PER_HOUR, Nerdiversary.MS_PER_HOUR, 'MS_PER_HOUR: ');
+    assertEqual(Milestones.MS_PER_DAY, Nerdiversary.MS_PER_DAY, 'MS_PER_DAY: ');
+    assertEqual(Milestones.MS_PER_WEEK, Nerdiversary.MS_PER_WEEK, 'MS_PER_WEEK: ');
+    assertEqual(Milestones.MS_PER_YEAR, Nerdiversary.MS_PER_YEAR, 'MS_PER_YEAR: ');
+
+    // Math constants
+    assertEqual(Milestones.PI, Nerdiversary.PI, 'PI: ');
+    assertEqual(Milestones.E, Nerdiversary.E, 'E: ');
+    assertEqual(Milestones.PHI, Nerdiversary.PHI, 'PHI: ');
+    assertEqual(Milestones.TAU, Nerdiversary.TAU, 'TAU: ');
+});
+
+test('Shared module planetary periods match Nerdiversary', () => {
+    for (const planet of Object.keys(Nerdiversary.PLANETS)) {
+        assertEqual(
+            Milestones.PLANETS[planet].days,
+            Nerdiversary.PLANETS[planet].days,
+            `${planet} orbital period: `
+        );
+    }
+});
+
+test('Shared module sequences match Nerdiversary', () => {
+    // Check FIBONACCI arrays match
+    assertEqual(Milestones.FIBONACCI.length, Nerdiversary.FIBONACCI.length, 'FIBONACCI length: ');
+    for (let i = 0; i < Milestones.FIBONACCI.length; i++) {
+        assertEqual(Milestones.FIBONACCI[i], Nerdiversary.FIBONACCI[i], `FIBONACCI[${i}]: `);
+    }
+
+    // Check key sequences exist
+    assertTrue(Milestones.LUCAS.length > 0, 'LUCAS should exist');
+    assertTrue(Milestones.PERFECT_NUMBERS.length > 0, 'PERFECT_NUMBERS should exist');
+    assertTrue(Milestones.TRIANGULAR.length > 0, 'TRIANGULAR should exist');
+    assertTrue(Milestones.PALINDROMES.length > 0, 'PALINDROMES should exist');
+    assertTrue(Milestones.REPUNITS.length > 0, 'REPUNITS should exist');
+});
+
+test('Worker code uses same constants as shared module', () => {
+    // Verify worker has all the shared constants
+    const sharedKeys = ['MS_PER_SECOND', 'MS_PER_MINUTE', 'MS_PER_HOUR', 'MS_PER_DAY',
+                        'MS_PER_WEEK', 'MS_PER_YEAR', 'PI', 'E', 'PHI', 'TAU'];
+
+    for (const key of sharedKeys) {
+        const pattern = new RegExp(`(const\\s+${key}|${key}\\s*[=:])`);
+        assertTrue(workerCode.match(pattern) !== null, `Worker should define ${key}`);
+    }
+});
+
+// ============================================
 // SUMMARY
 // ============================================
 console.log('\n=== Test Summary ===');

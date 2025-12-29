@@ -1,54 +1,47 @@
 /**
  * Nerdiversary Calculator
  * Calculates various nerdy anniversary milestones
+ *
+ * Requires: js/milestones.js to be loaded first (provides shared constants)
  */
 
-const Nerdiversary = {
-    // Time constants in milliseconds
-    MS_PER_SECOND: 1000,
-    MS_PER_MINUTE: 60 * 1000,
-    MS_PER_HOUR: 60 * 60 * 1000,
-    MS_PER_DAY: 24 * 60 * 60 * 1000,
-    MS_PER_WEEK: 7 * 24 * 60 * 60 * 1000,
-    MS_PER_YEAR: 365.2425 * 24 * 60 * 60 * 1000, // Gregorian calendar average
+// Get shared constants (from Milestones global in browser, or require in Node.js)
+const _M = (typeof Milestones !== 'undefined') ? Milestones : require('./milestones.js');
 
-    // Planetary orbital periods in Earth days
+const Nerdiversary = {
+    // Time constants (from shared module)
+    MS_PER_SECOND: _M.MS_PER_SECOND,
+    MS_PER_MINUTE: _M.MS_PER_MINUTE,
+    MS_PER_HOUR: _M.MS_PER_HOUR,
+    MS_PER_DAY: _M.MS_PER_DAY,
+    MS_PER_WEEK: _M.MS_PER_WEEK,
+    MS_PER_YEAR: _M.MS_PER_YEAR,
+
+    // Planetary orbital periods (from shared module, with colors for website)
     PLANETS: {
-        mercury: { name: 'Mercury', days: 87.969, icon: '☿️', color: '#8c8c8c' },
-        venus: { name: 'Venus', days: 224.701, icon: '♀️', color: '#e6c229' },
-        mars: { name: 'Mars', days: 686.980, icon: '♂️', color: '#e04f39' },
-        jupiter: { name: 'Jupiter', days: 4332.59, icon: '♃', color: '#d8a066' },
-        saturn: { name: 'Saturn', days: 10759.22, icon: '♄', color: '#f4d58d' },
-        uranus: { name: 'Uranus', days: 30688.5, icon: '⛢', color: '#4fd0e7' },
-        neptune: { name: 'Neptune', days: 60182, icon: '♆', color: '#4b70dd' }
+        mercury: { ..._M.PLANETS.mercury, color: '#8c8c8c' },
+        venus: { ..._M.PLANETS.venus, color: '#e6c229' },
+        mars: { ..._M.PLANETS.mars, color: '#e04f39' },
+        jupiter: { ..._M.PLANETS.jupiter, color: '#d8a066' },
+        saturn: { ..._M.PLANETS.saturn, color: '#f4d58d' },
+        uranus: { ..._M.PLANETS.uranus, color: '#4fd0e7' },
+        neptune: { ..._M.PLANETS.neptune, color: '#4b70dd' }
     },
 
-    // Mathematical constants
-    PI: Math.PI,
-    E: Math.E,
-    PHI: (1 + Math.sqrt(5)) / 2, // Golden ratio
-    TAU: 2 * Math.PI,
+    // Mathematical constants (from shared module)
+    PI: _M.PI,
+    E: _M.E,
+    PHI: _M.PHI,
+    TAU: _M.TAU,
 
-    // Fibonacci sequence (useful range for time milestones - extended for seconds)
-    FIBONACCI: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073],
-
-    // Lucas numbers (like Fibonacci but starts 2, 1)
-    LUCAS: [2, 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, 199, 322, 521, 843, 1364, 2207, 3571, 5778, 9349, 15127, 24476, 39603, 64079, 103682, 167761, 271443, 439204, 710647, 1149851, 1860498, 3010349, 4870847, 7881196, 12752043, 20633239, 33385282, 54018521, 87403803, 141422324, 228826127, 370248451, 599074578, 969323029, 1568397607, 2537720636],
-
-    // Perfect numbers (equal to sum of proper divisors)
-    PERFECT_NUMBERS: [6, 28, 496, 8128],
-
-    // Triangular numbers (1+2+3+...+n)
-    TRIANGULAR: [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78, 91, 105, 120, 136, 153, 171, 190, 210, 231, 253, 276, 300, 325, 351, 378, 406, 435, 465, 496, 528, 561, 595, 630, 666, 703, 741, 780, 820, 861, 903, 946, 990, 1035, 1081, 1128, 1176, 1225, 1275, 1326, 1378, 1431, 1485, 1540, 1596, 1653, 1711, 1770, 1830, 1891, 1953, 2016, 2080, 2145, 2211, 2278, 2346, 2415, 2485, 2556, 2628, 2701, 2775, 2850, 2926, 3003, 3081, 3160, 3240, 3321, 3403, 3486, 3570, 3655, 3741, 3828, 3916, 4005, 4095, 4186, 4278, 4371, 4465, 4560, 4656, 4753, 4851, 4950, 5050, 5151, 5253, 5356, 5460, 5565, 5671, 5778, 5886, 5995, 6105, 6216, 6328, 6441, 6555, 6670, 6786, 6903, 7021, 7140, 7260, 7381, 7503, 7626, 7750, 7875, 8001, 8128, 8256, 8385, 8515, 8646, 8778, 8911, 9045, 9180, 9316, 9453, 9591, 9730, 9870, 10011, 10153, 10296, 10440, 10585, 10731, 10878, 11026, 11175, 11325, 11476, 11628, 11781, 11935, 12090, 12246, 12403, 12561, 12720, 12880],
-
-    // Palindrome milestones
-    PALINDROMES: [11, 22, 33, 44, 55, 66, 77, 88, 99, 101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 202, 212, 222, 232, 242, 252, 262, 272, 282, 292, 303, 313, 323, 333, 343, 353, 363, 373, 383, 393, 404, 414, 424, 434, 444, 454, 464, 474, 484, 494, 505, 515, 525, 535, 545, 555, 565, 575, 585, 595, 606, 616, 626, 636, 646, 656, 666, 676, 686, 696, 707, 717, 727, 737, 747, 757, 767, 777, 787, 797, 808, 818, 828, 838, 848, 858, 868, 878, 888, 898, 909, 919, 929, 939, 949, 959, 969, 979, 989, 999, 1001, 1111, 1221, 1331, 1441, 1551, 1661, 1771, 1881, 1991, 2002, 2112, 2222, 2332, 2442, 2552, 2662, 2772, 2882, 2992, 3003, 3113, 3223, 3333, 3443, 3553, 3663, 3773, 3883, 3993, 4004, 4114, 4224, 4334, 4444, 4554, 4664, 4774, 4884, 4994, 5005, 5115, 5225, 5335, 5445, 5555, 5665, 5775, 5885, 5995, 6006, 6116, 6226, 6336, 6446, 6556, 6666, 6776, 6886, 6996, 7007, 7117, 7227, 7337, 7447, 7557, 7667, 7777, 7887, 7997, 8008, 8118, 8228, 8338, 8448, 8558, 8668, 8778, 8888, 8998, 9009, 9119, 9229, 9339, 9449, 9559, 9669, 9779, 9889, 9999, 10001, 10101, 10201, 10301, 10401, 10501, 10601, 10701, 10801, 10901, 11011, 11111, 11211, 11311, 11411, 11511, 11611, 11711, 11811, 11911, 12021, 12121, 12221, 12321, 12421, 12521, 12621, 12721, 12821, 12921],
-
-    // Repunits (all 1s)
-    REPUNITS: [11, 111, 1111, 11111, 111111, 1111111, 11111111, 111111111],
-
-    // Powers of 2 for binary milestones
-    POWERS_OF_2: [10, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
+    // Number sequences (from shared module)
+    FIBONACCI: _M.FIBONACCI,
+    LUCAS: _M.LUCAS,
+    PERFECT_NUMBERS: _M.PERFECT_NUMBERS,
+    TRIANGULAR: _M.TRIANGULAR,
+    PALINDROMES: _M.PALINDROMES,
+    REPUNITS: _M.REPUNITS,
+    POWERS_OF_2: _M.POWERS_OF_2,
 
     /**
      * Calculate all nerdiversaries for a given birthdate
