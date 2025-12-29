@@ -75,10 +75,10 @@ function displayNextEvent() {
 
     const now = new Date();
     const diff = nextEvent.date - now;
-    const days = Math.floor(diff / Nerdiversary.MS_PER_DAY);
-    const hours = Math.floor((diff % Nerdiversary.MS_PER_DAY) / Nerdiversary.MS_PER_HOUR);
-    const minutes = Math.floor((diff % Nerdiversary.MS_PER_HOUR) / Nerdiversary.MS_PER_MINUTE);
-    const seconds = Math.floor((diff % Nerdiversary.MS_PER_MINUTE) / Nerdiversary.MS_PER_SECOND);
+    const days = Math.floor(diff / Milestones.MS_PER_DAY);
+    const hours = Math.floor((diff % Milestones.MS_PER_DAY) / Milestones.MS_PER_HOUR);
+    const minutes = Math.floor((diff % Milestones.MS_PER_HOUR) / Milestones.MS_PER_MINUTE);
+    const seconds = Math.floor((diff % Milestones.MS_PER_MINUTE) / Milestones.MS_PER_SECOND);
 
     const categoryInfo = Nerdiversary.getCategoryInfo(nextEvent.category);
 
@@ -135,10 +135,10 @@ function startCountdownTimer() {
             return;
         }
 
-        const days = Math.floor(diff / Nerdiversary.MS_PER_DAY);
-        const hours = Math.floor((diff % Nerdiversary.MS_PER_DAY) / Nerdiversary.MS_PER_HOUR);
-        const minutes = Math.floor((diff % Nerdiversary.MS_PER_HOUR) / Nerdiversary.MS_PER_MINUTE);
-        const seconds = Math.floor((diff % Nerdiversary.MS_PER_MINUTE) / Nerdiversary.MS_PER_SECOND);
+        const days = Math.floor(diff / Milestones.MS_PER_DAY);
+        const hours = Math.floor((diff % Milestones.MS_PER_DAY) / Milestones.MS_PER_HOUR);
+        const minutes = Math.floor((diff % Milestones.MS_PER_HOUR) / Milestones.MS_PER_MINUTE);
+        const seconds = Math.floor((diff % Milestones.MS_PER_MINUTE) / Milestones.MS_PER_SECOND);
 
         const daysEl = document.getElementById('countdown-days');
         const hoursEl = document.getElementById('countdown-hours');
