@@ -567,6 +567,18 @@ const Calculator = {
         // Distance = age in seconds × speed of light
         // So: seconds needed = distance / speed of light
 
+        // Map cosmic distance keys to wiki keys
+        const cosmicWikiKeys = {
+            moon: 'moon',
+            sun: 'sun',
+            mars: 'marsDistance',
+            jupiter: 'jupiterDistance',
+            saturn: 'saturnDistance',
+            neptune: 'neptuneDistance',
+            voyager1: 'voyager1',
+            proximaCentauri: 'proximaCentauri'
+        };
+
         for (const [key, dest] of Object.entries(Milestones.COSMIC_DISTANCES)) {
             const secondsNeeded = dest.meters / Milestones.SPEED_OF_LIGHT;
             const eventDate = new Date(birthDate.getTime() + secondsNeeded * Milestones.MS_PER_SECOND);
@@ -583,10 +595,13 @@ const Calculator = {
                 distanceStr = `${(dest.meters / 1e6).toFixed(0)} million km`;
             }
 
+            const wikiKey = cosmicWikiKeys[key];
+            const destLink = wikiKey ? wikiLink(wikiKey, dest.name) : dest.name;
+
             addEvent({
                 id: `lightspeed-${key}`,
                 title: `Light Speed to ${dest.name}`,
-                description: `If you traveled at the speed of light since birth, you'd have reached ${dest.name} (${distanceStr} away)!`,
+                description: `If you traveled at the ${wikiLink('speedOfLight', 'speed of light')} since birth, you'd have reached ${destLink} (${distanceStr} away)!`,
                 date: eventDate,
                 category: 'scientific',
                 icon: dest.icon,
@@ -596,18 +611,19 @@ const Calculator = {
 
         // Also add some clean multiples of light-time units
         const lightTimeUnits = [
-            { seconds: 1, name: '1 Light-Second', desc: 'enough to circle Earth 7.5 times' },
-            { seconds: 60, name: '1 Light-Minute', desc: 'the distance light travels in a minute' },
-            { seconds: 499, name: '1 AU (Sun Distance)', desc: 'the distance from Earth to the Sun' },
-            { seconds: 3600, name: '1 Light-Hour', desc: 'past the orbit of Jupiter' },
-            { seconds: 86400, name: '1 Light-Day', desc: 'well beyond the Kuiper Belt' }
+            { seconds: 1, name: '1 Light-Second', wikiKey: 'lightSecond', desc: 'enough to circle Earth 7.5 times' },
+            { seconds: 60, name: '1 Light-Minute', wikiKey: 'lightMinute', desc: 'the distance light travels in a minute' },
+            { seconds: 499, name: '1 AU (Sun Distance)', wikiKey: 'au', desc: 'the distance from Earth to the Sun' },
+            { seconds: 3600, name: '1 Light-Hour', wikiKey: 'lightHour', desc: 'past the orbit of Jupiter' },
+            { seconds: 86400, name: '1 Light-Day', wikiKey: 'lightDay', desc: 'well beyond the Kuiper Belt' }
         ];
 
         for (const unit of lightTimeUnits) {
+            const unitLink = wikiLink(unit.wikiKey, unit.name.toLowerCase());
             addEvent({
                 id: `lightspeed-${unit.seconds}s`,
                 title: unit.name,
-                description: `At age ${unit.seconds.toLocaleString()} seconds, you've lived long enough for light to travel ${unit.name.toLowerCase()} - ${unit.desc}!`,
+                description: `At age ${unit.seconds.toLocaleString()} seconds, you've lived long enough for light to travel ${unitLink} - ${unit.desc}!`,
                 date: new Date(birthDate.getTime() + unit.seconds * Milestones.MS_PER_SECOND),
                 category: 'scientific',
                 icon: '💡',
