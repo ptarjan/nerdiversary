@@ -183,6 +183,29 @@ test.describe('Nerdiversary Main Flows', () => {
     await expect(page.locator('#person-filter-buttons')).toContainText('Bob');
   });
 
+  test('results page handles family URL with mixed time formats', async ({ page }) => {
+    // Test with real-world URL: some members have time, some don't
+    await page.goto('/results.html?family=Paul|1984-05-02|20:37,Michelle|1982-07-02,Everett|2021-01-31,Orion|2024-08-20');
+
+    // Wait for page to load
+    await page.waitForLoadState('domcontentloaded');
+
+    // Should NOT redirect to index - check we're still on results page
+    await expect(page).toHaveURL(/results\.html/);
+
+    // Person filter section should be visible for 4 people
+    await expect(page.locator('#person-filter-section')).toBeVisible({ timeout: 5000 });
+
+    // Should show all 4 names
+    await expect(page.locator('#person-filter-buttons')).toContainText('Paul');
+    await expect(page.locator('#person-filter-buttons')).toContainText('Michelle');
+    await expect(page.locator('#person-filter-buttons')).toContainText('Everett');
+    await expect(page.locator('#person-filter-buttons')).toContainText('Orion');
+
+    // Events should be displayed
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+  });
+
   test('share button exists and is clickable', async ({ page }) => {
     await page.goto('/results.html?family=Test|1990-05-15');
 
