@@ -5,12 +5,12 @@ test.describe('Nerdiversary Main Flows', () => {
 
   test.beforeEach(async ({ page }) => {
     // Clear localStorage before each test
-    await page.goto('/');
+    await page.goto('/index.html');
     await page.evaluate(() => localStorage.clear());
   });
 
   test('home page loads correctly', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/index.html');
 
     // Check title
     await expect(page).toHaveTitle(/Nerdiversary/);
@@ -24,7 +24,7 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('add family member button works', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/index.html');
 
     // Initially should have 1 family member
     await expect(page.locator('.family-member')).toHaveCount(1);
@@ -41,7 +41,7 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('remove family member button works', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/index.html');
 
     // Add a second family member
     await page.click('#add-member');
@@ -58,7 +58,7 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('name is optional for single person', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/index.html');
 
     // Name input should not be required for single person
     const nameInput = page.locator('#name-0');
@@ -66,7 +66,7 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('name becomes required when adding family members', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/index.html');
 
     // Add a family member
     await page.click('#add-member');
