@@ -175,8 +175,12 @@ function formatICalDate(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
+function stripHtml(text) {
+  return text.replace(/<[^>]*>/g, '');
+}
+
 function escapeICalText(text) {
-  return text
+  return stripHtml(text)
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')

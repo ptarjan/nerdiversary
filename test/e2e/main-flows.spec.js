@@ -326,4 +326,34 @@ test.describe('Nerdiversary Main Flows', () => {
     expect(parseInt(initialSeconds)).toBeGreaterThanOrEqual(0);
     expect(parseInt(newSeconds)).toBeGreaterThanOrEqual(0);
   });
+
+  test('XSS prevention - malicious URL params are escaped', async ({ page }) => {
+    // Attempt XSS via family name parameter
+    const xssPayload = '"><img src=x onerror=alert(1)>';
+    const maliciousUrl = `/index.html?family=${encodeURIComponent(xssPayload)}|1990-01-01`;
+
+    // Track if any alert/error occurs
+    let alertFired = false;
+    page.on('dialog', async dialog => {
+      alertFired = true;
+      await dialog.dismiss();
+    });
+
+    await page.goto(maliciousUrl);
+
+    // Wait for the name input to be populated
+    const nameInput = page.locator('#name-0');
+    await nameInput.waitFor({ state: 'visible' });
+
+    // XSS should NOT have executed
+    expect(alertFired).toBe(false);
+
+    // The malicious string should be safely contained in the input value
+    const value = await nameInput.inputValue();
+    expect(value).toBe(xssPayload);
+
+    // The page HTML should NOT contain unescaped script injection
+    const html = await page.content();
+    expect(html).not.toContain('onerror=alert');
+  });
 });

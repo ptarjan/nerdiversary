@@ -96,12 +96,21 @@ const ICalGenerator = {
     },
 
     /**
+     * Strip HTML tags from text
+     * @param {string} text - Text with potential HTML
+     * @returns {string} Plain text
+     */
+    stripHtml(text) {
+        return text.replace(/<[^>]*>/g, '');
+    },
+
+    /**
      * Escape special characters in iCal text
      * @param {string} text - Text to escape
      * @returns {string} Escaped text
      */
     escapeText(text) {
-        return text
+        return this.stripHtml(text)
             .replace(/\\/g, '\\\\')
             .replace(/;/g, '\\;')
             .replace(/,/g, '\\,')

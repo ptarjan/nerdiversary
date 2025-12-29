@@ -146,10 +146,6 @@ function addFamilyMember(data = null) {
 
     const index = getNextMemberIndex();
 
-    const name = data && data.name ? data.name : '';
-    const date = data && data.date ? data.date : '';
-    const time = data && data.time ? data.time : '';
-
     const memberDiv = document.createElement('div');
     memberDiv.className = 'family-member';
     memberDiv.dataset.index = index;
@@ -160,19 +156,26 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group">
             <label for="name-${index}">Name</label>
-            <input type="text" id="name-${index}" name="name" placeholder="Name" required value="${name}">
+            <input type="text" id="name-${index}" name="name" placeholder="Name" required>
         </div>
         <div class="form-group">
             <label for="birthdate-${index}">Birthday</label>
-            <input type="date" id="birthdate-${index}" name="birthdate" required value="${date}">
+            <input type="date" id="birthdate-${index}" name="birthdate" required>
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
                 Birth Time <span class="optional-label">(optional)</span>
             </label>
-            <input type="time" id="birthtime-${index}" name="birthtime" step="60" value="${time}">
+            <input type="time" id="birthtime-${index}" name="birthtime" step="60">
         </div>
     `;
+
+    // Set values via DOM properties to prevent XSS
+    if (data) {
+        if (data.name) memberDiv.querySelector(`#name-${index}`).value = data.name;
+        if (data.date) memberDiv.querySelector(`#birthdate-${index}`).value = data.date;
+        if (data.time) memberDiv.querySelector(`#birthtime-${index}`).value = data.time;
+    }
 
     familyMembers.appendChild(memberDiv);
     setupDateConstraints(index);
@@ -285,8 +288,12 @@ function submitForm() {
         return;
     }
 
-    // Store in localStorage
-    localStorage.setItem('nerdiversary_family', JSON.stringify(family));
+    // Store in localStorage (may fail in private browsing or if quota exceeded)
+    try {
+        localStorage.setItem('nerdiversary_family', JSON.stringify(family));
+    } catch (e) {
+        console.warn('Failed to save to localStorage:', e);
+    }
 
     // Build URL params
     const familyParam = family.map(m =>

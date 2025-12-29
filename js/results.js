@@ -212,7 +212,8 @@ function getFilteredByPerson(events) {
     if (currentPerson === 'all') {
         return events;
     }
-    return events.filter(e => e.personName === currentPerson);
+    // Include shared holidays (Everyone) when filtering by person
+    return events.filter(e => e.personName === currentPerson || e.personName === 'Everyone');
 }
 
 /**
@@ -551,8 +552,8 @@ function copyCalendarUrl() {
     navigator.clipboard.writeText(input.value).then(() => {
         showToast('Calendar URL copied!');
     }).catch(() => {
-        document.execCommand('copy');
-        showToast('Calendar URL copied!');
+        const success = document.execCommand('copy');
+        showToast(success ? 'Calendar URL copied!' : 'Failed to copy URL');
     });
 }
 
