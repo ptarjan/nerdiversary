@@ -682,7 +682,23 @@ function showToast(message) {
  * Show celebration overlay when a nerdiversary happens
  */
 function showCelebration(event) {
-    // Create confetti container
+    // Create celebration overlay FIRST (lower z-index)
+    const showPerson = familyMembers.length > 1;
+    const overlay = document.createElement('div');
+    overlay.className = 'celebration-overlay';
+    overlay.innerHTML = `
+        <div class="celebration-content">
+            <span class="celebration-emoji">${event.icon}</span>
+            <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
+            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
+            <p class="celebration-event">${event.title}</p>
+            <p class="celebration-description">${event.description}</p>
+            <button class="celebration-dismiss">Continue to Next Event</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Create confetti container AFTER overlay (higher z-index, appears on top)
     const confettiContainer = document.createElement('div');
     confettiContainer.className = 'confetti-container';
     document.body.appendChild(confettiContainer);
@@ -707,22 +723,6 @@ function showCelebration(event) {
 
         confettiContainer.appendChild(confetti);
     }
-
-    // Create celebration overlay
-    const showPerson = familyMembers.length > 1;
-    const overlay = document.createElement('div');
-    overlay.className = 'celebration-overlay';
-    overlay.innerHTML = `
-        <div class="celebration-content">
-            <span class="celebration-emoji">${event.icon}</span>
-            <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
-            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
-            <p class="celebration-event">${event.title}</p>
-            <p class="celebration-description">${event.description}</p>
-            <button class="celebration-dismiss">Continue to Next Event</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
 
     // Handle dismiss
     const dismissBtn = overlay.querySelector('.celebration-dismiss');

@@ -47,6 +47,21 @@ const WIKI_URLS = {
     saturn: 'https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation',
     uranus: 'https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation',
     neptune: 'https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation',
+    // Scientific/cosmic distances
+    lightSecond: 'https://en.wikipedia.org/wiki/Light-second',
+    lightMinute: 'https://en.wikipedia.org/wiki/Light-minute',
+    lightHour: 'https://en.wikipedia.org/wiki/Light-hour',
+    lightDay: 'https://en.wikipedia.org/wiki/Light-day',
+    lightYear: 'https://en.wikipedia.org/wiki/Light-year',
+    au: 'https://en.wikipedia.org/wiki/Astronomical_unit',
+    moon: 'https://en.wikipedia.org/wiki/Moon',
+    sun: 'https://en.wikipedia.org/wiki/Sun',
+    marsDistance: 'https://en.wikipedia.org/wiki/Mars',
+    jupiterDistance: 'https://en.wikipedia.org/wiki/Jupiter',
+    saturnDistance: 'https://en.wikipedia.org/wiki/Saturn',
+    neptuneDistance: 'https://en.wikipedia.org/wiki/Neptune',
+    voyager1: 'https://en.wikipedia.org/wiki/Voyager_1',
+    proximaCentauri: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
 };
 
 // Helper to create Wikipedia link HTML

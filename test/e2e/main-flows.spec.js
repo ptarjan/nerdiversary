@@ -247,6 +247,15 @@ test.describe('Nerdiversary Main Flows', () => {
     await expect(page.locator('.confetti-container')).toBeVisible();
     await expect(page.locator('.confetti').first()).toBeVisible();
 
+    // Verify confetti is layered above the overlay (z-index check)
+    const confettiZIndex = await page.locator('.confetti-container').evaluate(el =>
+      parseInt(getComputedStyle(el).zIndex) || 0
+    );
+    const overlayZIndex = await page.locator('.celebration-overlay').evaluate(el =>
+      parseInt(getComputedStyle(el).zIndex) || 0
+    );
+    expect(confettiZIndex).toBeGreaterThan(overlayZIndex);
+
     // Dismiss button should work
     await page.click('.celebration-dismiss');
 
