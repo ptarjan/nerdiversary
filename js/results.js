@@ -99,24 +99,26 @@ function updateFamilyInfo() {
 }
 
 /**
- * Get consistent color for a person's name
+ * Get consistent color for a person based on their index in the family
+ * Colors are chosen to be maximally distinct from each other
  */
 function getColorForPerson(name) {
+    // Vibrant, maximally distinct colors
     const colors = [
-        'rgba(124, 58, 237, 0.8)',   // Purple
-        'rgba(16, 185, 129, 0.8)',   // Green
-        'rgba(245, 158, 11, 0.8)',   // Orange
-        'rgba(6, 182, 212, 0.8)',    // Cyan
-        'rgba(236, 72, 153, 0.8)',   // Pink
-        'rgba(59, 130, 246, 0.8)',   // Blue
-        'rgba(244, 63, 94, 0.8)',    // Red
-        'rgba(139, 92, 246, 0.8)',   // Violet
+        '#e63946',  // Red
+        '#2a9d8f',  // Teal
+        '#f4a261',  // Orange
+        '#457b9d',  // Steel Blue
+        '#9b5de5',  // Purple
+        '#00f5d4',  // Cyan
+        '#f15bb5',  // Pink
+        '#fee440',  // Yellow
+        '#00bbf9',  // Sky Blue
+        '#9ef01a',  // Lime
     ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
+    // Use index in familyMembers array for consistent assignment
+    const index = familyMembers.findIndex(m => m.name === name);
+    return colors[index >= 0 ? index % colors.length : 0];
 }
 
 /**
