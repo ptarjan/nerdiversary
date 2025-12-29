@@ -15,6 +15,9 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 const MS_PER_YEAR = 365.2425 * 24 * 60 * 60 * 1000; // Gregorian calendar average
 const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 
+// Maximum years to calculate milestones for
+const MAX_YEARS = 120;
+
 // ============================================================================
 // PHYSICAL CONSTANTS
 // ============================================================================
@@ -114,6 +117,23 @@ const HEX_MILESTONES = [
 
 // Palindrome hours
 const PALINDROME_HOURS = [10001, 10101, 10201, 11011, 11111, 11211, 12021, 12121, 12221, 12321];
+
+// Perfect numbers that work as hour milestones
+const PERFECT_HOUR_NUMBERS = [496, 8128];
+
+// Interesting triangular numbers for day milestones
+const INTERESTING_TRIANGULAR = [666, 1225, 2016, 3003, 5050, 5778, 8128];
+
+// Interesting palindrome days
+const INTERESTING_PALINDROME_DAYS = [
+    1001, 1221, 1331, 1441, 2112, 2552, 3003, 5005, 5775, 7007, 7337, 9009,
+    10001, 10101, 11011, 11111, 12321, 12921
+];
+
+// Distance formatting thresholds (in meters)
+const DISTANCE_THRESHOLD_LIGHT_YEAR = 1e15;
+const DISTANCE_THRESHOLD_TRILLION_KM = 1e12;
+const DISTANCE_THRESHOLD_BILLION_KM = 1e9;
 
 // ============================================================================
 // WIKIPEDIA URLS
@@ -418,14 +438,25 @@ const MilestonesExports = {
     FIBONACCI_INDEX,
     LUCAS_INDEX,
     PERFECT_NUMBERS,
+    PERFECT_HOUR_NUMBERS,
     TRIANGULAR,
     TRIANGULAR_INDEX,
+    INTERESTING_TRIANGULAR,
     PALINDROMES,
+    INTERESTING_PALINDROME_DAYS,
     REPUNITS,
     POWERS_OF_2,
     MINUTE_POWERS,
     HEX_MILESTONES,
     PALINDROME_HOURS,
+
+    // Distance thresholds
+    DISTANCE_THRESHOLD_LIGHT_YEAR,
+    DISTANCE_THRESHOLD_TRILLION_KM,
+    DISTANCE_THRESHOLD_BILLION_KM,
+
+    // Limits
+    MAX_YEARS,
 
     // Wikipedia URLs
     WIKI_URLS,

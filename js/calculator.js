@@ -15,7 +15,7 @@ const Milestones = typeof window !== 'undefined' && window.Milestones ? window.M
 // Helper to create Wikipedia link HTML
 function wikiLink(key, text) {
     const url = Milestones.WIKI_URLS[key];
-    return url ? `<a href="${url}" target="_blank">${text}</a>` : text;
+    return url ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
 }
 
 const Calculator = {
@@ -273,7 +273,8 @@ const Calculator = {
         }
     },
 
-    _addFibonacciMilestones(birthDate, addEvent) {
+    _addSequenceMilestones(birthDate, addEvent, config) {
+        const { sequence, indexMap, idPrefix, name, wikiKey, icon, indexLabel } = config;
         const units = [
             { filter: n => n >= 1e6 && n <= 3e9, ms: Milestones.MS_PER_SECOND, unit: 'seconds', label: 'Second' },
             { filter: n => n >= 1e5 && n <= 5e7, ms: Milestones.MS_PER_MINUTE, unit: 'minutes', label: 'Minute' },
@@ -282,43 +283,43 @@ const Calculator = {
         ];
 
         for (const { filter, ms, unit, label } of units) {
-            for (const fib of Milestones.FIBONACCI.filter(filter)) {
-                const idx = Milestones.FIBONACCI_INDEX.get(fib);
+            for (const num of sequence.filter(filter)) {
+                const idx = indexMap.get(num);
                 addEvent({
-                    id: `fib-${unit}-${fib}`,
-                    title: `Fibonacci ${label} ${fib.toLocaleString()}`,
-                    description: `${label} ${fib.toLocaleString()} is a ${wikiLink('fibonacci', 'Fibonacci number')}!`,
-                    date: new Date(birthDate.getTime() + fib * ms),
+                    id: `${idPrefix}-${unit}-${num}`,
+                    title: `${name} ${label} ${num.toLocaleString()}`,
+                    description: `${label} ${num.toLocaleString()} is a ${wikiLink(wikiKey, `${name} number`)}!`,
+                    date: new Date(birthDate.getTime() + num * ms),
                     category: 'fibonacci',
-                    icon: '🌀',
-                    milestone: `F(${idx}) = ${fib.toLocaleString()} ${unit}`
+                    icon,
+                    milestone: `${indexLabel}(${idx}) = ${num.toLocaleString()} ${unit}`
                 });
             }
         }
     },
 
-    _addLucasMilestones(birthDate, addEvent) {
-        const units = [
-            { filter: n => n >= 1e6 && n <= 3e9, ms: Milestones.MS_PER_SECOND, unit: 'seconds', label: 'Second' },
-            { filter: n => n >= 1e5 && n <= 5e7, ms: Milestones.MS_PER_MINUTE, unit: 'minutes', label: 'Minute' },
-            { filter: n => n >= 10000 && n <= 1000000, ms: Milestones.MS_PER_HOUR, unit: 'hours', label: 'Hour' },
-            { filter: n => n >= 100 && n <= 40000, ms: Milestones.MS_PER_DAY, unit: 'days', label: 'Day' }
-        ];
+    _addFibonacciMilestones(birthDate, addEvent) {
+        this._addSequenceMilestones(birthDate, addEvent, {
+            sequence: Milestones.FIBONACCI,
+            indexMap: Milestones.FIBONACCI_INDEX,
+            idPrefix: 'fib',
+            name: 'Fibonacci',
+            wikiKey: 'fibonacci',
+            icon: '🌀',
+            indexLabel: 'F'
+        });
+    },
 
-        for (const { filter, ms, unit, label } of units) {
-            for (const luc of Milestones.LUCAS.filter(filter)) {
-                const idx = Milestones.LUCAS_INDEX.get(luc);
-                addEvent({
-                    id: `lucas-${unit}-${luc}`,
-                    title: `Lucas ${label} ${luc.toLocaleString()}`,
-                    description: `${label} ${luc.toLocaleString()} is a ${wikiLink('lucas', 'Lucas number')}!`,
-                    date: new Date(birthDate.getTime() + luc * ms),
-                    category: 'fibonacci',
-                    icon: '🔷',
-                    milestone: `L(${idx}) = ${luc.toLocaleString()} ${unit}`
-                });
-            }
-        }
+    _addLucasMilestones(birthDate, addEvent) {
+        this._addSequenceMilestones(birthDate, addEvent, {
+            sequence: Milestones.LUCAS,
+            indexMap: Milestones.LUCAS_INDEX,
+            idPrefix: 'lucas',
+            name: 'Lucas',
+            wikiKey: 'lucas',
+            icon: '🔷',
+            indexLabel: 'L'
+        });
     },
 
     _addPerfectNumberMilestones(birthDate, addEvent) {
@@ -336,7 +337,7 @@ const Calculator = {
         }
 
         // Perfect number hours for larger ones
-        for (const perfect of [496, 8128]) {
+        for (const perfect of Milestones.PERFECT_HOUR_NUMBERS) {
             addEvent({
                 id: `perfect-hours-${perfect}`,
                 title: `Perfect Hour ${perfect.toLocaleString()}`,
@@ -351,10 +352,9 @@ const Calculator = {
 
     _addTriangularMilestones(birthDate, addEvent) {
         // Interesting triangular numbers
+        const interestingSet = new Set(Milestones.INTERESTING_TRIANGULAR);
         const interesting = Milestones.TRIANGULAR.filter((t, i) =>
-            (i + 1) % 10 === 0 ||
-            t === 666 || t === 5050 || t === 1225 || t === 2016 ||
-            t === 3003 || t === 5778 || t === 8128
+            (i + 1) % 10 === 0 || interestingSet.has(t)
         );
 
         for (const tri of interesting) {
@@ -392,12 +392,12 @@ const Calculator = {
 
     _addPalindromeMilestones(birthDate, addEvent) {
         // Palindrome days
+        const interestingSet = new Set(Milestones.INTERESTING_PALINDROME_DAYS);
         const interestingPals = Milestones.PALINDROMES.filter(p =>
             p >= 1000 && p <= 15000 && (
                 p % 1111 === 0 ||
                 String(p).split('').every((c, i, a) => c === a[0]) ||
-                [1001, 1221, 1331, 1441, 2112, 2552, 3003, 5005, 5775, 7007, 7337, 9009,
-                 10001, 10101, 11011, 11111, 12321, 12921].includes(p)
+                interestingSet.has(p)
             )
         );
 
@@ -511,12 +511,12 @@ const Calculator = {
 
             // Format the distance nicely
             let distanceStr;
-            if (dest.meters >= 1e15) {
+            if (dest.meters >= Milestones.DISTANCE_THRESHOLD_LIGHT_YEAR) {
                 distanceStr = `${(dest.meters / Milestones.METERS_PER_LIGHT_YEAR).toFixed(2)} light-years`;
-            } else if (dest.meters >= 1e12) {
-                distanceStr = `${(dest.meters / 1e12).toFixed(1)} trillion km`;
-            } else if (dest.meters >= 1e9) {
-                distanceStr = `${(dest.meters / 1e9).toFixed(1)} billion km`;
+            } else if (dest.meters >= Milestones.DISTANCE_THRESHOLD_TRILLION_KM) {
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_TRILLION_KM).toFixed(1)} trillion km`;
+            } else if (dest.meters >= Milestones.DISTANCE_THRESHOLD_BILLION_KM) {
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_BILLION_KM).toFixed(1)} billion km`;
             } else {
                 distanceStr = `${(dest.meters / 1e6).toFixed(0)} million km`;
             }
@@ -551,10 +551,8 @@ const Calculator = {
     },
 
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
-        const maxYears = 120;
-
         for (const holiday of Milestones.nerdyHolidays) {
-            for (let year = 1; year <= maxYears; year++) {
+            for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
                 const holidayDate = new Date(
                     birthDate.getFullYear() + year,
                     holiday.month,
@@ -581,9 +579,7 @@ const Calculator = {
     },
 
     _addEarthBirthdays(birthDate, maxDate, addEvent) {
-        const maxYears = 120;
-
-        for (let year = 1; year <= maxYears; year++) {
+        for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
             const birthdayDate = new Date(
                 birthDate.getFullYear() + year,
                 birthDate.getMonth(),

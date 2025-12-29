@@ -555,9 +555,7 @@ function showSubscribeModal(calendarUrl) {
 
 /**
  * Copy calendar URL to clipboard
- * Exported to window for use in onclick handlers
  */
-// eslint-disable-next-line no-unused-vars
 function copyCalendarUrl() {
     const input = document.getElementById('calendar-url-input');
     input.select();
@@ -569,12 +567,15 @@ function copyCalendarUrl() {
     });
 }
 
+// Expose to window for onclick handlers
+window.copyCalendarUrl = copyCalendarUrl;
+
 /**
  * Create Google Calendar URL for an event
  */
 function createGoogleCalendarUrl(event) {
     const startDate = formatGoogleDate(event.date);
-    const endDate = formatGoogleDate(new Date(event.date.getTime() + 60 * 60 * 1000)); // 1 hour
+    const endDate = formatGoogleDate(new Date(event.date.getTime() + Milestones.MS_PER_HOUR));
 
     const title = familyMembers.length > 1
         ? `${event.icon} ${event.personName}: ${event.title}`

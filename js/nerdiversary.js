@@ -11,8 +11,8 @@ import MilestonesModule from './milestones.js';
 import CalculatorModule from './calculator.js';
 
 // Use global versions if available (browser), otherwise use imported modules
-const MilestonesRef = typeof Milestones !== 'undefined' ? Milestones : MilestonesModule;
-const CalculatorRef = typeof Calculator !== 'undefined' ? Calculator : CalculatorModule;
+const MilestonesRef = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
+const CalculatorRef = typeof window !== 'undefined' && window.Calculator ? window.Calculator : CalculatorModule;
 
 const Nerdiversary = {
 
