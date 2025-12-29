@@ -1,15 +1,9 @@
-# Run CI checks on every pull request
+# Run CI checks on every commit
 name: CI
 
 on:
   pull_request:
-    branches:
-      - main
-      - master
   push:
-    branches:
-      - main
-      - master
 
 jobs:
   test:
