@@ -9,12 +9,29 @@ on:
       - claude/nerdiversary-birthday-calculator-WK3L1
     paths:
       - 'worker/**'
+      - 'js/**'
+      - 'test/**'
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run tests
+        run: node test/nerdiversary.test.js
+
   deploy:
     runs-on: ubuntu-latest
     name: Deploy Worker
+    needs: test
     steps:
       - uses: actions/checkout@v4
 
