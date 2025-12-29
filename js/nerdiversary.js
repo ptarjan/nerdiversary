@@ -1055,23 +1055,6 @@ const Nerdiversary = {
             });
         }
 
-        // Seconds in a year (astronomical): 31,557,600
-        const astroYear = 31557600;
-        for (const mult of [10, 20, 30, 40, 50, 60, 70, 80, 90]) {
-            const eventDate = new Date(birthDate.getTime() + astroYear * mult * this.MS_PER_SECOND);
-            if (eventDate <= maxDate) {
-                events.push({
-                    id: `astro-years-${mult}`,
-                    title: `${mult} Astronomical Years`,
-                    description: `You've lived for exactly ${mult} × 31,557,600 seconds (astronomical year definition)!`,
-                    date: eventDate,
-                    category: 'mathematical',
-                    icon: '🔭',
-                    milestone: `${mult} × 31,557,600 seconds`
-                });
-            }
-        }
-
         // Euler's identity related: e^π ≈ 23.14
         const ePi = Math.pow(Math.E, Math.PI);
         for (const [mult, label] of [[1e6, 'Million'], [1e7, '10 Million'], [1e8, '100 Million']]) {
