@@ -1,10 +1,11 @@
-const CACHE_NAME = 'nerdiversary-v26';
+const CACHE_NAME = 'nerdiversary-v27';
 const ASSETS = [
   './',
   './index.html',
   './results.html',
   './css/style.css',
   './js/milestones.js',
+  './js/calculator.js',
   './js/nerdiversary.js',
   './js/ical.js',
   './js/main.js',

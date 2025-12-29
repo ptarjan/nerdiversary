@@ -540,17 +540,14 @@ const fs = require('fs');
 const workerPath = path.join(__dirname, '..', 'worker', 'worker.js');
 const workerCode = fs.readFileSync(workerPath, 'utf8');
 
-test('Worker imports from shared milestones.js module', () => {
-    // Check for the import statement
-    const hasImport = workerCode.includes("import Milestones from '../js/milestones.js'");
-    assertTrue(hasImport, 'Worker should import from milestones.js');
+test('Worker imports from shared modules', () => {
+    // Check for the import statements
+    const hasCalculatorImport = workerCode.includes("import Calculator from '../js/calculator.js'");
+    assertTrue(hasCalculatorImport, 'Worker should import Calculator');
 
-    // Check that constants are destructured from the import
-    const hasDestructure = workerCode.includes('MS_PER_SECOND') &&
-                          workerCode.includes('FIBONACCI') &&
-                          workerCode.includes('PLANETS') &&
-                          workerCode.includes('} = Milestones');
-    assertTrue(hasDestructure, 'Worker should destructure constants from Milestones');
+    // Check that Calculator.calculate is used
+    const usesCalculator = workerCode.includes('Calculator.calculate');
+    assertTrue(usesCalculator, 'Worker should use Calculator.calculate()');
 });
 
 test('Worker does not duplicate constant definitions', () => {
