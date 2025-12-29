@@ -328,9 +328,11 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('XSS prevention - malicious URL params are escaped', async ({ page }) => {
-    // Attempt XSS via family name parameter
+    // Attempt XSS via second family member (first member uses safe .value assignment,
+    // but addFamilyMember() for members 2+ could be vulnerable to innerHTML injection)
     const xssPayload = '"><img src=x onerror=alert(1)>';
-    const maliciousUrl = `/index.html?family=${encodeURIComponent(xssPayload)}|1990-01-01`;
+    // Two members: safe first, malicious second
+    const maliciousUrl = `/index.html?family=Safe|1990-01-01,${encodeURIComponent(xssPayload)}|1995-05-05`;
 
     // Track if any alert/error occurs
     let alertFired = false;
@@ -341,8 +343,8 @@ test.describe('Nerdiversary Main Flows', () => {
 
     await page.goto(maliciousUrl);
 
-    // Wait for the name input to be populated
-    const nameInput = page.locator('#name-0');
+    // Wait for the second member's name input to be populated
+    const nameInput = page.locator('#name-1');
     await nameInput.waitFor({ state: 'visible' });
 
     // XSS should NOT have executed
