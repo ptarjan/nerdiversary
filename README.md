@@ -1,5 +1,9 @@
 # Nerdiversary
 
+<p align="center">
+  <img src="assets/logo.svg" alt="Nerdiversary Logo" width="200">
+</p>
+
 **[Try it now!](https://paultarjan.com/nerdiversary/)**
 
 Calculate and celebrate your nerdy anniversaries! Discover when you've lived a billion seconds, completed a Mars year, or reached other geeky milestones.
