@@ -56,9 +56,9 @@ const WIKI_URLS = {
     au: 'https://en.wikipedia.org/wiki/Astronomical_unit',
     moon: 'https://en.wikipedia.org/wiki/Moon',
     sun: 'https://en.wikipedia.org/wiki/Sun',
-    mars_closest: 'https://en.wikipedia.org/wiki/Mars',
+    marsClosest: 'https://en.wikipedia.org/wiki/Mars',
     voyager1: 'https://en.wikipedia.org/wiki/Voyager_1',
-    proxima: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
+    proximaCentauri: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
 };
 
 // Helper to create Wikipedia link HTML
@@ -510,11 +510,10 @@ const Calculator = {
 
     _addScientificMilestones(birthDate, addEvent) {
         // Speed of light multiples (c = 299,792,458 m/s)
-        const speedOfLight = 299792458;
         const maxMultiple = 10; // Up to 10c (about 95 years)
 
         for (let mult = 1; mult <= maxMultiple; mult++) {
-            const seconds = speedOfLight * mult;
+            const seconds = Milestones.SPEED_OF_LIGHT * mult;
             const label = mult === 1 ? 'c' : `${mult}c`;
             addEvent({
                 id: `speed-of-light-${mult}x`,
@@ -571,7 +570,7 @@ const Calculator = {
             // Format the distance nicely
             let distanceStr;
             if (dest.meters >= 1e15) {
-                distanceStr = `${(dest.meters / 9.461e15).toFixed(2)} light-years`;
+                distanceStr = `${(dest.meters / Milestones.METERS_PER_LIGHT_YEAR).toFixed(2)} light-years`;
             } else if (dest.meters >= 1e12) {
                 distanceStr = `${(dest.meters / 1e12).toFixed(1)} trillion km`;
             } else if (dest.meters >= 1e9) {
@@ -620,11 +619,11 @@ const Calculator = {
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         const maxYears = 120;
 
-        // Map holiday names to wiki link keys and text
-        const holidayLinks = {
-            'Pi Day': { key: 'piDay', text: 'Pi Day' },
-            'May the 4th': { key: 'starWarsDay', text: 'Star Wars Day' },
-            'Tau Day': { key: 'tauDay', text: 'Tau Day' }
+        // Map holiday names to wiki link keys
+        const holidayWikiKeys = {
+            'Pi Day': 'piDay',
+            'May the 4th': 'starWarsDay',
+            'Tau Day': 'tauDay'
         };
 
         for (const holiday of Milestones.nerdyHolidays) {
@@ -638,8 +637,8 @@ const Calculator = {
                 );
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
-                    const link = holidayLinks[holiday.name];
-                    const linkText = link ? wikiLink(link.key, link.text) : holiday.name;
+                    const wikiKey = holidayWikiKeys[holiday.name];
+                    const linkText = wikiKey ? wikiLink(wikiKey, holiday.name) : holiday.name;
                     addEvent({
                         id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
                         title: `${holiday.name} ${holidayDate.getFullYear()}`,
