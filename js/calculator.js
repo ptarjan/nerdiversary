@@ -319,7 +319,7 @@ const Calculator = {
 
         for (const { filter, ms, unit, label } of units) {
             for (const fib of Milestones.FIBONACCI.filter(filter)) {
-                const idx = Milestones.FIBONACCI.indexOf(fib) + 1;
+                const idx = Milestones.FIBONACCI_INDEX.get(fib);
                 addEvent({
                     id: `fib-${unit}-${fib}`,
                     title: `Fibonacci ${label} ${fib.toLocaleString()}`,
@@ -343,7 +343,7 @@ const Calculator = {
 
         for (const { filter, ms, unit, label } of units) {
             for (const luc of Milestones.LUCAS.filter(filter)) {
-                const idx = Milestones.LUCAS.indexOf(luc) + 1;
+                const idx = Milestones.LUCAS_INDEX.get(luc);
                 addEvent({
                     id: `lucas-${unit}-${luc}`,
                     title: `Lucas ${label} ${luc.toLocaleString()}`,
@@ -410,7 +410,7 @@ const Calculator = {
 
         // Triangular hours
         const triangularHours = Milestones.TRIANGULAR.filter(t =>
-            t >= 10000 && t <= 100000 && Milestones.TRIANGULAR.indexOf(t) % 5 === 0
+            t >= 10000 && t <= 100000 && Milestones.TRIANGULAR_INDEX.get(t) % 5 === 0
         );
         for (const tri of triangularHours) {
             const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);

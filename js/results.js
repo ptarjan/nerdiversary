@@ -9,6 +9,33 @@ let currentPerson = 'all';
 let currentView = 'upcoming';
 let countdownInterval = null;
 
+// Cached DOM elements for countdown (to avoid querying every second)
+let countdownElements = {
+    days: null,
+    hours: null,
+    minutes: null,
+    seconds: null
+};
+
+/**
+ * Escape HTML to prevent XSS (for user-provided content)
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Clean up resources on page unload
+ */
+window.addEventListener('beforeunload', () => {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Parse family data from URL params
     const urlParams = new URLSearchParams(window.location.search);
@@ -87,11 +114,11 @@ function updateFamilyInfo() {
 
     if (familyMembers.length === 1) {
         const m = familyMembers[0];
-        familyInfo.innerHTML = `<p class="birth-info">${m.name}: Born ${Nerdiversary.formatDate(m.birthDate)}</p>`;
+        familyInfo.innerHTML = `<p class="birth-info">${escapeHtml(m.name)}: Born ${Nerdiversary.formatDate(m.birthDate)}</p>`;
     } else {
         const html = familyMembers.map(m =>
             `<span class="family-member-badge" style="background: ${getColorForPerson(m.name)}">
-                ${m.name}
+                ${escapeHtml(m.name)}
             </span>`
         ).join('');
         familyInfo.innerHTML = `<div class="family-badges">${html}</div>`;
@@ -135,7 +162,7 @@ function setupPersonFilter() {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.dataset.person = m.name;
-        btn.innerHTML = `<span style="color: ${getColorForPerson(m.name)}">●</span> ${m.name}`;
+        btn.innerHTML = `<span style="color: ${getColorForPerson(m.name)}">●</span> ${escapeHtml(m.name)}`;
         container.appendChild(btn);
     });
 
@@ -214,6 +241,12 @@ function displayNextEvent() {
     const container = document.getElementById('next-event');
     const now = new Date();
 
+    // Invalidate cached countdown elements since we're rebuilding the DOM
+    countdownElements.days = null;
+    countdownElements.hours = null;
+    countdownElements.minutes = null;
+    countdownElements.seconds = null;
+
     // Get next event (respecting person filter)
     const filteredEvents = getFilteredByPerson(allEvents);
     const upcomingEvents = filteredEvents.filter(e => e.date > now);
@@ -235,7 +268,7 @@ function displayNextEvent() {
 
     container.innerHTML = `
         <div class="countdown-title">${nextEvent.icon} ${nextEvent.title}</div>
-        ${showPerson ? `<div class="countdown-person" style="color: ${nextEvent.personColor}">${nextEvent.personName}</div>` : ''}
+        ${showPerson ? `<div class="countdown-person" style="color: ${nextEvent.personColor}">${escapeHtml(nextEvent.personName)}</div>` : ''}
         <div class="countdown-date">${Nerdiversary.formatDate(nextEvent.date)}</div>
         <div class="countdown-timer">
             <div class="countdown-unit">
@@ -295,15 +328,18 @@ function startCountdownTimer() {
         const minutes = Math.floor((diff % Milestones.MS_PER_HOUR) / Milestones.MS_PER_MINUTE);
         const seconds = Math.floor((diff % Milestones.MS_PER_MINUTE) / Milestones.MS_PER_SECOND);
 
-        const daysEl = document.getElementById('countdown-days');
-        const hoursEl = document.getElementById('countdown-hours');
-        const minutesEl = document.getElementById('countdown-minutes');
-        const secondsEl = document.getElementById('countdown-seconds');
+        // Use cached DOM elements (refresh cache if needed)
+        if (!countdownElements.days) {
+            countdownElements.days = document.getElementById('countdown-days');
+            countdownElements.hours = document.getElementById('countdown-hours');
+            countdownElements.minutes = document.getElementById('countdown-minutes');
+            countdownElements.seconds = document.getElementById('countdown-seconds');
+        }
 
-        if (daysEl) daysEl.textContent = days;
-        if (hoursEl) hoursEl.textContent = hours;
-        if (minutesEl) minutesEl.textContent = minutes;
-        if (secondsEl) secondsEl.textContent = seconds;
+        if (countdownElements.days) countdownElements.days.textContent = days;
+        if (countdownElements.hours) countdownElements.hours.textContent = hours;
+        if (countdownElements.minutes) countdownElements.minutes.textContent = minutes;
+        if (countdownElements.seconds) countdownElements.seconds.textContent = seconds;
     }, 1000);
 }
 
@@ -353,7 +389,7 @@ function displayTimeline() {
                 <div class="event-icon">${event.icon}</div>
                 <div class="event-content">
                     <h3 class="event-title">${event.title}</h3>
-                    ${showPerson ? `<span class="event-person" style="background: ${event.personColor}">${event.personName}</span>` : ''}
+                    ${showPerson ? `<span class="event-person" style="background: ${event.personColor}">${escapeHtml(event.personName)}</span>` : ''}
                     <p class="event-description">${event.description}</p>
                     <div class="event-meta">
                         <span class="event-date">${Nerdiversary.formatDate(event.date)}</span>
@@ -686,7 +722,7 @@ function showCelebration(event) {
         <div class="celebration-content">
             <span class="celebration-emoji">${event.icon}</span>
             <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
-            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${event.personName}</p>` : ''}
+            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
             <p class="celebration-event">${event.title}</p>
             <p class="celebration-description">${event.description}</p>
             <button class="celebration-dismiss">Continue to Next Event</button>
