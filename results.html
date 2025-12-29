@@ -44,7 +44,7 @@
     <main class="container results-container">
         <header class="results-header">
             <h1>Your Nerdiversaries</h1>
-            <p class="birth-info" id="birth-info">Born: Loading...</p>
+            <div class="family-info" id="family-info">Loading...</div>
             <div class="action-buttons">
                 <button id="subscribe-calendar" class="action-btn primary">
                     <span class="btn-icon">🔔</span>
@@ -65,6 +65,13 @@
             <h2>🎉 Next Nerdiversary</h2>
             <div class="countdown-card" id="next-event">
                 <div class="countdown-loading">Calculating...</div>
+            </div>
+        </section>
+
+        <section class="filter-section" id="person-filter-section" style="display: none;">
+            <h2>Filter by Person</h2>
+            <div class="filter-buttons" id="person-filter-buttons">
+                <button class="filter-btn active" data-person="all">Everyone</button>
             </div>
         </section>
 

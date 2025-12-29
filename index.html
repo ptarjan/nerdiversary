@@ -52,21 +52,35 @@
 
         <section class="input-section">
             <form id="birthday-form" class="birthday-form">
-                <div class="form-group">
-                    <label for="birthdate">Your Birthday</label>
-                    <input type="date" id="birthdate" name="birthdate" required>
+                <div id="family-members">
+                    <div class="family-member" data-index="0">
+                        <div class="member-header">
+                            <span class="member-label">Person 1</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="name-0">Name</label>
+                            <input type="text" id="name-0" name="name" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="birthdate-0">Birthday</label>
+                            <input type="date" id="birthdate-0" name="birthdate" required>
+                        </div>
+                        <div class="form-group optional">
+                            <label for="birthtime-0">
+                                Birth Time <span class="optional-label">(optional)</span>
+                            </label>
+                            <input type="time" id="birthtime-0" name="birthtime" step="60">
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group optional">
-                    <label for="birthtime">
-                        Birth Time <span class="optional-label">(optional)</span>
-                    </label>
-                    <input type="time" id="birthtime" name="birthtime" step="60">
-                    <small class="hint">For more precise calculations</small>
-                </div>
+                <button type="button" id="add-member" class="add-member-btn">
+                    <span class="btn-icon">👨‍👩‍👧‍👦</span>
+                    <span class="btn-text">Add Family Member</span>
+                </button>
 
                 <button type="submit" class="submit-btn">
-                    <span class="btn-text">Calculate My Nerdiversaries</span>
+                    <span class="btn-text">Calculate Nerdiversaries</span>
                     <span class="btn-icon">🚀</span>
                 </button>
             </form>

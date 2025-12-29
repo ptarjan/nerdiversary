@@ -7,21 +7,23 @@ const ICalGenerator = {
      * Generate iCalendar content from events
      * @param {Array} events - Array of nerdiversary events
      * @param {Date} birthDate - The birth date
+     * @param {boolean} isFamily - Whether this is a family calendar
      * @returns {string} iCalendar formatted string
      */
-    generate(events, birthDate) {
+    generate(events, birthDate, isFamily = false) {
+        const calName = isFamily ? 'Family Nerdiversaries' : 'My Nerdiversaries';
         const lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
             'PRODID:-//Nerdiversary//Nerdy Anniversary Calculator//EN',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
-            'X-WR-CALNAME:My Nerdiversaries',
+            `X-WR-CALNAME:${calName}`,
             'X-WR-CALDESC:Nerdy anniversary milestones'
         ];
 
         for (const event of events) {
-            lines.push(...this.createEvent(event));
+            lines.push(...this.createEvent(event, isFamily));
         }
 
         lines.push('END:VCALENDAR');
@@ -32,9 +34,10 @@ const ICalGenerator = {
     /**
      * Create a single VEVENT
      * @param {Object} event - Nerdiversary event object
+     * @param {boolean} isFamily - Whether to include person name
      * @returns {Array} Array of iCal lines for the event
      */
-    createEvent(event) {
+    createEvent(event, isFamily = false) {
         const uid = `${event.id}@nerdiversary`;
         const dtstamp = this.formatDate(new Date());
         const dtstart = this.formatDate(event.date);
@@ -42,13 +45,18 @@ const ICalGenerator = {
 
         const categoryInfo = Nerdiversary.getCategoryInfo(event.category);
 
+        // Include person name in title for family calendars
+        const title = isFamily && event.personName
+            ? `${event.icon} ${event.personName}: ${event.title}`
+            : `${event.icon} ${event.title}`;
+
         const lines = [
             'BEGIN:VEVENT',
             `UID:${uid}`,
             `DTSTAMP:${dtstamp}`,
             `DTSTART:${dtstart}`,
             `DTEND:${dtend}`,
-            `SUMMARY:${this.escapeText(`${event.icon} ${event.title}`)}`,
+            `SUMMARY:${this.escapeText(title)}`,
             `DESCRIPTION:${this.escapeText(event.description)}`,
             `CATEGORIES:${categoryInfo.name}`,
             'STATUS:CONFIRMED',

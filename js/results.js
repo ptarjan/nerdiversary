@@ -1,37 +1,69 @@
 /**
- * Results page script - displays nerdiversary events
+ * Results page script - displays nerdiversary events for individuals or families
  */
 
 let allEvents = [];
+let familyMembers = [];
 let currentFilter = 'all';
+let currentPerson = 'all';
 let currentView = 'upcoming';
-let birthDate = null;
 let countdownInterval = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Get birth date from URL params
+    // Parse family data from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    const dateStr = urlParams.get('d');
-    const timeStr = urlParams.get('t') || '00:00';
 
-    if (!dateStr) {
+    // Check for new family format
+    const familyParam = urlParams.get('family');
+    if (familyParam) {
+        try {
+            familyMembers = familyParam.split(',').map(m => {
+                const parts = m.split('|');
+                const name = decodeURIComponent(parts[0] || '');
+                const dateStr = parts[1] || '';
+                const timeStr = parts[2] || '00:00';
+                const birthDate = new Date(`${dateStr}T${timeStr}:00`);
+
+                return { name, dateStr, timeStr, birthDate };
+            }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
+        } catch (e) {
+            console.error('Failed to parse family param:', e);
+        }
+    }
+
+    // Legacy single-person format
+    if (familyMembers.length === 0) {
+        const dateStr = urlParams.get('d');
+        const timeStr = urlParams.get('t') || '00:00';
+
+        if (!dateStr) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const birthDate = new Date(`${dateStr}T${timeStr}:00`);
+        if (isNaN(birthDate.getTime())) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        familyMembers = [{ name: 'You', dateStr, timeStr, birthDate }];
+    }
+
+    if (familyMembers.length === 0) {
         window.location.href = 'index.html';
         return;
     }
 
-    // Parse birth date
-    birthDate = new Date(`${dateStr}T${timeStr}:00`);
+    // Update family info display
+    updateFamilyInfo();
 
-    if (isNaN(birthDate.getTime())) {
-        window.location.href = 'index.html';
-        return;
+    // Set up person filter if multiple people
+    if (familyMembers.length > 1) {
+        setupPersonFilter();
     }
 
-    // Update birth info display
-    const birthInfo = document.getElementById('birth-info');
-    birthInfo.textContent = `Born: ${Nerdiversary.formatDate(birthDate)}`;
-
-    // Calculate events
+    // Calculate events for all family members
     calculateAndDisplayEvents();
 
     // Set up filter buttons
@@ -48,11 +80,100 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * Update family info display
+ */
+function updateFamilyInfo() {
+    const familyInfo = document.getElementById('family-info');
+
+    if (familyMembers.length === 1) {
+        const m = familyMembers[0];
+        familyInfo.innerHTML = `<p class="birth-info">${m.name}: Born ${Nerdiversary.formatDate(m.birthDate)}</p>`;
+    } else {
+        const html = familyMembers.map(m =>
+            `<span class="family-member-badge" style="background: ${getColorForPerson(m.name)}">
+                ${m.name}
+            </span>`
+        ).join('');
+        familyInfo.innerHTML = `<div class="family-badges">${html}</div>`;
+    }
+}
+
+/**
+ * Get consistent color for a person's name
+ */
+function getColorForPerson(name) {
+    const colors = [
+        'rgba(124, 58, 237, 0.8)',   // Purple
+        'rgba(16, 185, 129, 0.8)',   // Green
+        'rgba(245, 158, 11, 0.8)',   // Orange
+        'rgba(6, 182, 212, 0.8)',    // Cyan
+        'rgba(236, 72, 153, 0.8)',   // Pink
+        'rgba(59, 130, 246, 0.8)',   // Blue
+        'rgba(244, 63, 94, 0.8)',    // Red
+        'rgba(139, 92, 246, 0.8)',   // Violet
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
+/**
+ * Set up person filter buttons
+ */
+function setupPersonFilter() {
+    const section = document.getElementById('person-filter-section');
+    const container = document.getElementById('person-filter-buttons');
+
+    section.style.display = 'block';
+
+    // Add buttons for each person
+    familyMembers.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.person = m.name;
+        btn.innerHTML = `<span style="color: ${getColorForPerson(m.name)}">●</span> ${m.name}`;
+        container.appendChild(btn);
+    });
+
+    container.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('filter-btn')) return;
+
+        container.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        e.target.classList.add('active');
+
+        currentPerson = e.target.dataset.person;
+        displayNextEvent();
+        displayTimeline();
+    });
+}
+
+/**
  * Calculate and display all nerdiversary events
  */
 function calculateAndDisplayEvents() {
-    // Calculate events (100 years of events)
-    allEvents = Nerdiversary.calculate(birthDate, 100);
+    allEvents = [];
+
+    // Calculate events for each family member
+    familyMembers.forEach(member => {
+        const events = Nerdiversary.calculate(member.birthDate, 100);
+
+        // Add person info to each event
+        events.forEach(event => {
+            event.personName = member.name;
+            event.personColor = getColorForPerson(member.name);
+            // Make ID unique per person
+            event.id = `${member.name}-${event.id}`;
+        });
+
+        allEvents = allEvents.concat(events);
+    });
+
+    // Sort all events by date
+    allEvents.sort((a, b) => a.date - b.date);
 
     // Display next event
     displayNextEvent();
@@ -62,18 +183,32 @@ function calculateAndDisplayEvents() {
 }
 
 /**
+ * Get filtered events based on current person filter
+ */
+function getFilteredByPerson(events) {
+    if (currentPerson === 'all') {
+        return events;
+    }
+    return events.filter(e => e.personName === currentPerson);
+}
+
+/**
  * Display the next upcoming nerdiversary
  */
 function displayNextEvent() {
     const container = document.getElementById('next-event');
-    const nextEvent = Nerdiversary.getNextEvent(allEvents);
+    const now = new Date();
+
+    // Get next event (respecting person filter)
+    const filteredEvents = getFilteredByPerson(allEvents);
+    const upcomingEvents = filteredEvents.filter(e => e.date > now);
+    const nextEvent = upcomingEvents[0];
 
     if (!nextEvent) {
         container.innerHTML = '<p class="empty-state">No upcoming events found</p>';
         return;
     }
 
-    const now = new Date();
     const diff = nextEvent.date - now;
     const days = Math.floor(diff / Milestones.MS_PER_DAY);
     const hours = Math.floor((diff % Milestones.MS_PER_DAY) / Milestones.MS_PER_HOUR);
@@ -81,9 +216,11 @@ function displayNextEvent() {
     const seconds = Math.floor((diff % Milestones.MS_PER_MINUTE) / Milestones.MS_PER_SECOND);
 
     const categoryInfo = Nerdiversary.getCategoryInfo(nextEvent.category);
+    const showPerson = familyMembers.length > 1;
 
     container.innerHTML = `
         <div class="countdown-title">${nextEvent.icon} ${nextEvent.title}</div>
+        ${showPerson ? `<div class="countdown-person" style="color: ${nextEvent.personColor}">${nextEvent.personName}</div>` : ''}
         <div class="countdown-date">${Nerdiversary.formatDate(nextEvent.date)}</div>
         <div class="countdown-timer">
             <div class="countdown-unit">
@@ -119,10 +256,13 @@ function startCountdownTimer() {
     let celebrationTriggered = false;
 
     countdownInterval = setInterval(() => {
-        const nextEvent = Nerdiversary.getNextEvent(allEvents);
+        const now = new Date();
+        const filteredEvents = getFilteredByPerson(allEvents);
+        const upcomingEvents = filteredEvents.filter(e => e.date > now);
+        const nextEvent = upcomingEvents[0];
+
         if (!nextEvent) return;
 
-        const now = new Date();
         const diff = nextEvent.date - now;
 
         if (diff <= 0) {
@@ -159,8 +299,8 @@ function displayTimeline() {
     const timeline = document.getElementById('timeline');
     const now = new Date();
 
-    // Filter events
-    let filteredEvents = allEvents;
+    // Start with person filter
+    let filteredEvents = getFilteredByPerson(allEvents);
 
     // Apply category filter
     if (currentFilter !== 'all') {
@@ -184,8 +324,9 @@ function displayTimeline() {
     }
 
     // Find the next event for highlighting
-    const nextEvent = Nerdiversary.getNextEvent(allEvents);
+    const nextEvent = getFilteredByPerson(allEvents).filter(e => e.date > now)[0];
     const nextEventId = nextEvent ? nextEvent.id : null;
+    const showPerson = familyMembers.length > 1;
 
     timeline.innerHTML = displayEvents.map(event => {
         const categoryInfo = Nerdiversary.getCategoryInfo(event.category);
@@ -197,6 +338,7 @@ function displayTimeline() {
                 <div class="event-icon">${event.icon}</div>
                 <div class="event-content">
                     <h3 class="event-title">${event.title}</h3>
+                    ${showPerson ? `<span class="event-person" style="background: ${event.personColor}">${event.personName}</span>` : ''}
                     <p class="event-description">${event.description}</p>
                     <div class="event-meta">
                         <span class="event-date">${Nerdiversary.formatDate(event.date)}</span>
@@ -301,14 +443,9 @@ function setupActionButtons() {
  */
 function subscribeToCalendar() {
     const urlParams = new URLSearchParams(window.location.search);
-    const dateStr = urlParams.get('d');
-    const timeStr = urlParams.get('t');
 
-    // Build the calendar URL
-    let calendarUrl = `${CALENDAR_WORKER_URL}/?d=${dateStr}`;
-    if (timeStr) {
-        calendarUrl += `&t=${timeStr}`;
-    }
+    // Build the calendar URL with family or single person params
+    let calendarUrl = CALENDAR_WORKER_URL + '/?' + urlParams.toString();
 
     // Show subscription modal
     showSubscribeModal(calendarUrl);
@@ -394,9 +531,13 @@ function createGoogleCalendarUrl(event) {
     const startDate = formatGoogleDate(event.date);
     const endDate = formatGoogleDate(new Date(event.date.getTime() + 60 * 60 * 1000)); // 1 hour
 
+    const title = familyMembers.length > 1
+        ? `${event.icon} ${event.personName}: ${event.title}`
+        : `${event.icon} ${event.title}`;
+
     const params = new URLSearchParams({
         action: 'TEMPLATE',
-        text: `${event.icon} ${event.title}`,
+        text: title,
         dates: `${startDate}/${endDate}`,
         details: event.description,
         sf: 'true'
@@ -418,20 +559,23 @@ function formatGoogleDate(date) {
 function downloadICalendar() {
     // Get all upcoming events
     const upcomingEvents = allEvents.filter(e => !e.isPast);
-    const icalContent = ICalGenerator.generate(upcomingEvents, birthDate);
+
+    // Use first person's birthdate as reference (for legacy compatibility)
+    const birthDate = familyMembers[0].birthDate;
+    const icalContent = ICalGenerator.generate(upcomingEvents, birthDate, familyMembers.length > 1);
 
     // Create download
     const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'nerdiversaries.ics';
+    link.download = familyMembers.length > 1 ? 'family-nerdiversaries.ics' : 'nerdiversaries.ics';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast('Downloaded nerdiversaries.ics');
+    showToast(`Downloaded ${link.download}`);
 }
 
 /**
@@ -441,10 +585,14 @@ function shareResults() {
     const urlParams = new URLSearchParams(window.location.search);
     const shareUrl = `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
 
+    const shareText = familyMembers.length > 1
+        ? `Check out our family's nerdy anniversaries!`
+        : `Check out my nerdy anniversaries!`;
+
     if (navigator.share) {
         navigator.share({
-            title: 'My Nerdiversaries',
-            text: 'Check out my nerdy anniversaries!',
+            title: familyMembers.length > 1 ? 'Our Family Nerdiversaries' : 'My Nerdiversaries',
+            text: shareText,
             url: shareUrl
         }).catch(() => {
             copyToClipboard(shareUrl);
@@ -516,12 +664,14 @@ function showCelebration(event) {
     }
 
     // Create celebration overlay
+    const showPerson = familyMembers.length > 1;
     const overlay = document.createElement('div');
     overlay.className = 'celebration-overlay';
     overlay.innerHTML = `
         <div class="celebration-content">
             <span class="celebration-emoji">${event.icon}</span>
             <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
+            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${event.personName}</p>` : ''}
             <p class="celebration-event">${event.title}</p>
             <p class="celebration-description">${event.description}</p>
             <button class="celebration-dismiss">Continue to Next Event</button>
@@ -569,14 +719,18 @@ function checkForCelebration(event) {
 
 // Expose for console testing: testCelebration()
 window.testCelebration = function() {
-    const nextEvent = Nerdiversary.getNextEvent(allEvents);
+    const now = new Date();
+    const filteredEvents = getFilteredByPerson(allEvents);
+    const nextEvent = filteredEvents.filter(e => e.date > now)[0];
     if (nextEvent) {
         showCelebration(nextEvent);
     } else {
         showCelebration({
             icon: '🎉',
             title: 'Test Celebration!',
-            description: 'This is what happens when a nerdiversary occurs!'
+            description: 'This is what happens when a nerdiversary occurs!',
+            personName: 'Test',
+            personColor: 'rgba(124, 58, 237, 0.8)'
         });
     }
 };

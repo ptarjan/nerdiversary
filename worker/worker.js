@@ -29,14 +29,20 @@ const workerHandler = {
       });
     }
 
-    // Get birthday from query params
+    // Check for family format first
+    const familyParam = url.searchParams.get('family');
+    if (familyParam) {
+      return handleFamilyRequest(url, familyParam);
+    }
+
+    // Legacy single-person format
     const birthday = url.searchParams.get('d') || url.searchParams.get('birthday');
     const birthtime = url.searchParams.get('t') || url.searchParams.get('time') || '00:00';
 
     if (!birthday) {
       return new Response(JSON.stringify({
         error: 'Missing birthday parameter',
-        usage: 'Add ?d=YYYY-MM-DD or ?birthday=YYYY-MM-DD to the URL',
+        usage: 'Add ?d=YYYY-MM-DD or ?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
         example: url.origin + '/?d=1990-05-15'
       }), {
         status: 400,
@@ -76,7 +82,7 @@ const workerHandler = {
     });
 
     // Generate iCal content
-    const icalContent = generateICal(events);
+    const icalContent = generateICal(events, false);
 
     // Return .ics file
     return new Response(icalContent, {
@@ -90,6 +96,83 @@ const workerHandler = {
   },
 };
 
+/**
+ * Handle family calendar request with multiple people
+ */
+function handleFamilyRequest(url, familyParam) {
+  try {
+    // Parse family members: Name|YYYY-MM-DD|HH:MM,Name2|YYYY-MM-DD
+    const members = familyParam.split(',').map(m => {
+      const parts = m.split('|');
+      const name = decodeURIComponent(parts[0] || '');
+      const dateStr = parts[1] || '';
+      const timeStr = parts[2] || '00:00';
+      const birthDate = new Date(`${dateStr}T${timeStr}:00`);
+
+      return { name, birthDate };
+    }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
+
+    if (members.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'No valid family members found',
+        usage: '?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
+        example: url.origin + '/?family=Alice|1990-05-15,Bob|1988-03-22'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    // Generate events for all family members
+    let allEvents = [];
+
+    for (const member of members) {
+      const events = Calculator.calculate(member.birthDate, {
+        yearsAhead: 120,
+        includePast: false,
+        transformEvent: (event) => ({
+          ...event,
+          personName: member.name,
+          title: `${event.icon} ${member.name}: ${event.title}`,
+          id: `${member.name}-${event.id}`
+        })
+      });
+
+      allEvents = allEvents.concat(events);
+    }
+
+    // Sort by date
+    allEvents.sort((a, b) => a.date - b.date);
+
+    // Generate iCal content
+    const icalContent = generateICal(allEvents, true);
+
+    // Return .ics file
+    return new Response(icalContent, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'inline; filename="family-nerdiversaries.ics"',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({
+      error: 'Failed to parse family parameter',
+      message: e.message
+    }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+}
+
 // ES module export for Cloudflare Workers
 export default workerHandler;
 
@@ -97,14 +180,15 @@ export default workerHandler;
 // ICAL GENERATION
 // ============================================================================
 
-function generateICal(events) {
+function generateICal(events, isFamily = false) {
+  const calName = isFamily ? 'Family Nerdiversaries' : 'Nerdiversaries';
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Nerdiversary//Nerdy Anniversaries//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Nerdiversaries',
+    `X-WR-CALNAME:${calName}`,
     'X-WR-CALDESC:Your nerdy anniversary milestones',
   ];
 
