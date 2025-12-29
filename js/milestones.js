@@ -227,13 +227,31 @@ const baseMilestones = [
         { powers: [4, 5, 6, 7], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
     ]},
+    { base: 9, name: 'nonary', icon: '9️⃣', units: [
+        { powers: [8, 9, 10], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+        { powers: [6, 7, 8], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+        { powers: [5, 6], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+        { powers: [4, 5], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+    ]},
     { base: 12, name: 'dozenal', icon: '🕛', units: [
         { powers: [6, 7, 8, 9], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [4, 5, 6], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4, 5], unit: 'days', label: 'Days', ms: MS_PER_DAY }
     ]},
-    { base: 60, name: 'Babylonian', icon: '🏛️', units: [
+    { base: 16, name: 'hexadecimal', icon: '🔷', units: [
+        { powers: [7, 8], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+        { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+        { powers: [4, 5], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+        { powers: [3, 4], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+    ]},
+    { base: 20, name: 'vigesimal', icon: '🏛️', units: [
+        { powers: [6, 7, 8], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
+        { powers: [5, 6], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
+        { powers: [4, 5], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
+        { powers: [3, 4], unit: 'days', label: 'Days', ms: MS_PER_DAY }
+    ]},
+    { base: 60, name: 'Babylonian', icon: '⏰', units: [
         { powers: [4, 5], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [3, 4], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [2, 3], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
