@@ -16,6 +16,25 @@ const MS_PER_YEAR = 365.2425 * 24 * 60 * 60 * 1000; // Gregorian calendar averag
 const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 
 // ============================================================================
+// PHYSICAL CONSTANTS
+// ============================================================================
+
+// Speed of light in meters per second
+const SPEED_OF_LIGHT = 299792458;
+
+// Cosmic distances in meters
+const COSMIC_DISTANCES = {
+    moon: { name: 'the Moon', meters: 384400000, icon: '🌙' },
+    sun: { name: 'the Sun', meters: 149597870700, icon: '☀️' },
+    mars_closest: { name: 'Mars (closest)', meters: 54600000000, icon: '🔴' },
+    jupiter: { name: 'Jupiter', meters: 628730000000, icon: '🪐' },
+    saturn: { name: 'Saturn', meters: 1275000000000, icon: '💫' },
+    neptune: { name: 'Neptune', meters: 4347000000000, icon: '🔵' },
+    voyager1: { name: 'Voyager 1', meters: 24000000000000, icon: '🛸' },
+    proxima: { name: 'Proxima Centauri', meters: 4.0208e16, icon: '⭐' }
+};
+
+// ============================================================================
 // MATHEMATICAL CONSTANTS
 // ============================================================================
 
@@ -308,6 +327,10 @@ const MilestonesExports = {
     E,
     PHI,
     TAU,
+
+    // Physical constants
+    SPEED_OF_LIGHT,
+    COSMIC_DISTANCES,
 
     // Planetary data
     PLANETS,

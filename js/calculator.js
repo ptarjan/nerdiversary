@@ -98,6 +98,7 @@ const Calculator = {
         this._addRepunitMilestones(birthDate, addEvent);
         this._addScientificMilestones(birthDate, addEvent);
         this._addPopCultureMilestones(birthDate, addEvent);
+        this._addSpeedOfLightMilestones(birthDate, addEvent);
         this._addNerdyHolidays(birthDate, maxDate, addEvent);
         this._addEarthBirthdays(birthDate, maxDate, addEvent);
 
@@ -221,7 +222,7 @@ const Calculator = {
                 addEvent({
                     id: `binary-seconds-${power}`,
                     title: `2^${power} Seconds`,
-                    description: `You've lived for exactly 2${this._toSuperscript(power)} = ${value.toLocaleString()} seconds!`,
+                    description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} seconds!`,
                     date: eventDate,
                     category: 'binary',
                     icon: '💻',
@@ -237,7 +238,7 @@ const Calculator = {
             addEvent({
                 id: `binary-minutes-${power}`,
                 title: `2^${power} Minutes`,
-                description: `You've lived for exactly 2${this._toSuperscript(power)} = ${value.toLocaleString()} minutes!`,
+                description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} minutes!`,
                 date: new Date(birthDate.getTime() + value * Milestones.MS_PER_MINUTE),
                 category: 'binary',
                 icon: '🔟',
@@ -275,7 +276,7 @@ const Calculator = {
                         addEvent({
                             id: `base${base}-${power}-${unit}`,
                             title: `${base}^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                            description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${wikiLink(name, name)})!`,
+                            description: `You've lived for ${base}${Milestones.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${wikiLink(name, name)})!`,
                             date: eventDate,
                             category: 'binary',
                             icon,
@@ -538,6 +539,60 @@ const Calculator = {
         }
     },
 
+    _addSpeedOfLightMilestones(birthDate, addEvent) {
+        // Calculate when you've "traveled" to cosmic destinations at light speed
+        // Distance = age in seconds × speed of light
+        // So: seconds needed = distance / speed of light
+
+        for (const [key, dest] of Object.entries(Milestones.COSMIC_DISTANCES)) {
+            const secondsNeeded = dest.meters / Milestones.SPEED_OF_LIGHT;
+            const eventDate = new Date(birthDate.getTime() + secondsNeeded * Milestones.MS_PER_SECOND);
+
+            // Format the distance nicely
+            let distanceStr;
+            if (dest.meters >= 1e15) {
+                distanceStr = `${(dest.meters / 9.461e15).toFixed(2)} light-years`;
+            } else if (dest.meters >= 1e12) {
+                distanceStr = `${(dest.meters / 1e12).toFixed(1)} trillion km`;
+            } else if (dest.meters >= 1e9) {
+                distanceStr = `${(dest.meters / 1e9).toFixed(1)} billion km`;
+            } else {
+                distanceStr = `${(dest.meters / 1e6).toFixed(0)} million km`;
+            }
+
+            addEvent({
+                id: `lightspeed-${key}`,
+                title: `Light Speed to ${dest.name}`,
+                description: `If you traveled at the speed of light since birth, you'd have reached ${dest.name} (${distanceStr} away)!`,
+                date: eventDate,
+                category: 'scientific',
+                icon: dest.icon,
+                milestone: `c × age = ${dest.name}`
+            });
+        }
+
+        // Also add some clean multiples of light-time units
+        const lightTimeUnits = [
+            { seconds: 1, name: '1 Light-Second', desc: 'enough to circle Earth 7.5 times' },
+            { seconds: 60, name: '1 Light-Minute', desc: 'the distance light travels in a minute' },
+            { seconds: 499, name: '1 AU (Sun Distance)', desc: 'the distance from Earth to the Sun' },
+            { seconds: 3600, name: '1 Light-Hour', desc: 'past the orbit of Jupiter' },
+            { seconds: 86400, name: '1 Light-Day', desc: 'well beyond the Kuiper Belt' }
+        ];
+
+        for (const unit of lightTimeUnits) {
+            addEvent({
+                id: `lightspeed-${unit.seconds}s`,
+                title: unit.name,
+                description: `At age ${unit.seconds.toLocaleString()} seconds, you've lived long enough for light to travel ${unit.name.toLowerCase()} - ${unit.desc}!`,
+                date: new Date(birthDate.getTime() + unit.seconds * Milestones.MS_PER_SECOND),
+                category: 'scientific',
+                icon: '💡',
+                milestone: unit.name
+            });
+        }
+    },
+
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         const maxYears = 120;
 
@@ -612,18 +667,6 @@ const Calculator = {
                 });
             }
         }
-    },
-
-    // =========================================================================
-    // UTILITY FUNCTIONS
-    // =========================================================================
-
-    _toSuperscript(num) {
-        const superscripts = {
-            0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴',
-            5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹'
-        };
-        return String(num).split('').map(d => superscripts[d] || d).join('');
     }
 };
 
