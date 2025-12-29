@@ -28,101 +28,22 @@ const {
   PALINDROMES,
   REPUNITS,
   POWERS_OF_2,
+  secondMilestones,
+  minuteMilestones,
+  hourMilestones,
+  dayMilestones,
+  weekMilestones,
+  monthMilestones,
+  baseMilestones,
+  popCultureMilestones,
+  nerdyHolidays,
+  primeAges,
+  squareAges,
+  powerOf2Ages,
+  cubeAges,
+  hexRoundAges,
   getOrdinal
 } = Milestones;
-
-// ============================================================================
-// CALENDAR MILESTONES - Subset of milestones for calendar display
-// ============================================================================
-
-const secondMilestones = [
-  { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds' },
-  { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds' },
-  { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds' },
-  { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds' },
-  { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds' },
-  { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds' },
-  { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds' },
-  { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds' },
-  { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds' },
-  { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds' },
-  { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds' },
-  { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds' }
-];
-
-const minuteMilestones = [
-  { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes' },
-  { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes' },
-  { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' }
-];
-
-const hourMilestones = [
-  { value: 1e4, label: '10,000 Hours', short: '10⁴ hours' },
-  { value: 2.5e4, label: '25,000 Hours', short: '2.5×10⁴ hours' },
-  { value: 5e4, label: '50,000 Hours', short: '5×10⁴ hours' },
-  { value: 7.5e4, label: '75,000 Hours', short: '7.5×10⁴ hours' },
-  { value: 1e5, label: '100,000 Hours', short: '10⁵ hours' },
-  { value: 1.5e5, label: '150,000 Hours', short: '1.5×10⁵ hours' },
-  { value: 2e5, label: '200,000 Hours', short: '2×10⁵ hours' },
-  { value: 2.5e5, label: '250,000 Hours', short: '2.5×10⁵ hours' },
-  { value: 3e5, label: '300,000 Hours', short: '3×10⁵ hours' },
-  { value: 4e5, label: '400,000 Hours', short: '4×10⁵ hours' },
-  { value: 5e5, label: '500,000 Hours', short: '5×10⁵ hours' },
-  { value: 6e5, label: '600,000 Hours', short: '6×10⁵ hours' },
-  { value: 7.5e5, label: '750,000 Hours', short: '7.5×10⁵ hours' },
-  { value: 1e6, label: '1 Million Hours', short: '10⁶ hours' }
-];
-
-const dayMilestones = [
-  { value: 1000, label: '1,000 Days', short: '10³ days' },
-  { value: 1500, label: '1,500 Days', short: '1.5×10³ days' },
-  { value: 2000, label: '2,000 Days', short: '2×10³ days' },
-  { value: 2500, label: '2,500 Days', short: '2.5×10³ days' },
-  { value: 3000, label: '3,000 Days', short: '3×10³ days' },
-  { value: 4000, label: '4,000 Days', short: '4×10³ days' },
-  { value: 5000, label: '5,000 Days', short: '5×10³ days' },
-  { value: 6000, label: '6,000 Days', short: '6×10³ days' },
-  { value: 7000, label: '7,000 Days', short: '7×10³ days' },
-  { value: 7500, label: '7,500 Days', short: '7.5×10³ days' },
-  { value: 8000, label: '8,000 Days', short: '8×10³ days' },
-  { value: 9000, label: '9,000 Days', short: '9×10³ days' },
-  { value: 10000, label: '10,000 Days', short: '10⁴ days' },
-  { value: 11111, label: '11,111 Days', short: '11,111 days' },
-  { value: 12345, label: '12,345 Days', short: '12,345 days' },
-  { value: 15000, label: '15,000 Days', short: '1.5×10⁴ days' },
-  { value: 17500, label: '17,500 Days', short: '1.75×10⁴ days' },
-  { value: 20000, label: '20,000 Days', short: '2×10⁴ days' },
-  { value: 22222, label: '22,222 Days', short: '22,222 days' },
-  { value: 25000, label: '25,000 Days', short: '2.5×10⁴ days' },
-  { value: 27500, label: '27,500 Days', short: '2.75×10⁴ days' },
-  { value: 30000, label: '30,000 Days', short: '3×10⁴ days' },
-  { value: 33333, label: '33,333 Days', short: '33,333 days' }
-];
-
-const weekMilestones = [
-  { value: 250, label: '250 Weeks', short: '250 weeks' },
-  { value: 500, label: '500 Weeks', short: '500 weeks' },
-  { value: 750, label: '750 Weeks', short: '750 weeks' },
-  { value: 1000, label: '1,000 Weeks', short: '10³ weeks' },
-  { value: 1250, label: '1,250 Weeks', short: '1,250 weeks' },
-  { value: 1500, label: '1,500 Weeks', short: '1,500 weeks' },
-  { value: 1750, label: '1,750 Weeks', short: '1,750 weeks' },
-  { value: 2000, label: '2,000 Weeks', short: '2×10³ weeks' },
-  { value: 2500, label: '2,500 Weeks', short: '2,500 weeks' },
-  { value: 3000, label: '3,000 Weeks', short: '3×10³ weeks' }
-];
-
-const monthMilestones = [
-  { value: 100, label: '100 Months', short: '100 months' },
-  { value: 200, label: '200 Months', short: '200 months' },
-  { value: 250, label: '250 Months', short: '250 months' },
-  { value: 300, label: '300 Months', short: '300 months' },
-  { value: 400, label: '400 Months', short: '400 months' },
-  { value: 500, label: '500 Months', short: '500 months' },
-  { value: 600, label: '600 Months', short: '600 months' },
-  { value: 750, label: '750 Months', short: '750 months' },
-  { value: 1000, label: '1,000 Months', short: '10³ months' }
-];
 
 // ============================================================================
 // WORKER HANDLER
@@ -326,52 +247,7 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // All number base milestones
-  const baseMilestones = [
-    { base: 3, name: 'ternary', icon: '🔺', units: [
-      { powers: [15, 16, 17, 18, 19, 20], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [11, 12, 13, 14, 15], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [8, 9, 10, 11, 12], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [6, 7, 8, 9], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 5, name: 'quinary', icon: '🖐️', units: [
-      { powers: [10, 11, 12, 13, 14], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [8, 9, 10, 11], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [6, 7, 8, 9], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [5, 6, 7], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 6, name: 'senary', icon: '🎲', units: [
-      { powers: [9, 10, 11, 12, 13], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [7, 8, 9, 10], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [5, 6, 7, 8], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 7, name: 'septenary', icon: '🌈', units: [
-      { powers: [8, 9, 10, 11, 12], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [6, 7, 8, 9], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [5, 6, 7, 8], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 8, name: 'octal', icon: '🐙', units: [
-      { powers: [7, 8, 9, 10, 11], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [5, 6, 7, 8], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [4, 5, 6, 7], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [3, 4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 12, name: 'dozenal', icon: '🕛', units: [
-      { powers: [6, 7, 8, 9], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [4, 5, 6], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [3, 4, 5], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
-    { base: 60, name: 'Babylonian', icon: '🏛️', units: [
-      { powers: [4, 5], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
-      { powers: [3, 4], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
-      { powers: [2, 3], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
-      { powers: [2], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]}
-  ];
-
+  // All number base milestones (using shared baseMilestones from milestones.js)
   for (const { base, name, icon, units } of baseMilestones) {
     for (const { powers, unit, label, ms } of units) {
       for (const power of powers) {
@@ -572,12 +448,7 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // Pop culture milestones
-  const popCultureMilestones = [
-    { value: 42e6, unit: MS_PER_SECOND, label: '42 Million Seconds', icon: '🌌', desc: 'The Answer to Life, the Universe, and Everything!' },
-    { value: 1337, unit: MS_PER_DAY, label: '1,337 Days', icon: '🎮', desc: 'You are now officially 1337 (elite)!' },
-  ];
-
+  // Pop culture milestones (using shared popCultureMilestones from milestones.js)
   for (const m of popCultureMilestones) {
     const eventDate = new Date(birthDate.getTime() + m.value * m.unit);
     if (eventDate <= maxDate && eventDate > now) {
@@ -591,12 +462,7 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // Nerdy holidays (Pi Day, May 4th, Tau Day)
-  const nerdyHolidays = [
-    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)' },
-    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day' },
-    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
-  ];
+  // Nerdy holidays (using shared nerdyHolidays from milestones.js)
   const maxYears = 120;
 
   for (const holiday of nerdyHolidays) {
@@ -621,13 +487,8 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
     }
   }
 
-  // Earth birthdays with special labels
+  // Earth birthdays with special labels (using shared arrays from milestones.js)
   const maxBirthdayYears = 120;
-  const primes = new Set([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113]);
-  const squares = { 4: '2²', 9: '3²', 16: '4²', 25: '5²', 36: '6²', 49: '7²', 64: '8²', 81: '9²', 100: '10²' };
-  const powersOf2 = { 2: '2¹', 4: '2²', 8: '2³', 16: '2⁴', 32: '2⁵', 64: '2⁶' };
-  const cubes = { 8: '2³', 27: '3³', 64: '4³' };
-  const hexRound = { 16: '0x10', 32: '0x20', 48: '0x30', 64: '0x40', 80: '0x50', 96: '0x60', 112: '0x70' };
 
   for (let year = 1; year <= maxBirthdayYears; year++) {
     const birthdayDate = new Date(
@@ -643,11 +504,11 @@ function calculateNerdiversaries(birthDate, yearsAhead) {
       // Build special labels
       const labels = [];
       if (year === 42) labels.push('The Answer!');
-      if (primes.has(year)) labels.push('Prime');
-      if (squares[year]) labels.push(`Perfect Square (${squares[year]})`);
-      if (powersOf2[year]) labels.push(`Power of 2 (${powersOf2[year]})`);
-      if (cubes[year]) labels.push(`Perfect Cube (${cubes[year]})`);
-      if (hexRound[year]) labels.push(`Hex Round (${hexRound[year]})`);
+      if (primeAges.has(year)) labels.push('Prime');
+      if (squareAges[year]) labels.push(`Perfect Square (${squareAges[year]})`);
+      if (powerOf2Ages[year]) labels.push(`Power of 2 (${powerOf2Ages[year]})`);
+      if (cubeAges[year]) labels.push(`Perfect Cube (${cubeAges[year]})`);
+      if (hexRoundAges[year]) labels.push(`Hex Round (${hexRoundAges[year]})`);
 
       const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
 
