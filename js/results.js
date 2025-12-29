@@ -158,6 +158,7 @@ function setupPersonFilter() {
  */
 function calculateAndDisplayEvents() {
     allEvents = [];
+    const seenSharedHolidays = new Set();
 
     // Calculate events for each family member
     familyMembers.forEach(member => {
@@ -165,13 +166,25 @@ function calculateAndDisplayEvents() {
 
         // Add person info to each event
         events.forEach(event => {
-            event.personName = member.name;
-            event.personColor = getColorForPerson(member.name);
-            // Make ID unique per person
-            event.id = `${member.name}-${event.id}`;
-        });
+            // Skip duplicate shared holidays (Pi Day, Star Wars Day, etc.)
+            if (event.isSharedHoliday) {
+                const holidayKey = event.id;
+                if (seenSharedHolidays.has(holidayKey)) {
+                    return; // Skip this duplicate
+                }
+                seenSharedHolidays.add(holidayKey);
+                // Shared holidays belong to everyone
+                event.personName = 'Everyone';
+                event.personColor = '#7c3aed';
+            } else {
+                event.personName = member.name;
+                event.personColor = getColorForPerson(member.name);
+                // Make ID unique per person
+                event.id = `${member.name}-${event.id}`;
+            }
 
-        allEvents = allEvents.concat(events);
+            allEvents.push(event);
+        });
     });
 
     // Sort all events by date

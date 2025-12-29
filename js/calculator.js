@@ -26,7 +26,24 @@ const WIKI_LINKS = {
     tenKHours: '<a href="https://en.wikipedia.org/wiki/Outliers_(book)" target="_blank">10,000-hour rule</a>',
     answer42: '<a href="https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42" target="_blank">The Answer</a>',
     binary: '<a href="https://en.wikipedia.org/wiki/Binary_number" target="_blank">binary</a>',
+    ternary: '<a href="https://en.wikipedia.org/wiki/Ternary_numeral_system" target="_blank">ternary</a>',
+    octal: '<a href="https://en.wikipedia.org/wiki/Octal" target="_blank">octal</a>',
+    nonary: '<a href="https://en.wikipedia.org/wiki/Nonary" target="_blank">nonary</a>',
+    dozenal: '<a href="https://en.wikipedia.org/wiki/Duodecimal" target="_blank">dozenal</a>',
     hexadecimal: '<a href="https://en.wikipedia.org/wiki/Hexadecimal" target="_blank">hexadecimal</a>',
+    vigesimal: '<a href="https://en.wikipedia.org/wiki/Vigesimal" target="_blank">vigesimal</a>',
+    sexagesimal: '<a href="https://en.wikipedia.org/wiki/Sexagesimal" target="_blank">sexagesimal</a>',
+    piDay: '<a href="https://en.wikipedia.org/wiki/Pi_Day" target="_blank">Pi Day</a>',
+    starWarsDay: '<a href="https://en.wikipedia.org/wiki/Star_Wars_Day" target="_blank">Star Wars Day</a>',
+    tauDay: '<a href="https://en.wikipedia.org/wiki/Tau_Day" target="_blank">Tau Day</a>',
+    // Planets with orbital period info
+    mercury: '<a href="https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude" target="_blank">Mercury</a>',
+    venus: '<a href="https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation" target="_blank">Venus</a>',
+    mars: '<a href="https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation" target="_blank">Mars</a>',
+    jupiter: '<a href="https://en.wikipedia.org/wiki/Jupiter#Orbit_and_rotation" target="_blank">Jupiter</a>',
+    saturn: '<a href="https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation" target="_blank">Saturn</a>',
+    uranus: '<a href="https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation" target="_blank">Uranus</a>',
+    neptune: '<a href="https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation" target="_blank">Neptune</a>',
 };
 
 const Calculator = {
@@ -88,6 +105,7 @@ const Calculator = {
     _addPlanetaryYears(birthDate, maxDate, addEvent) {
         for (const [key, planet] of Object.entries(Milestones.PLANETS)) {
             const periodMs = planet.days * Milestones.MS_PER_DAY;
+            const planetLink = WIKI_LINKS[key] || planet.name;
             for (let yearNum = 1; yearNum <= 200; yearNum++) {
                 const eventDate = new Date(birthDate.getTime() + yearNum * periodMs);
                 if (eventDate > maxDate) break;
@@ -95,7 +113,7 @@ const Calculator = {
                 addEvent({
                     id: `${key}-${yearNum}`,
                     title: `${planet.name} Year ${yearNum}`,
-                    description: `You've completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} around the Sun as measured from ${planet.name}!`,
+                    description: `You've completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} around the Sun as measured from ${planetLink}!`,
                     date: eventDate,
                     category: 'planetary',
                     icon: planet.icon,
@@ -241,6 +259,7 @@ const Calculator = {
 
         // All number base milestones
         for (const { base, name, icon, units } of Milestones.baseMilestones) {
+            const baseLink = WIKI_LINKS[name] || name;
             for (const { powers, unit, ms } of units) {
                 for (const power of powers) {
                     const value = Math.pow(base, power);
@@ -249,7 +268,7 @@ const Calculator = {
                         addEvent({
                             id: `base${base}-${power}-${unit}`,
                             title: `${base}^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                            description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${name})!`,
+                            description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${baseLink})!`,
                             date: eventDate,
                             category: 'binary',
                             icon: icon,
@@ -514,6 +533,13 @@ const Calculator = {
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         const maxYears = 120;
 
+        // Map holiday names to wiki links
+        const holidayLinks = {
+            'Pi Day': WIKI_LINKS.piDay,
+            'May the 4th': WIKI_LINKS.starWarsDay,
+            'Tau Day': WIKI_LINKS.tauDay
+        };
+
         for (const holiday of Milestones.nerdyHolidays) {
             for (let year = 1; year <= maxYears; year++) {
                 const holidayDate = new Date(
@@ -525,15 +551,16 @@ const Calculator = {
                 );
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
-                    const ordinal = Milestones.getOrdinal(year);
+                    const wikiLink = holidayLinks[holiday.name] || holiday.name;
                     addEvent({
-                        id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${year}`,
-                        title: `${ordinal} ${holiday.name}`,
-                        description: `Your ${ordinal} ${holiday.name}! (${holiday.desc})`,
+                        id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
+                        title: `${holiday.name} ${holidayDate.getFullYear()}`,
+                        description: `${wikiLink}! (${holiday.desc})`,
                         date: holidayDate,
                         category: 'pop-culture',
                         icon: holiday.icon,
-                        milestone: `${year} years of ${holiday.name}`
+                        milestone: holiday.name,
+                        isSharedHoliday: true
                     });
                 }
             }
