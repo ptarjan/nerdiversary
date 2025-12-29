@@ -358,4 +358,37 @@ test.describe('Nerdiversary Main Flows', () => {
     const html = await page.content();
     expect(html).not.toContain('onerror=alert');
   });
+
+  test('all event categories have corresponding filter buttons', async ({ page }) => {
+    // Load results page with a birthdate that will generate events in all categories
+    await page.goto('/results.html?family=Test|1990-01-01');
+
+    // Wait for events to load
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // Get all unique categories from the displayed events
+    const eventCategories = await page.evaluate(() => {
+      const cards = document.querySelectorAll('.event-card[data-category]');
+      const categories = new Set();
+      cards.forEach(card => categories.add(card.dataset.category));
+      return Array.from(categories);
+    });
+
+    // Get all filter button categories (except 'all')
+    const filterCategories = await page.evaluate(() => {
+      const buttons = document.querySelectorAll('.filter-btn[data-filter]');
+      const categories = [];
+      buttons.forEach(btn => {
+        if (btn.dataset.filter !== 'all') {
+          categories.push(btn.dataset.filter);
+        }
+      });
+      return categories;
+    });
+
+    // Every event category should have a corresponding filter button
+    for (const category of eventCategories) {
+      expect(filterCategories, `Filter button missing for category: ${category}`).toContain(category);
+    }
+  });
 });
