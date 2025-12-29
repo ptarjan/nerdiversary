@@ -186,7 +186,6 @@ const monthMilestones = [
     { value: 444, label: '444 Months', short: 'repdigit months' },
     { value: 480, label: '480 Months', short: '40 years in months' },
     { value: 500, label: '500 Months', short: '500 months' },
-    { value: 504, label: '504 Months', short: '42 years in months' },
     { value: 540, label: '540 Months', short: '45 years in months' },
     { value: 555, label: '555 Months', short: 'repdigit months' },
     { value: 600, label: '600 Months', short: '600 months' },
