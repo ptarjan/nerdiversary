@@ -10,44 +10,48 @@ if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
     globalThis.Milestones = require('./milestones.js');
 }
 
-// Wikipedia links for educational terms
-const WIKI_LINKS = {
-    fibonacci: '<a href="https://en.wikipedia.org/wiki/Fibonacci_sequence" target="_blank">Fibonacci number</a>',
-    lucas: '<a href="https://en.wikipedia.org/wiki/Lucas_number" target="_blank">Lucas number</a>',
-    perfect: '<a href="https://en.wikipedia.org/wiki/Perfect_number" target="_blank">perfect number</a>',
-    triangular: '<a href="https://en.wikipedia.org/wiki/Triangular_number" target="_blank">triangular</a>',
-    palindrome: '<a href="https://en.wikipedia.org/wiki/Palindromic_number" target="_blank">palindrome</a>',
-    repunit: '<a href="https://en.wikipedia.org/wiki/Repunit" target="_blank">repunit</a>',
-    phi: '<a href="https://en.wikipedia.org/wiki/Golden_ratio" target="_blank">golden ratio</a>',
-    pi: '<a href="https://en.wikipedia.org/wiki/Pi" target="_blank">π</a>',
-    e: '<a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)" target="_blank">e</a>',
-    tau: '<a href="https://en.wikipedia.org/wiki/Tau_(mathematics)" target="_blank">τ (2π)</a>',
-    speedOfLight: '<a href="https://en.wikipedia.org/wiki/Speed_of_light" target="_blank">speed of light</a>',
-    tenKHours: '<a href="https://en.wikipedia.org/wiki/Outliers_(book)" target="_blank">10,000-hour rule</a>',
-    answer42: '<a href="https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42" target="_blank">The Answer</a>',
-    binary: '<a href="https://en.wikipedia.org/wiki/Binary_number" target="_blank">binary</a>',
-    ternary: '<a href="https://en.wikipedia.org/wiki/Ternary_numeral_system" target="_blank">ternary</a>',
-    quinary: '<a href="https://en.wikipedia.org/wiki/Quinary" target="_blank">quinary</a>',
-    senary: '<a href="https://en.wikipedia.org/wiki/Senary" target="_blank">senary</a>',
-    septenary: '<a href="https://en.wikipedia.org/wiki/Septenary" target="_blank">septenary</a>',
-    octal: '<a href="https://en.wikipedia.org/wiki/Octal" target="_blank">octal</a>',
-    dozenal: '<a href="https://en.wikipedia.org/wiki/Duodecimal" target="_blank">dozenal</a>',
-    hexadecimal: '<a href="https://en.wikipedia.org/wiki/Hexadecimal" target="_blank">hexadecimal</a>',
-    vigesimal: '<a href="https://en.wikipedia.org/wiki/Vigesimal" target="_blank">vigesimal</a>',
-    sexagesimal: '<a href="https://en.wikipedia.org/wiki/Sexagesimal" target="_blank">sexagesimal</a>',
-    Babylonian: '<a href="https://en.wikipedia.org/wiki/Sexagesimal" target="_blank">Babylonian (base 60)</a>',
-    piDay: '<a href="https://en.wikipedia.org/wiki/Pi_Day" target="_blank">Pi Day</a>',
-    starWarsDay: '<a href="https://en.wikipedia.org/wiki/Star_Wars_Day" target="_blank">Star Wars Day</a>',
-    tauDay: '<a href="https://en.wikipedia.org/wiki/Tau_Day" target="_blank">Tau Day</a>',
-    // Planets with orbital period info
-    mercury: '<a href="https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude" target="_blank">Mercury</a>',
-    venus: '<a href="https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation" target="_blank">Venus</a>',
-    mars: '<a href="https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation" target="_blank">Mars</a>',
-    jupiter: '<a href="https://en.wikipedia.org/wiki/Jupiter#Orbit_and_rotation" target="_blank">Jupiter</a>',
-    saturn: '<a href="https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation" target="_blank">Saturn</a>',
-    uranus: '<a href="https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation" target="_blank">Uranus</a>',
-    neptune: '<a href="https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation" target="_blank">Neptune</a>',
+// Wikipedia URLs for educational terms
+const WIKI_URLS = {
+    fibonacci: 'https://en.wikipedia.org/wiki/Fibonacci_sequence',
+    lucas: 'https://en.wikipedia.org/wiki/Lucas_number',
+    perfect: 'https://en.wikipedia.org/wiki/Perfect_number',
+    triangular: 'https://en.wikipedia.org/wiki/Triangular_number',
+    palindrome: 'https://en.wikipedia.org/wiki/Palindromic_number',
+    repunit: 'https://en.wikipedia.org/wiki/Repunit',
+    phi: 'https://en.wikipedia.org/wiki/Golden_ratio',
+    pi: 'https://en.wikipedia.org/wiki/Pi',
+    e: 'https://en.wikipedia.org/wiki/E_(mathematical_constant)',
+    tau: 'https://en.wikipedia.org/wiki/Tau_(mathematics)',
+    speedOfLight: 'https://en.wikipedia.org/wiki/Speed_of_light',
+    tenKHours: 'https://en.wikipedia.org/wiki/Outliers_(book)',
+    answer42: 'https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42',
+    binary: 'https://en.wikipedia.org/wiki/Binary_number',
+    ternary: 'https://en.wikipedia.org/wiki/Ternary_numeral_system',
+    quinary: 'https://en.wikipedia.org/wiki/Quinary',
+    senary: 'https://en.wikipedia.org/wiki/Senary',
+    septenary: 'https://en.wikipedia.org/wiki/Septenary',
+    octal: 'https://en.wikipedia.org/wiki/Octal',
+    dozenal: 'https://en.wikipedia.org/wiki/Duodecimal',
+    hexadecimal: 'https://en.wikipedia.org/wiki/Hexadecimal',
+    vigesimal: 'https://en.wikipedia.org/wiki/Vigesimal',
+    Babylonian: 'https://en.wikipedia.org/wiki/Sexagesimal',
+    piDay: 'https://en.wikipedia.org/wiki/Pi_Day',
+    starWarsDay: 'https://en.wikipedia.org/wiki/Star_Wars_Day',
+    tauDay: 'https://en.wikipedia.org/wiki/Tau_Day',
+    mercury: 'https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude',
+    venus: 'https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation',
+    mars: 'https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation',
+    jupiter: 'https://en.wikipedia.org/wiki/Jupiter#Orbit_and_rotation',
+    saturn: 'https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation',
+    uranus: 'https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation',
+    neptune: 'https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation',
 };
+
+// Helper to create Wikipedia link HTML
+function wikiLink(key, text) {
+    const url = WIKI_URLS[key];
+    return url ? `<a href="${url}" target="_blank">${text}</a>` : text;
+}
 
 const Calculator = {
     /**
@@ -108,7 +112,6 @@ const Calculator = {
     _addPlanetaryYears(birthDate, maxDate, addEvent) {
         for (const [key, planet] of Object.entries(Milestones.PLANETS)) {
             const periodMs = planet.days * Milestones.MS_PER_DAY;
-            const planetLink = WIKI_LINKS[key] || planet.name;
             for (let yearNum = 1; yearNum <= 200; yearNum++) {
                 const eventDate = new Date(birthDate.getTime() + yearNum * periodMs);
                 if (eventDate > maxDate) break;
@@ -116,7 +119,7 @@ const Calculator = {
                 addEvent({
                     id: `${key}-${yearNum}`,
                     title: `${planet.name} Year ${yearNum}`,
-                    description: `You've completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} around the Sun as measured from ${planetLink}!`,
+                    description: `You've completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} around the Sun as measured from ${wikiLink(key, planet.name)}!`,
                     date: eventDate,
                     category: 'planetary',
                     icon: planet.icon,
@@ -155,7 +158,7 @@ const Calculator = {
 
         // Hours
         for (const m of Milestones.hourMilestones) {
-            const extra = m.value === 10000 ? ` You've mastered life according to the ${WIKI_LINKS.tenKHours}!` : '';
+            const extra = m.value === 10000 ? ` You've mastered life according to the ${wikiLink('tenKHours', '10,000-hour rule')}!` : '';
             addEvent({
                 id: `hours-${m.value}`,
                 title: m.label,
@@ -262,7 +265,6 @@ const Calculator = {
 
         // All number base milestones
         for (const { base, name, icon, units } of Milestones.baseMilestones) {
-            const baseLink = WIKI_LINKS[name] || name;
             for (const { powers, unit, ms } of units) {
                 for (const power of powers) {
                     const value = Math.pow(base, power);
@@ -271,7 +273,7 @@ const Calculator = {
                         addEvent({
                             id: `base${base}-${power}-${unit}`,
                             title: `${base}^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                            description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${baseLink})!`,
+                            description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${wikiLink(name, name)})!`,
                             date: eventDate,
                             category: 'binary',
                             icon: icon,
@@ -285,10 +287,10 @@ const Calculator = {
 
     _addMathMilestones(birthDate, addEvent) {
         const constants = [
-            { symbol: 'π', value: Milestones.PI, name: 'pi', wiki: WIKI_LINKS.pi },
-            { symbol: 'e', value: Milestones.E, name: 'e', wiki: WIKI_LINKS.e },
-            { symbol: 'φ', value: Milestones.PHI, name: 'phi', wiki: WIKI_LINKS.phi },
-            { symbol: 'τ', value: Milestones.TAU, name: 'tau', wiki: WIKI_LINKS.tau }
+            { symbol: 'π', value: Milestones.PI, name: 'pi', text: 'π' },
+            { symbol: 'e', value: Milestones.E, name: 'e', text: 'e' },
+            { symbol: 'φ', value: Milestones.PHI, name: 'phi', text: 'golden ratio' },
+            { symbol: 'τ', value: Milestones.TAU, name: 'tau', text: 'τ (2π)' }
         ];
 
         const multipliers = [1e7, 1e8, 1e9];
@@ -302,7 +304,7 @@ const Calculator = {
                 addEvent({
                     id: `${c.name}-${mult}`,
                     title: label,
-                    description: `You've lived for ${c.wiki} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds!`,
+                    description: `You've lived for ${wikiLink(c.name, c.text)} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds!`,
                     date: new Date(birthDate.getTime() + c.value * mult * Milestones.MS_PER_SECOND),
                     category: 'mathematical',
                     icon: c.symbol,
@@ -326,7 +328,7 @@ const Calculator = {
                 addEvent({
                     id: `fib-${unit}-${fib}`,
                     title: `Fibonacci ${label} ${fib.toLocaleString()}`,
-                    description: `${label} ${fib.toLocaleString()} is a ${WIKI_LINKS.fibonacci}!`,
+                    description: `${label} ${fib.toLocaleString()} is a ${wikiLink('fibonacci', 'Fibonacci number')}!`,
                     date: new Date(birthDate.getTime() + fib * ms),
                     category: 'fibonacci',
                     icon: '🌀',
@@ -350,7 +352,7 @@ const Calculator = {
                 addEvent({
                     id: `lucas-${unit}-${luc}`,
                     title: `Lucas ${label} ${luc.toLocaleString()}`,
-                    description: `${label} ${luc.toLocaleString()} is a ${WIKI_LINKS.lucas}!`,
+                    description: `${label} ${luc.toLocaleString()} is a ${wikiLink('lucas', 'Lucas number')}!`,
                     date: new Date(birthDate.getTime() + luc * ms),
                     category: 'fibonacci',
                     icon: '🔷',
@@ -366,7 +368,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-days-${perfect}`,
                 title: `Perfect Day ${perfect}`,
-                description: `Day ${perfect} is a ${WIKI_LINKS.perfect}! (${perfect} = sum of its divisors)`,
+                description: `Day ${perfect} is a ${wikiLink('perfect', 'perfect number')}! (${perfect} = sum of its divisors)`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '💎',
@@ -379,7 +381,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-hours-${perfect}`,
                 title: `Perfect Hour ${perfect.toLocaleString()}`,
-                description: `Hour ${perfect.toLocaleString()} is a ${WIKI_LINKS.perfect}!`,
+                description: `Hour ${perfect.toLocaleString()} is a ${wikiLink('perfect', 'perfect number')}!`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '💎',
@@ -402,7 +404,7 @@ const Calculator = {
                 addEvent({
                     id: `triangular-days-${tri}`,
                     title: `Triangular Day ${tri.toLocaleString()}`,
-                    description: `Day ${tri.toLocaleString()} is ${WIKI_LINKS.triangular}! (1+2+3+...+${n} = ${tri})`,
+                    description: `Day ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+3+...+${n} = ${tri})`,
                     date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_DAY),
                     category: 'mathematical',
                     icon: '🔺',
@@ -420,7 +422,7 @@ const Calculator = {
             addEvent({
                 id: `triangular-hours-${tri}`,
                 title: `Triangular Hour ${tri.toLocaleString()}`,
-                description: `Hour ${tri.toLocaleString()} is ${WIKI_LINKS.triangular}! (1+2+...+${n})`,
+                description: `Hour ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+...+${n})`,
                 date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🔺',
@@ -444,7 +446,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-days-${pal}`,
                 title: `Palindrome Day ${pal.toLocaleString()}`,
-                description: `Day ${pal} is a ${WIKI_LINKS.palindrome} - reads the same forwards and backwards!`,
+                description: `Day ${pal} is a ${wikiLink('palindrome', 'palindrome')} - reads the same forwards and backwards!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '🪞',
@@ -458,7 +460,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-hours-${pal}`,
                 title: `Palindrome Hour ${pal.toLocaleString()}`,
-                description: `Hour ${pal.toLocaleString()} is a ${WIKI_LINKS.palindrome}!`,
+                description: `Hour ${pal.toLocaleString()} is a ${wikiLink('palindrome', 'palindrome')}!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🪞',
@@ -480,7 +482,7 @@ const Calculator = {
                 addEvent({
                     id: `repunit-${unit}-${rep}`,
                     title: `Repunit ${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()}`,
-                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is a ${WIKI_LINKS.repunit} (all 1s)!`,
+                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is a ${wikiLink('repunit', 'repunit')} (all 1s)!`,
                     date: new Date(birthDate.getTime() + rep * ms),
                     category: 'binary',
                     icon: '1️⃣',
@@ -496,7 +498,7 @@ const Calculator = {
         addEvent({
             id: 'speed-of-light-seconds',
             title: 'Speed of Light Seconds',
-            description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the ${WIKI_LINKS.speedOfLight} in m/s!`,
+            description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the ${wikiLink('speedOfLight', 'speed of light')} in m/s!`,
             date: new Date(birthDate.getTime() + speedOfLight * Milestones.MS_PER_SECOND),
             category: 'mathematical',
             icon: '💡',
@@ -536,11 +538,11 @@ const Calculator = {
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         const maxYears = 120;
 
-        // Map holiday names to wiki links
+        // Map holiday names to wiki link keys and text
         const holidayLinks = {
-            'Pi Day': WIKI_LINKS.piDay,
-            'May the 4th': WIKI_LINKS.starWarsDay,
-            'Tau Day': WIKI_LINKS.tauDay
+            'Pi Day': { key: 'piDay', text: 'Pi Day' },
+            'May the 4th': { key: 'starWarsDay', text: 'Star Wars Day' },
+            'Tau Day': { key: 'tauDay', text: 'Tau Day' }
         };
 
         for (const holiday of Milestones.nerdyHolidays) {
@@ -554,11 +556,12 @@ const Calculator = {
                 );
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
-                    const wikiLink = holidayLinks[holiday.name] || holiday.name;
+                    const link = holidayLinks[holiday.name];
+                    const linkText = link ? wikiLink(link.key, link.text) : holiday.name;
                     addEvent({
                         id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
                         title: `${holiday.name} ${holidayDate.getFullYear()}`,
-                        description: `${wikiLink}! (${holiday.desc})`,
+                        description: `${linkText}! (${holiday.desc})`,
                         date: holidayDate,
                         category: 'pop-culture',
                         icon: holiday.icon,
@@ -586,7 +589,7 @@ const Calculator = {
                 const ordinal = Milestones.getOrdinal(year);
                 const labels = [];
 
-                if (year === 42) labels.push(`${WIKI_LINKS.answer42}! 🌌`);
+                if (year === 42) labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`);
                 if (Milestones.primeAges.has(year)) labels.push('Prime');
                 if (Milestones.squareAges[year]) labels.push(`Perfect Square (${Milestones.squareAges[year]})`);
                 if (Milestones.powerOf2Ages[year]) labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`);
