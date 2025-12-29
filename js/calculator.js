@@ -497,17 +497,25 @@ const Calculator = {
     },
 
     _addScientificMilestones(birthDate, addEvent) {
-        // Speed of light
+        // Speed of light multiples (c = 299,792,458 m/s)
         const speedOfLight = 299792458;
-        addEvent({
-            id: 'speed-of-light-seconds',
-            title: 'Speed of Light Seconds',
-            description: `You've lived for ${speedOfLight.toLocaleString()} seconds - the ${wikiLink('speedOfLight', 'speed of light')} in m/s!`,
-            date: new Date(birthDate.getTime() + speedOfLight * Milestones.MS_PER_SECOND),
-            category: 'mathematical',
-            icon: '💡',
-            milestone: `c = ${speedOfLight.toLocaleString()} seconds`
-        });
+        const maxMultiple = 10; // Up to 10c (about 95 years)
+
+        for (let mult = 1; mult <= maxMultiple; mult++) {
+            const seconds = speedOfLight * mult;
+            const label = mult === 1 ? 'c' : `${mult}c`;
+            addEvent({
+                id: `speed-of-light-${mult}x`,
+                title: `${label} Seconds`,
+                description: mult === 1
+                    ? `You've lived for ${seconds.toLocaleString()} seconds - the ${wikiLink('speedOfLight', 'speed of light')} in m/s!`
+                    : `You've lived for ${mult} × the speed of light = ${seconds.toLocaleString()} seconds!`,
+                date: new Date(birthDate.getTime() + seconds * Milestones.MS_PER_SECOND),
+                category: 'scientific',
+                icon: '💡',
+                milestone: `${label} seconds`
+            });
+        }
 
         // e^π milestones
         const ePi = Math.pow(Math.E, Math.PI);
