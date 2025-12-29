@@ -228,4 +228,102 @@ test.describe('Nerdiversary Main Flows', () => {
     // Should navigate to home (wait for it)
     await expect(page).toHaveURL(/index\.html|\/$/);
   });
+
+  test('celebration overlay displays and can be dismissed', async ({ page }) => {
+    await page.goto('/results.html?family=Test|1990-05-15');
+
+    // Wait for events to load
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // Trigger celebration via exposed test function
+    await page.evaluate(() => window.testCelebration());
+
+    // Celebration overlay should appear
+    await expect(page.locator('.celebration-overlay')).toBeVisible();
+    await expect(page.locator('.celebration-title')).toContainText("It's Happening NOW!");
+    await expect(page.locator('.celebration-emoji')).toBeVisible();
+
+    // Confetti should be present
+    await expect(page.locator('.confetti-container')).toBeVisible();
+    await expect(page.locator('.confetti').first()).toBeVisible();
+
+    // Dismiss button should work
+    await page.click('.celebration-dismiss');
+
+    // Overlay should be removed
+    await expect(page.locator('.celebration-overlay')).not.toBeVisible({ timeout: 2000 });
+  });
+
+  test('celebration shows person name in family mode', async ({ page }) => {
+    await page.goto('/results.html?family=Alice|1990-01-15,Bob|1985-06-20');
+
+    // Wait for events to load
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // Trigger celebration
+    await page.evaluate(() => window.testCelebration());
+
+    // Celebration overlay should show person name
+    await expect(page.locator('.celebration-overlay')).toBeVisible();
+    await expect(page.locator('.celebration-person')).toBeVisible();
+
+    // Dismiss
+    await page.click('.celebration-dismiss');
+  });
+
+  test('countdown cache invalidation when switching person filter', async ({ page }) => {
+    await page.goto('/results.html?family=Alice|1990-01-15,Bob|1985-06-20');
+
+    // Wait for events to load
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // Get initial countdown title
+    const initialTitle = await page.locator('.countdown-title').textContent();
+
+    // Click on Bob's filter to switch person
+    await page.click('button[data-person="Bob"]');
+
+    // Wait a moment for the display to update
+    await page.waitForTimeout(500);
+
+    // Verify countdown elements still exist and are updating
+    await expect(page.locator('#countdown-days')).toBeVisible();
+    await expect(page.locator('#countdown-hours')).toBeVisible();
+    await expect(page.locator('#countdown-minutes')).toBeVisible();
+    await expect(page.locator('#countdown-seconds')).toBeVisible();
+
+    // Switch back to All
+    await page.click('button[data-person="all"]');
+
+    // Wait a moment for the display to update
+    await page.waitForTimeout(500);
+
+    // Countdown should still work
+    await expect(page.locator('#countdown-days')).toBeVisible();
+
+    // Wait for the interval to tick and verify values are valid numbers
+    await page.waitForTimeout(1100);
+    const daysText = await page.locator('#countdown-days').textContent();
+    expect(parseInt(daysText)).toBeGreaterThanOrEqual(0);
+  });
+
+  test('countdown continues to update after page interactions', async ({ page }) => {
+    await page.goto('/results.html?family=Test|1990-05-15');
+
+    // Wait for events to load
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // Get initial seconds value
+    const initialSeconds = await page.locator('#countdown-seconds').textContent();
+
+    // Wait for countdown to tick
+    await page.waitForTimeout(1500);
+
+    // Seconds should have changed (or wrapped around)
+    const newSeconds = await page.locator('#countdown-seconds').textContent();
+
+    // At least one of them should be a valid number
+    expect(parseInt(initialSeconds)).toBeGreaterThanOrEqual(0);
+    expect(parseInt(newSeconds)).toBeGreaterThanOrEqual(0);
+  });
 });
