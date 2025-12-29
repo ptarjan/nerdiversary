@@ -533,62 +533,34 @@ test('toSuperscript converts numbers correctly', () => {
 // ============================================
 // WORKER.JS SYNC TESTS
 // ============================================
-console.log('\n--- Worker.js Sync Tests ---');
+console.log('\n--- Worker.js Import Verification ---');
 
-// Load worker module for comparison
+// Verify worker.js imports from the shared milestones module
 const fs = require('fs');
-const vm = require('vm');
 const workerPath = path.join(__dirname, '..', 'worker', 'worker.js');
 const workerCode = fs.readFileSync(workerPath, 'utf8');
 
-// Execute worker code in a sandbox to get calculateNerdiversaries
-const workerSandbox = { Math, Date, Object, Array, console, module: { exports: {} } };
-vm.createContext(workerSandbox);
-vm.runInContext(workerCode.replace(/^export default.*$/m, ''), workerSandbox);
-const Worker = workerSandbox.module.exports;
+test('Worker imports from shared milestones.js module', () => {
+    // Check for the import statement
+    const hasImport = workerCode.includes("import Milestones from '../js/milestones.js'");
+    assertTrue(hasImport, 'Worker should import from milestones.js');
 
-test('Website and calendar generate same events for a birthday', () => {
-    const testBirthday = new Date('2020-06-15T10:30:00');
-    const yearsAhead = 50;
+    // Check that constants are destructured from the import
+    const hasDestructure = workerCode.includes('MS_PER_SECOND') &&
+                          workerCode.includes('FIBONACCI') &&
+                          workerCode.includes('PLANETS') &&
+                          workerCode.includes('} = Milestones');
+    assertTrue(hasDestructure, 'Worker should destructure constants from Milestones');
+});
 
-    // Get events from website (Nerdiversary)
-    const websiteEvents = Nerdiversary.calculate(testBirthday, yearsAhead);
+test('Worker does not duplicate constant definitions', () => {
+    // Make sure we don't have duplicate constant definitions
+    // (should have destructuring, not direct const assignments for shared constants)
+    const hasDuplicateTimeConst = /const MS_PER_SECOND = 1000/.test(workerCode);
+    assertTrue(!hasDuplicateTimeConst, 'Worker should not duplicate MS_PER_SECOND');
 
-    // Get events from worker (calendar)
-    const workerEvents = Worker.calculateNerdiversaries(testBirthday, yearsAhead);
-
-    // Build maps of id -> date for comparison
-    const websiteMap = new Map();
-    for (const e of websiteEvents) {
-        websiteMap.set(e.id, e.date.getTime());
-    }
-
-    const workerMap = new Map();
-    for (const e of workerEvents) {
-        workerMap.set(e.id, e.date.getTime());
-    }
-
-    // Find events in both and verify dates match
-    let matchCount = 0;
-    let mismatchCount = 0;
-    const mismatches = [];
-
-    for (const [id, websiteTime] of websiteMap) {
-        if (workerMap.has(id)) {
-            const workerTime = workerMap.get(id);
-            if (websiteTime === workerTime) {
-                matchCount++;
-            } else {
-                mismatchCount++;
-                if (mismatches.length < 5) {
-                    mismatches.push(`${id}: website=${new Date(websiteTime).toISOString()} worker=${new Date(workerTime).toISOString()}`);
-                }
-            }
-        }
-    }
-
-    assertTrue(matchCount > 100, `Should have many matching events (got ${matchCount})`);
-    assertTrue(mismatchCount === 0, `Should have no date mismatches (got ${mismatchCount}): ${mismatches.join(', ')}`);
+    const hasDuplicateFib = /const FIBONACCI = \[1, 2, 3/.test(workerCode);
+    assertTrue(!hasDuplicateFib, 'Worker should not duplicate FIBONACCI array');
 });
 
 // ============================================

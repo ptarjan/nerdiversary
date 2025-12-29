@@ -10,17 +10,6 @@ if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
     globalThis.Milestones = require('./milestones.js');
 }
 
-// Planet colors for website display
-const PLANET_COLORS = {
-    mercury: '#8c8c8c',
-    venus: '#e6c229',
-    mars: '#e04f39',
-    jupiter: '#d8a066',
-    saturn: '#f4d58d',
-    uranus: '#4fd0e7',
-    neptune: '#4b70dd'
-};
-
 const Nerdiversary = {
 
     /**

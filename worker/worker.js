@@ -5,59 +5,34 @@
  * Deployed via GitHub Actions
  */
 
-// ============================================================================
-// SHARED CONSTANTS - Keep in sync with js/nerdiversary.js
-// ============================================================================
+// Import shared constants from milestones module
+// Wrangler's bundler (esbuild) handles CommonJS -> ESM conversion
+import Milestones from '../js/milestones.js';
 
-// Time constants
-const MS_PER_SECOND = 1000;
-const MS_PER_MINUTE = 60 * 1000;
-const MS_PER_HOUR = 60 * 60 * 1000;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-const MS_PER_YEAR = 365.2425 * 24 * 60 * 60 * 1000; // Gregorian calendar average
-const MS_PER_MONTH = MS_PER_DAY * 30.4375;
-
-// Planetary orbital periods in Earth days
-const PLANETS = {
-  mercury: { name: 'Mercury', days: 87.969, icon: '☿️' },
-  venus: { name: 'Venus', days: 224.701, icon: '♀️' },
-  mars: { name: 'Mars', days: 686.980, icon: '♂️' },
-  jupiter: { name: 'Jupiter', days: 4332.59, icon: '♃' },
-  saturn: { name: 'Saturn', days: 10759.22, icon: '♄' },
-  uranus: { name: 'Uranus', days: 30688.5, icon: '⛢' },
-  neptune: { name: 'Neptune', days: 60182, icon: '♆' }
-};
-
-// Mathematical constants
-const PI = Math.PI;
-const E = Math.E;
-const PHI = (1 + Math.sqrt(5)) / 2;
-const TAU = 2 * Math.PI;
-
-// Fibonacci sequence (extended for seconds milestones)
-const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309, 3524578, 5702887, 9227465, 14930352, 24157817, 39088169, 63245986, 102334155, 165580141, 267914296, 433494437, 701408733, 1134903170, 1836311903, 2971215073];
-
-// Lucas numbers (like Fibonacci but starts 2, 1)
-const LUCAS = [2, 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, 199, 322, 521, 843, 1364, 2207, 3571, 5778, 9349, 15127, 24476, 39603, 64079, 103682, 167761, 271443, 439204, 710647, 1149851, 1860498, 3010349, 4870847, 7881196, 12752043, 20633239, 33385282, 54018521, 87403803];
-
-// Triangular numbers T(n) = n*(n+1)/2
-const TRIANGULAR = [];
-for (let n = 1; n <= 100; n++) {
-  TRIANGULAR.push(n * (n + 1) / 2);
-}
-
-// Palindrome numbers (interesting ones for days)
-const PALINDROMES = [101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 202, 212, 303, 313, 404, 414, 505, 515, 606, 616, 707, 717, 808, 818, 909, 919, 1001, 1111, 1221, 1331, 1441, 1551, 1661, 1771, 1881, 1991, 2002, 2112, 2222, 2332, 2442, 2552, 2662, 2772, 2882, 2992, 3003, 3113, 3223, 3333, 4004, 4114, 4224, 4334, 4444, 5005, 5115, 5225, 5335, 5445, 5555, 6006, 6116, 6226, 6336, 6446, 6556, 6666, 7007, 7117, 7227, 7337, 7447, 7557, 7667, 7777, 8008, 8118, 8228, 8338, 8448, 8558, 8668, 8778, 8888, 9009, 9119, 9229, 9339, 9449, 9559, 9669, 9779, 9889, 9999, 10001, 10101, 10201, 11011, 11111, 11211, 11311, 11411, 11511, 11611, 11711, 11811, 11911, 12021, 12121, 12221, 12321];
-
-// Repunit numbers (all 1s)
-const REPUNITS = [11, 111, 1111, 11111, 111111, 1111111, 11111111];
-
-// Powers of 2 for binary milestones
-const POWERS_OF_2 = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+const {
+  MS_PER_SECOND,
+  MS_PER_MINUTE,
+  MS_PER_HOUR,
+  MS_PER_DAY,
+  MS_PER_WEEK,
+  MS_PER_YEAR,
+  MS_PER_MONTH,
+  PLANETS,
+  PI,
+  E,
+  PHI,
+  TAU,
+  FIBONACCI,
+  LUCAS,
+  TRIANGULAR,
+  PALINDROMES,
+  REPUNITS,
+  POWERS_OF_2,
+  getOrdinal
+} = Milestones;
 
 // ============================================================================
-// SHARED MILESTONES - Keep in sync with js/nerdiversary.js
+// CALENDAR MILESTONES - Subset of milestones for calendar display
 // ============================================================================
 
 const secondMilestones = [
@@ -224,16 +199,6 @@ const workerHandler = {
 
 // ES module export for Cloudflare Workers
 export default workerHandler;
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function getOrdinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
 
 // ============================================================================
 // EVENT CALCULATION
@@ -754,23 +719,3 @@ function escapeICalText(text) {
     .replace(/\n/g, '\\n');
 }
 
-// Export for Node.js testing (ignored by Cloudflare Workers)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports.calculateNerdiversaries = calculateNerdiversaries;
-  module.exports.MS_PER_SECOND = MS_PER_SECOND;
-  module.exports.MS_PER_MINUTE = MS_PER_MINUTE;
-  module.exports.MS_PER_HOUR = MS_PER_HOUR;
-  module.exports.MS_PER_DAY = MS_PER_DAY;
-  module.exports.MS_PER_WEEK = MS_PER_WEEK;
-  module.exports.MS_PER_YEAR = MS_PER_YEAR;
-  module.exports.PLANETS = PLANETS;
-  module.exports.FIBONACCI = FIBONACCI;
-  module.exports.LUCAS = LUCAS;
-  module.exports.TRIANGULAR = TRIANGULAR;
-  module.exports.PALINDROMES = PALINDROMES;
-  module.exports.REPUNITS = REPUNITS;
-  module.exports.PI = PI;
-  module.exports.E = E;
-  module.exports.PHI = PHI;
-  module.exports.TAU = TAU;
-}
