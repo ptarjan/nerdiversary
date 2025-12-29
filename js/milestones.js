@@ -87,8 +87,19 @@ const secondMilestones = [
 
 const minuteMilestones = [
     { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes' },
+    { value: 5e5, label: '500,000 Minutes', short: '5×10⁵ minutes' },
     { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes' },
-    { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' }
+    { value: 2e6, label: '2 Million Minutes', short: '2×10⁶ minutes' },
+    { value: 3e6, label: '3 Million Minutes', short: '3×10⁶ minutes' },
+    { value: 5e6, label: '5 Million Minutes', short: '5×10⁶ minutes' },
+    { value: 7.5e6, label: '7.5 Million Minutes', short: '7.5×10⁶ minutes' },
+    { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' },
+    { value: 1.5e7, label: '15 Million Minutes', short: '1.5×10⁷ minutes' },
+    { value: 2e7, label: '20 Million Minutes', short: '2×10⁷ minutes' },
+    { value: 2.5e7, label: '25 Million Minutes', short: '2.5×10⁷ minutes' },
+    { value: 3e7, label: '30 Million Minutes', short: '3×10⁷ minutes' },
+    { value: 4e7, label: '40 Million Minutes', short: '4×10⁷ minutes' },
+    { value: 5e7, label: '50 Million Minutes', short: '5×10⁷ minutes' }
 ];
 
 const hourMilestones = [

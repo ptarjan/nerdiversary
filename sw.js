@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nerdiversary-v27';
+const CACHE_NAME = 'nerdiversary-v28';
 const ASSETS = [
   './',
   './index.html',
