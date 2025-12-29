@@ -721,8 +721,9 @@ function showCelebration(event) {
         setTimeout(() => {
             overlay.remove();
             confettiContainer.remove();
-            // Recalculate and display events
+            // Recalculate and display events, restart countdown
             calculateAndDisplayEvents();
+            startCountdownTimer();
         }, 300);
     });
 

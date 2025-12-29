@@ -28,7 +28,6 @@ const WIKI_LINKS = {
     binary: '<a href="https://en.wikipedia.org/wiki/Binary_number" target="_blank">binary</a>',
     ternary: '<a href="https://en.wikipedia.org/wiki/Ternary_numeral_system" target="_blank">ternary</a>',
     octal: '<a href="https://en.wikipedia.org/wiki/Octal" target="_blank">octal</a>',
-    nonary: '<a href="https://en.wikipedia.org/wiki/Nonary" target="_blank">nonary</a>',
     dozenal: '<a href="https://en.wikipedia.org/wiki/Duodecimal" target="_blank">dozenal</a>',
     hexadecimal: '<a href="https://en.wikipedia.org/wiki/Hexadecimal" target="_blank">hexadecimal</a>',
     vigesimal: '<a href="https://en.wikipedia.org/wiki/Vigesimal" target="_blank">vigesimal</a>',
