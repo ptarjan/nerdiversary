@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFromUrlParams();
 
     // Add family member button
-    addMemberBtn.addEventListener('click', () => {
+    addMemberBtn.addEventListener('click', function() {
         addFamilyMember();
     });
 
@@ -137,6 +137,10 @@ function addFamilyMember(data = null) {
     const memberDiv = document.createElement('div');
     memberDiv.className = 'family-member';
     memberDiv.dataset.index = index;
+    const name = data && data.name ? data.name : '';
+    const date = data && data.date ? data.date : '';
+    const time = data && data.time ? data.time : '';
+
     memberDiv.innerHTML = `
         <div class="member-header">
             <span class="member-label">Person ${index + 1}</span>
@@ -144,17 +148,17 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group">
             <label for="name-${index}">Name</label>
-            <input type="text" id="name-${index}" name="name" placeholder="Name" required value="${data?.name || ''}">
+            <input type="text" id="name-${index}" name="name" placeholder="Name" required value="${name}">
         </div>
         <div class="form-group">
             <label for="birthdate-${index}">Birthday</label>
-            <input type="date" id="birthdate-${index}" name="birthdate" required value="${data?.date || ''}">
+            <input type="date" id="birthdate-${index}" name="birthdate" required value="${date}">
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
                 Birth Time <span class="optional-label">(optional)</span>
             </label>
-            <input type="time" id="birthtime-${index}" name="birthtime" step="60" value="${data?.time || ''}">
+            <input type="time" id="birthtime-${index}" name="birthtime" step="60" value="${time}">
         </div>
     `;
 
