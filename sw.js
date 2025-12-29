@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nerdiversary-v25';
+const CACHE_NAME = 'nerdiversary-v26';
 const ASSETS = [
   './',
   './index.html',
@@ -44,6 +44,12 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith(self.location.origin)) return;
 
   const url = new URL(event.request.url);
+
+  // Dev mode: ?dev bypasses all caching - always fetch from network
+  if (url.searchParams.has('dev')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   const isCodeFile = url.pathname.endsWith('.html') ||
                      url.pathname.endsWith('.js') ||
                      url.pathname.endsWith('.css') ||
