@@ -58,25 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Legacy single-person format
-    if (familyMembers.length === 0) {
-        const dateStr = urlParams.get('d');
-        const timeStr = urlParams.get('t') || '00:00';
-
-        if (!dateStr) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const birthDate = new Date(`${dateStr}T${timeStr}:00`);
-        if (isNaN(birthDate.getTime())) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        familyMembers = [{ name: 'You', dateStr, timeStr, birthDate }];
-    }
-
     if (familyMembers.length === 0) {
         window.location.href = 'index.html';
         return;
@@ -611,7 +592,7 @@ function downloadICalendar() {
     // Get all upcoming events
     const upcomingEvents = allEvents.filter(e => !e.isPast);
 
-    // Use first person's birthdate as reference (for legacy compatibility)
+    // Use first person's birthdate as reference
     const birthDate = familyMembers[0].birthDate;
     const icalContent = ICalGenerator.generate(upcomingEvents, birthDate, familyMembers.length > 1);
 

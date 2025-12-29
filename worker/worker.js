@@ -29,68 +29,22 @@ const workerHandler = {
       });
     }
 
-    // Check for family format first
+    // Require family format
     const familyParam = url.searchParams.get('family');
     if (familyParam) {
       return handleFamilyRequest(url, familyParam);
     }
 
-    // Legacy single-person format
-    const birthday = url.searchParams.get('d') || url.searchParams.get('birthday');
-    const birthtime = url.searchParams.get('t') || url.searchParams.get('time') || '00:00';
-
-    if (!birthday) {
-      return new Response(JSON.stringify({
-        error: 'Missing birthday parameter',
-        usage: 'Add ?d=YYYY-MM-DD or ?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
-        example: url.origin + '/?d=1990-05-15'
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
-    }
-
-    // Parse birth date
-    const birthDate = new Date(`${birthday}T${birthtime}:00`);
-
-    if (isNaN(birthDate.getTime())) {
-      return new Response(JSON.stringify({
-        error: 'Invalid date format',
-        expected: 'YYYY-MM-DD',
-        received: birthday
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
-    }
-
-    // Generate events using shared calculator
-    // Transform events to add icon to title for calendar display
-    const events = Calculator.calculate(birthDate, {
-      yearsAhead: 120,
-      includePast: false,
-      transformEvent: (event) => ({
-        ...event,
-        title: `${event.icon} ${event.title}`
-      })
-    });
-
-    // Generate iCal content
-    const icalContent = generateICal(events, false);
-
-    // Return .ics file
-    return new Response(icalContent, {
+    // No valid parameters provided
+    return new Response(JSON.stringify({
+      error: 'Missing family parameter',
+      usage: '?family=Name|YYYY-MM-DD or ?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
+      example: url.origin + '/?family=Alice|1990-05-15'
+    }), {
+      status: 400,
       headers: {
-        'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'inline; filename="nerdiversaries.ics"',
+        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600',
       },
     });
   },

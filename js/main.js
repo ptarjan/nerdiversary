@@ -135,16 +135,6 @@ function loadFromUrlParams() {
         }
         return;
     }
-
-    // Legacy single-person format
-    const sharedDate = urlParams.get('d');
-    const sharedTime = urlParams.get('t');
-    if (sharedDate) {
-        const dateEl = document.getElementById('birthdate-0');
-        const timeEl = document.getElementById('birthtime-0');
-        if (dateEl) dateEl.value = sharedDate;
-        if (timeEl && sharedTime) timeEl.value = sharedTime;
-    }
 }
 
 /**
