@@ -2,6 +2,16 @@
  * Results page script - displays nerdiversary events for individuals or families
  */
 
+// ESM imports to ensure module dependency ordering
+import NerdiversaryModule from './nerdiversary.js';
+import MilestonesModule from './milestones.js';
+import ICalGeneratorModule from './ical.js';
+
+// Use window globals if available (backwards compat), otherwise imported modules
+const Nerdiversary = typeof window !== 'undefined' && window.Nerdiversary ? window.Nerdiversary : NerdiversaryModule;
+const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
+const ICalGenerator = typeof window !== 'undefined' && window.ICalGenerator ? window.ICalGenerator : ICalGeneratorModule;
+
 let allEvents = [];
 let familyMembers = [];
 let currentFilter = 'all';
@@ -10,7 +20,7 @@ let currentView = 'upcoming';
 let countdownInterval = null;
 
 // Cached DOM elements for countdown (to avoid querying every second)
-let countdownElements = {
+const countdownElements = {
     days: null,
     hours: null,
     minutes: null,
@@ -113,16 +123,16 @@ function updateFamilyInfo() {
 function getColorForPerson(name) {
     // Vibrant, maximally distinct colors
     const colors = [
-        '#e63946',  // Red
-        '#2a9d8f',  // Teal
-        '#f4a261',  // Orange
-        '#457b9d',  // Steel Blue
-        '#9b5de5',  // Purple
-        '#00f5d4',  // Cyan
-        '#f15bb5',  // Pink
-        '#fee440',  // Yellow
-        '#00bbf9',  // Sky Blue
-        '#9ef01a',  // Lime
+        '#e63946', // Red
+        '#2a9d8f', // Teal
+        '#f4a261', // Orange
+        '#457b9d', // Steel Blue
+        '#9b5de5', // Purple
+        '#00f5d4', // Cyan
+        '#f15bb5', // Pink
+        '#fee440', // Yellow
+        '#00bbf9', // Sky Blue
+        '#9ef01a', // Lime
     ];
     // Use index in familyMembers array for consistent assignment
     const index = familyMembers.findIndex(m => m.name === name);
@@ -147,8 +157,8 @@ function setupPersonFilter() {
         container.appendChild(btn);
     });
 
-    container.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('filter-btn')) return;
+    container.addEventListener('click', e => {
+        if (!e.target.classList.contains('filter-btn')) { return; }
 
         container.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -291,7 +301,7 @@ function startCountdownTimer() {
         const upcomingEvents = filteredEvents.filter(e => e.date > now);
         const nextEvent = upcomingEvents[0];
 
-        if (!nextEvent) return;
+        if (!nextEvent) { return; }
 
         const diff = nextEvent.date - now;
 
@@ -318,10 +328,10 @@ function startCountdownTimer() {
             countdownElements.seconds = document.getElementById('countdown-seconds');
         }
 
-        if (countdownElements.days) countdownElements.days.textContent = days;
-        if (countdownElements.hours) countdownElements.hours.textContent = hours;
-        if (countdownElements.minutes) countdownElements.minutes.textContent = minutes;
-        if (countdownElements.seconds) countdownElements.seconds.textContent = seconds;
+        if (countdownElements.days) { countdownElements.days.textContent = days; }
+        if (countdownElements.hours) { countdownElements.hours.textContent = hours; }
+        if (countdownElements.minutes) { countdownElements.minutes.textContent = minutes; }
+        if (countdownElements.seconds) { countdownElements.seconds.textContent = seconds; }
     }, 1000);
 }
 
@@ -386,9 +396,9 @@ function displayTimeline() {
 
     // Add click handlers for individual calendar buttons
     timeline.querySelectorAll('.event-add-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', e => {
             e.stopPropagation();
-            const eventId = btn.dataset.eventId;
+            const { eventId } = btn.dataset;
             const event = allEvents.find(ev => ev.id === eventId);
             if (event) {
                 const gcalUrl = createGoogleCalendarUrl(event);
@@ -407,8 +417,8 @@ function displayTimeline() {
 function setupFilters() {
     const filterButtons = document.getElementById('filter-buttons');
 
-    filterButtons.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('filter-btn')) return;
+    filterButtons.addEventListener('click', e => {
+        if (!e.target.classList.contains('filter-btn')) { return; }
 
         // Update active state
         filterButtons.querySelectorAll('.filter-btn').forEach(btn => {
@@ -450,21 +460,21 @@ function setupActionButtons() {
     const shareBtn = document.getElementById('share-results');
 
     if (subscribeBtn) {
-        subscribeBtn.addEventListener('click', (e) => {
+        subscribeBtn.addEventListener('click', e => {
             e.preventDefault();
             subscribeToCalendar();
         });
     }
 
     if (downloadBtn) {
-        downloadBtn.addEventListener('click', (e) => {
+        downloadBtn.addEventListener('click', e => {
             e.preventDefault();
             downloadICalendar();
         });
     }
 
     if (shareBtn) {
-        shareBtn.addEventListener('click', (e) => {
+        shareBtn.addEventListener('click', e => {
             e.preventDefault();
             shareResults();
         });
@@ -478,7 +488,7 @@ function subscribeToCalendar() {
     const urlParams = new URLSearchParams(window.location.search);
 
     // Build the calendar URL with family or single person params
-    let calendarUrl = CALENDAR_WORKER_URL + '/?' + urlParams.toString();
+    const calendarUrl = `${CALENDAR_WORKER_URL}/?${urlParams.toString()}`;
 
     // Show subscription modal
     showSubscribeModal(calendarUrl);
@@ -532,20 +542,22 @@ function showSubscribeModal(calendarUrl) {
     // Handle Apple Calendar - use JavaScript navigation only on iOS (href works on desktop)
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) {
-        modal.querySelector('#apple-subscribe').addEventListener('click', (e) => {
+        modal.querySelector('#apple-subscribe').addEventListener('click', e => {
             e.preventDefault();
             window.location.href = webcalUrl;
         });
     }
 
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.remove();
+    modal.addEventListener('click', e => {
+        if (e.target === modal) { modal.remove(); }
     });
 }
 
 /**
  * Copy calendar URL to clipboard
+ * Exported to window for use in onclick handlers
  */
+// eslint-disable-next-line no-unused-vars
 function copyCalendarUrl() {
     const input = document.getElementById('calendar-url-input');
     input.select();
@@ -594,7 +606,7 @@ function downloadICalendar() {
     const upcomingEvents = allEvents.filter(e => !e.isPast);
 
     // Use first person's birthdate as reference
-    const birthDate = familyMembers[0].birthDate;
+    const { birthDate } = familyMembers[0];
     const icalContent = ICalGenerator.generate(upcomingEvents, birthDate, familyMembers.length > 1);
 
     // Create download
@@ -619,8 +631,8 @@ function shareResults() {
     const shareUrl = `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
 
     const shareText = familyMembers.length > 1
-        ? `Check out our family's nerdy anniversaries!`
-        : `Check out my nerdy anniversaries!`;
+        ? 'Check out our family\'s nerdy anniversaries!'
+        : 'Check out my nerdy anniversaries!';
 
     if (navigator.share) {
         navigator.share({
@@ -682,11 +694,11 @@ function showCelebration(event) {
     for (let i = 0; i < 150; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';
-        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.left = `${Math.random() * 100}%`;
         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-        confetti.style.animationDelay = (Math.random() * 2) + 's';
-        confetti.style.width = (Math.random() * 8 + 6) + 'px';
+        confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+        confetti.style.animationDelay = `${Math.random() * 2}s`;
+        confetti.style.width = `${Math.random() * 8 + 6}px`;
         confetti.style.height = confetti.style.width;
 
         if (shapes[Math.floor(Math.random() * shapes.length)] === 'circle') {
@@ -729,30 +741,15 @@ function showCelebration(event) {
     });
 
     // Also dismiss on overlay click (outside content)
-    overlay.addEventListener('click', (e) => {
+    overlay.addEventListener('click', e => {
         if (e.target === overlay) {
             dismissBtn.click();
         }
     });
 }
 
-/**
- * Check if the current event is happening and trigger celebration
- */
-function checkForCelebration(event) {
-    const now = new Date();
-    const diff = event.date - now;
-
-    // If within 1 second of the event, trigger celebration
-    if (diff <= 0 && diff > -1000) {
-        showCelebration(event);
-        return true;
-    }
-    return false;
-}
-
 // Expose for console testing: testCelebration()
-window.testCelebration = function() {
+window.testCelebration = function () {
     const now = new Date();
     const filteredEvents = getFilteredByPerson(allEvents);
     const nextEvent = filteredEvents.filter(e => e.date > now)[0];

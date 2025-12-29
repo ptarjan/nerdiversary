@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test.describe('Nerdiversary Main Flows', () => {
   /** @type {string[]} */
@@ -277,8 +277,8 @@ test.describe('Nerdiversary Main Flows', () => {
     // Wait for events to load
     await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
 
-    // Get initial countdown title
-    const initialTitle = await page.locator('.countdown-title').textContent();
+    // Ensure countdown is present before switching
+    await expect(page.locator('.countdown-title')).toBeVisible();
 
     // Click on Bob's filter to switch person
     await page.click('button[data-person="Bob"]');

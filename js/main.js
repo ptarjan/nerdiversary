@@ -8,7 +8,7 @@
 function getNextMemberIndex() {
     const members = document.querySelectorAll('.family-member');
     const usedIndices = new Set();
-    members.forEach(m => usedIndices.add(parseInt(m.dataset.index)));
+    members.forEach(m => usedIndices.add(parseInt(m.dataset.index, 10)));
 
     let index = 0;
     while (usedIndices.has(index)) {
@@ -32,14 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add family member button
     if (addMemberBtn) {
-        addMemberBtn.addEventListener('click', function() {
+        addMemberBtn.addEventListener('click', () => {
             addFamilyMember();
         });
     }
 
     // Form submission
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', e => {
             e.preventDefault();
             submitForm();
         });
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function setupDateConstraints(index) {
     const birthdateInput = document.getElementById(`birthdate-${index}`);
-    if (!birthdateInput) return;
+    if (!birthdateInput) { return; }
 
     // Set max date to today
     const today = new Date();
@@ -81,9 +81,9 @@ function loadStoredData() {
                 const dateEl = document.getElementById('birthdate-0');
                 const timeEl = document.getElementById('birthtime-0');
 
-                if (nameEl) nameEl.value = first.name || '';
-                if (dateEl) dateEl.value = first.date || '';
-                if (timeEl && first.time) timeEl.value = first.time;
+                if (nameEl) { nameEl.value = first.name || ''; }
+                if (dateEl) { dateEl.value = first.date || ''; }
+                if (timeEl && first.time) { timeEl.value = first.time; }
 
                 // Add and load additional members
                 for (let i = 1; i < family.length; i++) {
@@ -121,9 +121,9 @@ function loadFromUrlParams() {
                 const dateEl = document.getElementById('birthdate-0');
                 const timeEl = document.getElementById('birthtime-0');
 
-                if (nameEl) nameEl.value = members[0].name;
-                if (dateEl) dateEl.value = members[0].date;
-                if (timeEl && members[0].time) timeEl.value = members[0].time;
+                if (nameEl) { nameEl.value = members[0].name; }
+                if (dateEl) { dateEl.value = members[0].date; }
+                if (timeEl && members[0].time) { timeEl.value = members[0].time; }
 
                 // Add additional members
                 for (let i = 1; i < members.length; i++) {
@@ -133,7 +133,6 @@ function loadFromUrlParams() {
         } catch (e) {
             console.error('Failed to parse family URL param:', e);
         }
-        return;
     }
 }
 
@@ -142,7 +141,7 @@ function loadFromUrlParams() {
  */
 function addFamilyMember(data = null) {
     const familyMembers = document.getElementById('family-members');
-    if (!familyMembers) return;
+    if (!familyMembers) { return; }
 
     const index = getNextMemberIndex();
 
@@ -172,9 +171,9 @@ function addFamilyMember(data = null) {
 
     // Set values via DOM properties to prevent XSS
     if (data) {
-        if (data.name) memberDiv.querySelector(`#name-${index}`).value = data.name;
-        if (data.date) memberDiv.querySelector(`#birthdate-${index}`).value = data.date;
-        if (data.time) memberDiv.querySelector(`#birthtime-${index}`).value = data.time;
+        if (data.name) { memberDiv.querySelector(`#name-${index}`).value = data.name; }
+        if (data.date) { memberDiv.querySelector(`#birthdate-${index}`).value = data.date; }
+        if (data.time) { memberDiv.querySelector(`#birthtime-${index}`).value = data.time; }
     }
 
     familyMembers.appendChild(memberDiv);
@@ -204,24 +203,24 @@ function removeFamilyMember(index) {
 function updateRemoveButtons() {
     const members = document.querySelectorAll('.family-member');
     const firstMember = members[0];
-    if (!firstMember) return;
+    if (!firstMember) { return; }
 
     if (members.length > 1) {
         // Add remove button to first member if not present
         if (!firstMember.querySelector('.remove-member-btn')) {
             const header = firstMember.querySelector('.member-header');
-            const index = firstMember.dataset.index;
+            const { index } = firstMember.dataset;
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'remove-member-btn';
             btn.textContent = '✕';
-            btn.onclick = () => removeFamilyMember(parseInt(index));
+            btn.onclick = () => removeFamilyMember(parseInt(index, 10));
             header.appendChild(btn);
         }
     } else {
         // Remove the button from first member if only one left
         const btn = firstMember.querySelector('.remove-member-btn');
-        if (btn) btn.remove();
+        if (btn) { btn.remove(); }
     }
 }
 
@@ -259,12 +258,12 @@ function submitForm() {
     const family = [];
 
     members.forEach(member => {
-        const index = member.dataset.index;
+        const { index } = member.dataset;
         const nameEl = document.getElementById(`name-${index}`);
         const dateEl = document.getElementById(`birthdate-${index}`);
         const timeEl = document.getElementById(`birthtime-${index}`);
 
-        if (!dateEl) return;
+        if (!dateEl) { return; }
 
         const name = nameEl ? nameEl.value.trim() : '';
         const birthdate = dateEl.value;
@@ -297,7 +296,7 @@ function submitForm() {
 
     // Build URL params
     const familyParam = family.map(m =>
-        `${encodeURIComponent(m.name)}|${m.date}${m.time ? '|' + m.time : ''}`
+        `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
     ).join(',');
 
     // Use relative URL - works regardless of subdirectory
@@ -314,9 +313,9 @@ function addStarfieldInteractivity() {
     const stars = document.querySelector('.stars');
     const twinkling = document.querySelector('.twinkling');
 
-    if (!stars && !twinkling) return;
+    if (!stars && !twinkling) { return; }
 
-    document.addEventListener('mousemove', (e) => {
+    document.addEventListener('mousemove', e => {
         const x = e.clientX / window.innerWidth;
         const y = e.clientY / window.innerHeight;
 

@@ -19,8 +19,8 @@ const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 // MATHEMATICAL CONSTANTS
 // ============================================================================
 
-const PI = Math.PI;
-const E = Math.E;
+const { PI } = Math;
+const { E } = Math;
 const PHI = (1 + Math.sqrt(5)) / 2;
 const TAU = 2 * Math.PI;
 
@@ -203,55 +203,55 @@ const baseMilestones = [
         { powers: [11, 12, 13, 14, 15], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [8, 9, 10, 11, 12], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [6, 7, 8, 9], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 5, name: 'quinary', icon: '🖐️', units: [
         { powers: [10, 11, 12, 13, 14], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [8, 9, 10, 11], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [6, 7, 8, 9], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [5, 6, 7], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 6, name: 'senary', icon: '🎲', units: [
         { powers: [9, 10, 11, 12, 13], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [7, 8, 9, 10], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [5, 6, 7, 8], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 7, name: 'septenary', icon: '🌈', units: [
         { powers: [8, 9, 10, 11, 12], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [6, 7, 8, 9], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [5, 6, 7, 8], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 8, name: 'octal', icon: '🐙', units: [
         { powers: [7, 8, 9, 10, 11], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [5, 6, 7, 8], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [4, 5, 6, 7], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4, 5, 6], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 12, name: 'dozenal', icon: '🕛', units: [
         { powers: [6, 7, 8, 9], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [4, 5, 6], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4, 5], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 16, name: 'hexadecimal', icon: '🔷', units: [
         { powers: [7, 8], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [5, 6, 7], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [4, 5], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 20, name: 'vigesimal', icon: '🏛️', units: [
         { powers: [6, 7, 8], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [5, 6], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [4, 5], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [3, 4], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]},
+    ] },
     { base: 60, name: 'Babylonian', icon: '⏰', units: [
         { powers: [4, 5], unit: 'seconds', label: 'Seconds', ms: MS_PER_SECOND },
         { powers: [3, 4], unit: 'minutes', label: 'Minutes', ms: MS_PER_MINUTE },
         { powers: [2, 3], unit: 'hours', label: 'Hours', ms: MS_PER_HOUR },
         { powers: [2], unit: 'days', label: 'Days', ms: MS_PER_DAY }
-    ]}
+    ] }
 ];
 
 // Pop culture milestones
@@ -286,7 +286,7 @@ function getOrdinal(n) {
 
 function toSuperscript(num) {
     const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
-    return String(num).split('').map(d => superscripts[parseInt(d)]).join('');
+    return String(num).split('').map(d => superscripts[parseInt(d, 10)]).join('');
 }
 
 // ============================================================================
@@ -347,12 +347,10 @@ const MilestonesExports = {
     toSuperscript
 };
 
-// CommonJS exports for Node.js
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = MilestonesExports;
-}
+// ESM export
+export default MilestonesExports;
 
-// Global export for browsers
+// Global export for browsers (when loaded via script tag)
 if (typeof window !== 'undefined') {
     window.Milestones = MilestonesExports;
 }

@@ -2,13 +2,15 @@
  * Shared Nerdiversary Calculator
  * Core logic for calculating milestone events, used by both website and worker
  *
- * Requires: js/milestones.js
+ * In browser: Requires js/milestones.js to be loaded first
+ * In ESM: Milestones is imported below
  */
 
-// Load Milestones in Node.js/Worker if not already global
-if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
-    globalThis.Milestones = require('./milestones.js');
-}
+// ESM import
+import MilestonesModule from './milestones.js';
+
+// Use global version if available (browser), otherwise use imported module
+const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
 
 // Wikipedia URLs for educational terms
 const WIKI_URLS = {
@@ -75,12 +77,12 @@ const Calculator = {
         const events = [];
 
         // Helper to add events with optional filtering and transformation
-        const addEvent = (event) => {
-            if (event.date > maxDate) return;
-            if (!includePast && event.date < now) return;
+        const addEvent = event => {
+            if (event.date > maxDate) { return; }
+            if (!includePast && event.date < now) { return; }
 
             const finalEvent = transformEvent ? transformEvent(event) : event;
-            if (finalEvent) events.push(finalEvent);
+            if (finalEvent) { events.push(finalEvent); }
         };
 
         // Generate all milestone types
@@ -114,7 +116,7 @@ const Calculator = {
             const periodMs = planet.days * Milestones.MS_PER_DAY;
             for (let yearNum = 1; yearNum <= 200; yearNum++) {
                 const eventDate = new Date(birthDate.getTime() + yearNum * periodMs);
-                if (eventDate > maxDate) break;
+                if (eventDate > maxDate) { break; }
 
                 addEvent({
                     id: `${key}-${yearNum}`,
@@ -276,7 +278,7 @@ const Calculator = {
                             description: `You've lived for ${base}${this._toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${wikiLink(name, name)})!`,
                             date: eventDate,
                             category: 'binary',
-                            icon: icon,
+                            icon,
                             milestone: `${base}^${power} ${unit}`
                         });
                     }
@@ -297,8 +299,9 @@ const Calculator = {
 
         for (const c of constants) {
             for (const mult of multipliers) {
-                if (c.name === 'tau' && mult === 1e9) continue; // Too far in future
-                const superMult = mult === 1e7 ? '⁷' : mult === 1e8 ? '⁸' : '⁹';
+                if (c.name === 'tau' && mult === 1e9) { continue; } // Too far in future
+                const superscriptMap = { 1e7: '⁷', 1e8: '⁸', 1e9: '⁹' };
+                const superMult = superscriptMap[mult];
                 const label = `${c.symbol} × 10${superMult} Seconds`;
 
                 addEvent({
@@ -589,12 +592,12 @@ const Calculator = {
                 const ordinal = Milestones.getOrdinal(year);
                 const labels = [];
 
-                if (year === 42) labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`);
-                if (Milestones.primeAges.has(year)) labels.push('Prime');
-                if (Milestones.squareAges[year]) labels.push(`Perfect Square (${Milestones.squareAges[year]})`);
-                if (Milestones.powerOf2Ages[year]) labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`);
-                if (Milestones.cubeAges[year]) labels.push(`Perfect Cube (${Milestones.cubeAges[year]})`);
-                if (Milestones.hexRoundAges[year]) labels.push(`Hex Round (${Milestones.hexRoundAges[year]})`);
+                if (year === 42) { labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`); }
+                if (Milestones.primeAges.has(year)) { labels.push('Prime'); }
+                if (Milestones.squareAges[year]) { labels.push(`Perfect Square (${Milestones.squareAges[year]})`); }
+                if (Milestones.powerOf2Ages[year]) { labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`); }
+                if (Milestones.cubeAges[year]) { labels.push(`Perfect Cube (${Milestones.cubeAges[year]})`); }
+                if (Milestones.hexRoundAges[year]) { labels.push(`Hex Round (${Milestones.hexRoundAges[year]})`); }
 
                 const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
 
@@ -617,14 +620,12 @@ const Calculator = {
 
     _toSuperscript(num) {
         const superscripts = {
-            '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-            '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+            0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴',
+            5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹'
         };
         return String(num).split('').map(d => superscripts[d] || d).join('');
     }
 };
 
-// Export for different module systems
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Calculator;
-}
+// ESM export
+export default Calculator;

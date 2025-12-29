@@ -2,16 +2,17 @@
  * Nerdiversary Calculator
  * Wrapper around shared Calculator for website use
  *
- * Requires: js/milestones.js and js/calculator.js to be loaded first
+ * In browser: Requires js/milestones.js and js/calculator.js to be loaded first
+ * In ESM: Dependencies are imported below
  */
 
-// Load dependencies in Node.js if not already global
-if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
-    globalThis.Milestones = require('./milestones.js');
-}
-if (typeof Calculator === 'undefined' && typeof require !== 'undefined') {
-    globalThis.Calculator = require('./calculator.js');
-}
+// ESM imports for Node.js and bundlers
+import MilestonesModule from './milestones.js';
+import CalculatorModule from './calculator.js';
+
+// Use global versions if available (browser), otherwise use imported modules
+const MilestonesRef = typeof Milestones !== 'undefined' ? Milestones : MilestonesModule;
+const CalculatorRef = typeof Calculator !== 'undefined' ? Calculator : CalculatorModule;
 
 const Nerdiversary = {
 
@@ -25,7 +26,7 @@ const Nerdiversary = {
         const now = new Date();
 
         // Use shared calculator
-        const events = Calculator.calculate(birthDate, {
+        const events = CalculatorRef.calculate(birthDate, {
             yearsAhead,
             includePast: true
         });
@@ -34,7 +35,7 @@ const Nerdiversary = {
         return events.map(event => ({
             ...event,
             isPast: event.date < now,
-            daysFromNow: Math.floor((event.date - now) / Milestones.MS_PER_DAY)
+            daysFromNow: Math.floor((event.date - now) / MilestonesRef.MS_PER_DAY)
         }));
     },
 
@@ -42,7 +43,7 @@ const Nerdiversary = {
      * Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
      */
     getOrdinal(n) {
-        return Milestones.getOrdinal(n);
+        return MilestonesRef.getOrdinal(n);
     },
 
     /**
@@ -50,8 +51,8 @@ const Nerdiversary = {
      */
     toSuperscript(num) {
         const superscripts = {
-            '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-            '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+            0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴',
+            5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹'
         };
         return String(num).split('').map(d => superscripts[d] || d).join('');
     },
@@ -75,21 +76,20 @@ const Nerdiversary = {
      * Format relative time (days until/since)
      */
     formatRelative(days) {
-        if (days === 0) return 'Today!';
-        if (days === 1) return 'Tomorrow!';
-        if (days === -1) return 'Yesterday';
+        if (days === 0) { return 'Today!'; }
+        if (days === 1) { return 'Tomorrow!'; }
+        if (days === -1) { return 'Yesterday'; }
         if (days > 0) {
-            if (days < 7) return `In ${days} days`;
-            if (days < 30) return `In ${Math.floor(days / 7)} weeks`;
-            if (days < 365) return `In ${Math.floor(days / 30)} months`;
+            if (days < 7) { return `In ${days} days`; }
+            if (days < 30) { return `In ${Math.floor(days / 7)} weeks`; }
+            if (days < 365) { return `In ${Math.floor(days / 30)} months`; }
             return `In ${(days / 365).toFixed(1)} years`;
-        } else {
-            const absDays = Math.abs(days);
-            if (absDays < 7) return `${absDays} days ago`;
-            if (absDays < 30) return `${Math.floor(absDays / 7)} weeks ago`;
-            if (absDays < 365) return `${Math.floor(absDays / 30)} months ago`;
-            return `${(absDays / 365).toFixed(1)} years ago`;
         }
+            const absDays = Math.abs(days);
+            if (absDays < 7) { return `${absDays} days ago`; }
+            if (absDays < 30) { return `${Math.floor(absDays / 7)} weeks ago`; }
+            if (absDays < 365) { return `${Math.floor(absDays / 30)} months ago`; }
+            return `${(absDays / 365).toFixed(1)} years ago`;
     },
 
     /**
@@ -105,18 +105,16 @@ const Nerdiversary = {
      */
     getCategoryInfo(category) {
         const categories = {
-            'planetary': { name: 'Planetary', icon: '🪐', color: '#f4d58d' },
-            'decimal': { name: 'Decimal', icon: '🔢', color: '#10b981' },
-            'binary': { name: 'Number Bases', icon: '💻', color: '#06b6d4' },
-            'mathematical': { name: 'Mathematical', icon: 'π', color: '#a855f7' },
-            'fibonacci': { name: 'Fibonacci', icon: '🌀', color: '#f59e0b' },
+            planetary: { name: 'Planetary', icon: '🪐', color: '#f4d58d' },
+            decimal: { name: 'Decimal', icon: '🔢', color: '#10b981' },
+            binary: { name: 'Number Bases', icon: '💻', color: '#06b6d4' },
+            mathematical: { name: 'Mathematical', icon: 'π', color: '#a855f7' },
+            fibonacci: { name: 'Fibonacci', icon: '🌀', color: '#f59e0b' },
             'pop-culture': { name: 'Pop Culture', icon: '🎬', color: '#ef4444' }
         };
         return categories[category] || { name: category, icon: '📅', color: '#7c3aed' };
     }
 };
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Nerdiversary;
-}
+// ESM export
+export default Nerdiversary;

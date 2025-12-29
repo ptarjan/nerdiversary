@@ -7,7 +7,6 @@
 
 // Import shared modules
 // Wrangler's bundler (esbuild) handles CommonJS -> ESM conversion
-import Milestones from '../js/milestones.js';
 import Calculator from '../js/calculator.js';
 
 // ============================================================================
@@ -15,7 +14,7 @@ import Calculator from '../js/calculator.js';
 // ============================================================================
 
 const workerHandler = {
-  async fetch(request, env, ctx) {
+  async fetch(request, _env, _ctx) {
     const url = new URL(request.url);
 
     // Handle CORS

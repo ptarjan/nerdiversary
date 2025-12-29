@@ -4,9 +4,14 @@
  */
 
 // Load the Nerdiversary and Milestones modules
-const path = require('path');
-const Milestones = require(path.join(__dirname, '..', 'js', 'milestones.js'));
-const Nerdiversary = require(path.join(__dirname, '..', 'js', 'nerdiversary.js'));
+import Milestones from '../js/milestones.js';
+import Nerdiversary from '../js/nerdiversary.js';
+
+// Node.js built-ins for worker.js verification tests
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let passed = 0;
 let failed = 0;
@@ -464,7 +469,7 @@ test('Each event has required properties', () => {
     const requiredProps = ['id', 'title', 'description', 'date', 'category', 'icon', 'milestone'];
     for (const event of events.slice(0, 10)) {
         for (const prop of requiredProps) {
-            assertTrue(event.hasOwnProperty(prop), `Event should have ${prop} property`);
+            assertTrue(Object.hasOwn(event, prop), `Event should have ${prop} property`);
         }
     }
 });
@@ -536,7 +541,6 @@ test('toSuperscript converts numbers correctly', () => {
 console.log('\n--- Worker.js Import Verification ---');
 
 // Verify worker.js imports from the shared milestones module
-const fs = require('fs');
 const workerPath = path.join(__dirname, '..', 'worker', 'worker.js');
 const workerCode = fs.readFileSync(workerPath, 'utf8');
 
