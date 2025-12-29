@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nerdiversary-v35';
+const CACHE_NAME = 'nerdiversary-v37';
 const ASSETS = [
   './',
   './index.html',
@@ -17,11 +17,18 @@ const ASSETS = [
   './favicon.ico'
 ];
 
-// Install - cache assets
+// Install - cache assets (individually to avoid single-point failures)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS))
+      .then((cache) => {
+        // Cache each asset individually - continue even if some fail
+        return Promise.allSettled(
+          ASSETS.map(url => cache.add(url).catch(() => {
+            console.warn('Failed to cache:', url);
+          }))
+        );
+      })
       .then(() => self.skipWaiting())
   );
 });

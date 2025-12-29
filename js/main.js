@@ -2,7 +2,20 @@
  * Main page script - handles birthday form submission
  */
 
-let memberCount = 1;
+/**
+ * Find the next available member index
+ */
+function getNextMemberIndex() {
+    const members = document.querySelectorAll('.family-member');
+    const usedIndices = new Set();
+    members.forEach(m => usedIndices.add(parseInt(m.dataset.index)));
+
+    let index = 0;
+    while (usedIndices.has(index)) {
+        index++;
+    }
+    return index;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('birthday-form');
@@ -141,7 +154,7 @@ function addFamilyMember(data = null) {
     const familyMembers = document.getElementById('family-members');
     if (!familyMembers) return;
 
-    const index = memberCount++;
+    const index = getNextMemberIndex();
 
     const name = data && data.name ? data.name : '';
     const date = data && data.date ? data.date : '';
