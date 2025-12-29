@@ -106,6 +106,7 @@ const Nerdiversary = {
             binary: { name: 'Number Bases', icon: '💻', color: '#06b6d4' },
             mathematical: { name: 'Mathematical', icon: 'π', color: '#a855f7' },
             fibonacci: { name: 'Fibonacci', icon: '🌀', color: '#f59e0b' },
+            scientific: { name: 'Scientific', icon: '🔬', color: '#3b82f6' },
             'pop-culture': { name: 'Pop Culture', icon: '🎬', color: '#ef4444' }
         };
         return categories[category] || { name: category, icon: '📅', color: '#7c3aed' };
