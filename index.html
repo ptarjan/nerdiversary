@@ -134,27 +134,13 @@
     <script src="js/nerdiversary.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Unregister any existing service workers and clear caches
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then(reg => {
-                // Check for updates immediately and periodically
-                reg.update();
-                setInterval(() => reg.update(), 60000);
-
-                // When a new service worker is waiting, activate it
-                reg.addEventListener('updatefound', () => {
-                    const newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New version available - reload to get it
-                            window.location.reload();
-                        }
-                    });
-                });
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(reg => reg.unregister());
             });
-
-            // Reload when the new service worker takes over
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                window.location.reload();
+            caches.keys().then(keys => {
+                keys.forEach(key => caches.delete(key));
             });
         }
     </script>

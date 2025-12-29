@@ -41,7 +41,7 @@ jobs:
           cp -r css dist/
           cp -r js dist/
           cp -r assets dist/
-          cp manifest.json sw.js favicon.ico dist/
+          cp manifest.json favicon.ico dist/
           cp .nojekyll dist/
 
           # Create a simple 404 page that redirects to index
