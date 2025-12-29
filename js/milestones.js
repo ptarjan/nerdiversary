@@ -23,6 +23,15 @@ const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 const SPEED_OF_LIGHT = 299792458;
 const METERS_PER_LIGHT_YEAR = 9.461e15;
 
+// Light-time units for milestones
+const LIGHT_TIME_UNITS = [
+    { seconds: 1, name: '1 Light-Second', wikiKey: 'lightSecond', desc: 'enough to circle Earth 7.5 times' },
+    { seconds: 60, name: '1 Light-Minute', wikiKey: 'lightMinute', desc: 'the distance light travels in a minute' },
+    { seconds: 499, name: '1 AU (Sun Distance)', wikiKey: 'au', desc: 'the distance from Earth to the Sun' },
+    { seconds: 3600, name: '1 Light-Hour', wikiKey: 'lightHour', desc: 'past the orbit of Jupiter' },
+    { seconds: 86400, name: '1 Light-Day', wikiKey: 'lightDay', desc: 'well beyond the Kuiper Belt' }
+];
+
 // Cosmic distances in meters
 const COSMIC_DISTANCES = {
     moon: { name: 'the Moon', meters: 384400000, icon: '🌙' },
@@ -90,6 +99,72 @@ const REPUNITS = [11, 111, 1111, 11111, 111111, 1111111, 11111111];
 
 // Powers of 2 for binary milestones
 const POWERS_OF_2 = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+
+// Powers of 2 for minute milestones
+const MINUTE_POWERS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+
+// Hexadecimal milestones
+const HEX_MILESTONES = [
+    { value: 0x100000, hex: '0x100000' },
+    { value: 0x1000000, hex: '0x1000000' },
+    { value: 0xFFFFFF, hex: '0xFFFFFF' },
+    { value: 0x10000000, hex: '0x10000000' },
+    { value: 0xDEADBEEF, hex: '0xDEADBEEF' }
+];
+
+// Palindrome hours
+const PALINDROME_HOURS = [10001, 10101, 10201, 11011, 11111, 11211, 12021, 12121, 12221, 12321];
+
+// ============================================================================
+// WIKIPEDIA URLS
+// ============================================================================
+
+const WIKI_URLS = {
+    fibonacci: 'https://en.wikipedia.org/wiki/Fibonacci_sequence',
+    lucas: 'https://en.wikipedia.org/wiki/Lucas_number',
+    perfect: 'https://en.wikipedia.org/wiki/Perfect_number',
+    triangular: 'https://en.wikipedia.org/wiki/Triangular_number',
+    palindrome: 'https://en.wikipedia.org/wiki/Palindromic_number',
+    repunit: 'https://en.wikipedia.org/wiki/Repunit',
+    phi: 'https://en.wikipedia.org/wiki/Golden_ratio',
+    pi: 'https://en.wikipedia.org/wiki/Pi',
+    e: 'https://en.wikipedia.org/wiki/E_(mathematical_constant)',
+    tau: 'https://en.wikipedia.org/wiki/Tau_(mathematics)',
+    speedOfLight: 'https://en.wikipedia.org/wiki/Speed_of_light',
+    tenKHours: 'https://en.wikipedia.org/wiki/Outliers_(book)',
+    answer42: 'https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42',
+    binary: 'https://en.wikipedia.org/wiki/Binary_number',
+    ternary: 'https://en.wikipedia.org/wiki/Ternary_numeral_system',
+    quinary: 'https://en.wikipedia.org/wiki/Quinary',
+    senary: 'https://en.wikipedia.org/wiki/Senary',
+    septenary: 'https://en.wikipedia.org/wiki/Septenary',
+    octal: 'https://en.wikipedia.org/wiki/Octal',
+    dozenal: 'https://en.wikipedia.org/wiki/Duodecimal',
+    hexadecimal: 'https://en.wikipedia.org/wiki/Hexadecimal',
+    vigesimal: 'https://en.wikipedia.org/wiki/Vigesimal',
+    Babylonian: 'https://en.wikipedia.org/wiki/Sexagesimal',
+    piDay: 'https://en.wikipedia.org/wiki/Pi_Day',
+    starWarsDay: 'https://en.wikipedia.org/wiki/Star_Wars_Day',
+    tauDay: 'https://en.wikipedia.org/wiki/Tau_Day',
+    mercury: 'https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude',
+    venus: 'https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation',
+    mars: 'https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation',
+    jupiter: 'https://en.wikipedia.org/wiki/Jupiter#Orbit_and_rotation',
+    saturn: 'https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation',
+    uranus: 'https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation',
+    neptune: 'https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation',
+    lightSecond: 'https://en.wikipedia.org/wiki/Light-second',
+    lightMinute: 'https://en.wikipedia.org/wiki/Light-minute',
+    lightHour: 'https://en.wikipedia.org/wiki/Light-hour',
+    lightDay: 'https://en.wikipedia.org/wiki/Light-day',
+    lightYear: 'https://en.wikipedia.org/wiki/Light-year',
+    au: 'https://en.wikipedia.org/wiki/Astronomical_unit',
+    moon: 'https://en.wikipedia.org/wiki/Moon',
+    sun: 'https://en.wikipedia.org/wiki/Sun',
+    marsClosest: 'https://en.wikipedia.org/wiki/Mars',
+    voyager1: 'https://en.wikipedia.org/wiki/Voyager_1',
+    proximaCentauri: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
+};
 
 // ============================================================================
 // MILESTONE DEFINITIONS
@@ -282,9 +357,9 @@ const popCultureMilestones = [
 
 // Nerdy holidays
 const nerdyHolidays = [
-    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)' },
-    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day' },
-    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)' }
+    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)', wikiKey: 'piDay' },
+    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day', wikiKey: 'starWarsDay' },
+    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)', wikiKey: 'tauDay' }
 ];
 
 // Earth birthday special labels
@@ -348,6 +423,15 @@ const MilestonesExports = {
     PALINDROMES,
     REPUNITS,
     POWERS_OF_2,
+    MINUTE_POWERS,
+    HEX_MILESTONES,
+    PALINDROME_HOURS,
+
+    // Wikipedia URLs
+    WIKI_URLS,
+
+    // Light-time units
+    LIGHT_TIME_UNITS,
 
     // Milestone definitions
     secondMilestones,

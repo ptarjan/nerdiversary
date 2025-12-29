@@ -12,58 +12,9 @@ import MilestonesModule from './milestones.js';
 // Use global version if available (browser), otherwise use imported module
 const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
 
-// Wikipedia URLs for educational terms
-const WIKI_URLS = {
-    fibonacci: 'https://en.wikipedia.org/wiki/Fibonacci_sequence',
-    lucas: 'https://en.wikipedia.org/wiki/Lucas_number',
-    perfect: 'https://en.wikipedia.org/wiki/Perfect_number',
-    triangular: 'https://en.wikipedia.org/wiki/Triangular_number',
-    palindrome: 'https://en.wikipedia.org/wiki/Palindromic_number',
-    repunit: 'https://en.wikipedia.org/wiki/Repunit',
-    phi: 'https://en.wikipedia.org/wiki/Golden_ratio',
-    pi: 'https://en.wikipedia.org/wiki/Pi',
-    e: 'https://en.wikipedia.org/wiki/E_(mathematical_constant)',
-    tau: 'https://en.wikipedia.org/wiki/Tau_(mathematics)',
-    speedOfLight: 'https://en.wikipedia.org/wiki/Speed_of_light',
-    tenKHours: 'https://en.wikipedia.org/wiki/Outliers_(book)',
-    answer42: 'https://en.wikipedia.org/wiki/Phrases_from_The_Hitchhiker%27s_Guide_to_the_Galaxy#The_Answer_to_the_Ultimate_Question_of_Life,_the_Universe,_and_Everything_is_42',
-    binary: 'https://en.wikipedia.org/wiki/Binary_number',
-    ternary: 'https://en.wikipedia.org/wiki/Ternary_numeral_system',
-    quinary: 'https://en.wikipedia.org/wiki/Quinary',
-    senary: 'https://en.wikipedia.org/wiki/Senary',
-    septenary: 'https://en.wikipedia.org/wiki/Septenary',
-    octal: 'https://en.wikipedia.org/wiki/Octal',
-    dozenal: 'https://en.wikipedia.org/wiki/Duodecimal',
-    hexadecimal: 'https://en.wikipedia.org/wiki/Hexadecimal',
-    vigesimal: 'https://en.wikipedia.org/wiki/Vigesimal',
-    Babylonian: 'https://en.wikipedia.org/wiki/Sexagesimal',
-    piDay: 'https://en.wikipedia.org/wiki/Pi_Day',
-    starWarsDay: 'https://en.wikipedia.org/wiki/Star_Wars_Day',
-    tauDay: 'https://en.wikipedia.org/wiki/Tau_Day',
-    mercury: 'https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude',
-    venus: 'https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation',
-    mars: 'https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation',
-    jupiter: 'https://en.wikipedia.org/wiki/Jupiter#Orbit_and_rotation',
-    saturn: 'https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation',
-    uranus: 'https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation',
-    neptune: 'https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation',
-    // Scientific/cosmic distances (keys match COSMIC_DISTANCES)
-    lightSecond: 'https://en.wikipedia.org/wiki/Light-second',
-    lightMinute: 'https://en.wikipedia.org/wiki/Light-minute',
-    lightHour: 'https://en.wikipedia.org/wiki/Light-hour',
-    lightDay: 'https://en.wikipedia.org/wiki/Light-day',
-    lightYear: 'https://en.wikipedia.org/wiki/Light-year',
-    au: 'https://en.wikipedia.org/wiki/Astronomical_unit',
-    moon: 'https://en.wikipedia.org/wiki/Moon',
-    sun: 'https://en.wikipedia.org/wiki/Sun',
-    marsClosest: 'https://en.wikipedia.org/wiki/Mars',
-    voyager1: 'https://en.wikipedia.org/wiki/Voyager_1',
-    proximaCentauri: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
-};
-
 // Helper to create Wikipedia link HTML
 function wikiLink(key, text) {
-    const url = WIKI_URLS[key];
+    const url = Milestones.WIKI_URLS[key];
     return url ? `<a href="${url}" target="_blank">${text}</a>` : text;
 }
 
@@ -244,8 +195,7 @@ const Calculator = {
         }
 
         // Powers of 2 in minutes
-        const minutePowers = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
-        for (const power of minutePowers) {
+        for (const power of Milestones.MINUTE_POWERS) {
             const value = Math.pow(2, power);
             addEvent({
                 id: `binary-minutes-${power}`,
@@ -259,14 +209,7 @@ const Calculator = {
         }
 
         // Hexadecimal milestones
-        const hexMilestones = [
-            { value: 0x100000, hex: '0x100000' },
-            { value: 0x1000000, hex: '0x1000000' },
-            { value: 0xFFFFFF, hex: '0xFFFFFF' },
-            { value: 0x10000000, hex: '0x10000000' },
-            { value: 0xDEADBEEF, hex: '0xDEADBEEF' }
-        ];
-        for (const m of hexMilestones) {
+        for (const m of Milestones.HEX_MILESTONES) {
             addEvent({
                 id: `hex-${m.hex}`,
                 title: `${m.hex} Seconds`,
@@ -471,8 +414,7 @@ const Calculator = {
         }
 
         // Palindrome hours
-        const palindromeHours = [10001, 10101, 10201, 11011, 11111, 11211, 12021, 12121, 12221, 12321];
-        for (const pal of palindromeHours) {
+        for (const pal of Milestones.PALINDROME_HOURS) {
             addEvent({
                 id: `palindrome-hours-${pal}`,
                 title: `Palindrome Hour ${pal.toLocaleString()}`,
@@ -594,15 +536,7 @@ const Calculator = {
         }
 
         // Also add some clean multiples of light-time units
-        const lightTimeUnits = [
-            { seconds: 1, name: '1 Light-Second', wikiKey: 'lightSecond', desc: 'enough to circle Earth 7.5 times' },
-            { seconds: 60, name: '1 Light-Minute', wikiKey: 'lightMinute', desc: 'the distance light travels in a minute' },
-            { seconds: 499, name: '1 AU (Sun Distance)', wikiKey: 'au', desc: 'the distance from Earth to the Sun' },
-            { seconds: 3600, name: '1 Light-Hour', wikiKey: 'lightHour', desc: 'past the orbit of Jupiter' },
-            { seconds: 86400, name: '1 Light-Day', wikiKey: 'lightDay', desc: 'well beyond the Kuiper Belt' }
-        ];
-
-        for (const unit of lightTimeUnits) {
+        for (const unit of Milestones.LIGHT_TIME_UNITS) {
             const unitLink = wikiLink(unit.wikiKey, unit.name.toLowerCase());
             addEvent({
                 id: `lightspeed-${unit.seconds}s`,
@@ -619,13 +553,6 @@ const Calculator = {
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         const maxYears = 120;
 
-        // Map holiday names to wiki link keys
-        const holidayWikiKeys = {
-            'Pi Day': 'piDay',
-            'May the 4th': 'starWarsDay',
-            'Tau Day': 'tauDay'
-        };
-
         for (const holiday of Milestones.nerdyHolidays) {
             for (let year = 1; year <= maxYears; year++) {
                 const holidayDate = new Date(
@@ -637,8 +564,7 @@ const Calculator = {
                 );
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
-                    const wikiKey = holidayWikiKeys[holiday.name];
-                    const linkText = wikiKey ? wikiLink(wikiKey, holiday.name) : holiday.name;
+                    const linkText = holiday.wikiKey ? wikiLink(holiday.wikiKey, holiday.name) : holiday.name;
                     addEvent({
                         id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
                         title: `${holiday.name} ${holidayDate.getFullYear()}`,
