@@ -2,11 +2,41 @@
 const { test, expect } = require('@playwright/test');
 
 test.describe('Nerdiversary Main Flows', () => {
+  /** @type {string[]} */
+  let consoleErrors = [];
+  /** @type {string[]} */
+  let pageErrors = [];
 
   test.beforeEach(async ({ page }) => {
+    // Reset error collectors
+    consoleErrors = [];
+    pageErrors = [];
+
+    // Collect console errors
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        // Ignore network errors for external resources
+        const text = msg.text();
+        if (!text.includes('net::ERR_') && !text.includes('Failed to load resource')) {
+          consoleErrors.push(text);
+        }
+      }
+    });
+
+    // Collect page errors (uncaught exceptions)
+    page.on('pageerror', err => {
+      pageErrors.push(err.message);
+    });
+
     // Clear localStorage before each test
     await page.goto('/index.html');
     await page.evaluate(() => localStorage.clear());
+  });
+
+  test.afterEach(async () => {
+    // Fail test if there were any JS errors
+    expect(pageErrors, 'Page should have no uncaught errors').toEqual([]);
+    expect(consoleErrors, 'Console should have no errors').toEqual([]);
   });
 
   test('home page loads correctly', async ({ page }) => {
