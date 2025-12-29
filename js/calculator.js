@@ -47,7 +47,7 @@ const WIKI_URLS = {
     saturn: 'https://en.wikipedia.org/wiki/Saturn#Orbit_and_rotation',
     uranus: 'https://en.wikipedia.org/wiki/Uranus#Orbit_and_rotation',
     neptune: 'https://en.wikipedia.org/wiki/Neptune#Orbit_and_rotation',
-    // Scientific/cosmic distances
+    // Scientific/cosmic distances (keys match COSMIC_DISTANCES)
     lightSecond: 'https://en.wikipedia.org/wiki/Light-second',
     lightMinute: 'https://en.wikipedia.org/wiki/Light-minute',
     lightHour: 'https://en.wikipedia.org/wiki/Light-hour',
@@ -56,12 +56,9 @@ const WIKI_URLS = {
     au: 'https://en.wikipedia.org/wiki/Astronomical_unit',
     moon: 'https://en.wikipedia.org/wiki/Moon',
     sun: 'https://en.wikipedia.org/wiki/Sun',
-    marsDistance: 'https://en.wikipedia.org/wiki/Mars',
-    jupiterDistance: 'https://en.wikipedia.org/wiki/Jupiter',
-    saturnDistance: 'https://en.wikipedia.org/wiki/Saturn',
-    neptuneDistance: 'https://en.wikipedia.org/wiki/Neptune',
+    mars_closest: 'https://en.wikipedia.org/wiki/Mars',
     voyager1: 'https://en.wikipedia.org/wiki/Voyager_1',
-    proximaCentauri: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
+    proxima: 'https://en.wikipedia.org/wiki/Proxima_Centauri',
 };
 
 // Helper to create Wikipedia link HTML
@@ -567,18 +564,6 @@ const Calculator = {
         // Distance = age in seconds × speed of light
         // So: seconds needed = distance / speed of light
 
-        // Map cosmic distance keys to wiki keys
-        const cosmicWikiKeys = {
-            moon: 'moon',
-            sun: 'sun',
-            mars: 'marsDistance',
-            jupiter: 'jupiterDistance',
-            saturn: 'saturnDistance',
-            neptune: 'neptuneDistance',
-            voyager1: 'voyager1',
-            proximaCentauri: 'proximaCentauri'
-        };
-
         for (const [key, dest] of Object.entries(Milestones.COSMIC_DISTANCES)) {
             const secondsNeeded = dest.meters / Milestones.SPEED_OF_LIGHT;
             const eventDate = new Date(birthDate.getTime() + secondsNeeded * Milestones.MS_PER_SECOND);
@@ -595,8 +580,8 @@ const Calculator = {
                 distanceStr = `${(dest.meters / 1e6).toFixed(0)} million km`;
             }
 
-            const wikiKey = cosmicWikiKeys[key];
-            const destLink = wikiKey ? wikiLink(wikiKey, dest.name) : dest.name;
+            // Use key directly - WIKI_URLS keys match COSMIC_DISTANCES keys
+            const destLink = wikiLink(key, dest.name);
 
             addEvent({
                 id: `lightspeed-${key}`,
