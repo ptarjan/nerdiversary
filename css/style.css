@@ -760,6 +760,18 @@ body {
     margin-bottom: 0.75rem;
 }
 
+.event-description a {
+    color: var(--accent-tertiary);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-tertiary);
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.event-description a:hover {
+    color: var(--accent-secondary);
+    border-bottom-color: var(--accent-secondary);
+}
+
 .event-meta {
     display: flex;
     flex-wrap: wrap;
