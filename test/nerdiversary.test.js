@@ -3,8 +3,9 @@
  * Run with: node test/nerdiversary.test.js
  */
 
-// Load the Nerdiversary module
+// Load the Nerdiversary and Milestones modules
 const path = require('path');
+const Milestones = require(path.join(__dirname, '..', 'js', 'milestones.js'));
 const Nerdiversary = require(path.join(__dirname, '..', 'js', 'nerdiversary.js'));
 
 let passed = 0;
@@ -48,27 +49,27 @@ console.log('\n=== Nerdiversary Tests ===\n');
 console.log('--- Time Constants ---');
 
 test('MS_PER_SECOND is 1000', () => {
-    assertEqual(Nerdiversary.MS_PER_SECOND, 1000);
+    assertEqual(Milestones.MS_PER_SECOND, 1000);
 });
 
 test('MS_PER_MINUTE is 60,000', () => {
-    assertEqual(Nerdiversary.MS_PER_MINUTE, 60 * 1000);
+    assertEqual(Milestones.MS_PER_MINUTE, 60 * 1000);
 });
 
 test('MS_PER_HOUR is 3,600,000', () => {
-    assertEqual(Nerdiversary.MS_PER_HOUR, 60 * 60 * 1000);
+    assertEqual(Milestones.MS_PER_HOUR, 60 * 60 * 1000);
 });
 
 test('MS_PER_DAY is 86,400,000', () => {
-    assertEqual(Nerdiversary.MS_PER_DAY, 24 * 60 * 60 * 1000);
+    assertEqual(Milestones.MS_PER_DAY, 24 * 60 * 60 * 1000);
 });
 
 test('MS_PER_WEEK is 604,800,000', () => {
-    assertEqual(Nerdiversary.MS_PER_WEEK, 7 * 24 * 60 * 60 * 1000);
+    assertEqual(Milestones.MS_PER_WEEK, 7 * 24 * 60 * 60 * 1000);
 });
 
 test('MS_PER_YEAR uses Gregorian average (365.2425 days)', () => {
-    assertEqual(Nerdiversary.MS_PER_YEAR, 365.2425 * 24 * 60 * 60 * 1000);
+    assertEqual(Milestones.MS_PER_YEAR, 365.2425 * 24 * 60 * 60 * 1000);
 });
 
 // ============================================
@@ -77,24 +78,24 @@ test('MS_PER_YEAR uses Gregorian average (365.2425 days)', () => {
 console.log('\n--- Mathematical Constants ---');
 
 test('PI is Math.PI', () => {
-    assertEqual(Nerdiversary.PI, Math.PI);
-    assertClose(Nerdiversary.PI, 3.14159265358979, 1e-14);
+    assertEqual(Milestones.PI, Math.PI);
+    assertClose(Milestones.PI, 3.14159265358979, 1e-14);
 });
 
 test('E is Math.E (Euler\'s number)', () => {
-    assertEqual(Nerdiversary.E, Math.E);
-    assertClose(Nerdiversary.E, 2.71828182845905, 1e-14);
+    assertEqual(Milestones.E, Math.E);
+    assertClose(Milestones.E, 2.71828182845905, 1e-14);
 });
 
 test('PHI is the golden ratio ((1 + sqrt(5)) / 2)', () => {
     const expected = (1 + Math.sqrt(5)) / 2;
-    assertEqual(Nerdiversary.PHI, expected);
-    assertClose(Nerdiversary.PHI, 1.6180339887, 1e-10);
+    assertEqual(Milestones.PHI, expected);
+    assertClose(Milestones.PHI, 1.6180339887, 1e-10);
 });
 
 test('TAU is 2π', () => {
-    assertEqual(Nerdiversary.TAU, 2 * Math.PI);
-    assertClose(Nerdiversary.TAU, 6.28318530717959, 1e-14);
+    assertEqual(Milestones.TAU, 2 * Math.PI);
+    assertClose(Milestones.TAU, 6.28318530717959, 1e-14);
 });
 
 // ============================================
@@ -103,7 +104,7 @@ test('TAU is 2π', () => {
 console.log('\n--- Fibonacci Sequence ---');
 
 test('FIBONACCI array is actually Fibonacci sequence', () => {
-    const fib = Nerdiversary.FIBONACCI;
+    const fib = Milestones.FIBONACCI;
     assertTrue(fib[0] === 1, 'First element should be 1');
     assertTrue(fib[1] === 2, 'Second element should be 2');
 
@@ -114,7 +115,7 @@ test('FIBONACCI array is actually Fibonacci sequence', () => {
 });
 
 test('FIBONACCI array covers 94+ years in seconds (~3 billion)', () => {
-    const maxFib = Math.max(...Nerdiversary.FIBONACCI);
+    const maxFib = Math.max(...Milestones.FIBONACCI);
     const years94InSeconds = 94 * 365.2425 * 24 * 60 * 60;
     assertTrue(maxFib >= years94InSeconds,
         `Max Fibonacci (${maxFib}) should cover 94 years in seconds (~${Math.floor(years94InSeconds)})`);
@@ -122,12 +123,12 @@ test('FIBONACCI array covers 94+ years in seconds (~3 billion)', () => {
 
 test('FIBONACCI contains key milestones for 42-year-old in seconds', () => {
     // ~42.67 years = 1,346,269,000 seconds (Fibonacci F(31) * 1000)
-    assertTrue(Nerdiversary.FIBONACCI.includes(1346269),
+    assertTrue(Milestones.FIBONACCI.includes(1346269),
         'Should include 1,346,269 for ~42.7 year milestone');
 });
 
 test('LUCAS array is actually Lucas sequence (starts 2, 1)', () => {
-    const luc = Nerdiversary.LUCAS;
+    const luc = Milestones.LUCAS;
     assertTrue(luc[0] === 2, 'First element should be 2');
     assertTrue(luc[1] === 1, 'Second element should be 1');
 
@@ -138,7 +139,7 @@ test('LUCAS array is actually Lucas sequence (starts 2, 1)', () => {
 });
 
 test('Perfect numbers are correct', () => {
-    const perfectNumbers = Nerdiversary.PERFECT_NUMBERS;
+    const perfectNumbers = Milestones.PERFECT_NUMBERS;
     // 6 = 1 + 2 + 3
     assertEqual(1 + 2 + 3, 6);
     // 28 = 1 + 2 + 4 + 7 + 14
@@ -152,7 +153,7 @@ test('Perfect numbers are correct', () => {
 });
 
 test('Triangular numbers are correct (T(n) = n*(n+1)/2)', () => {
-    const tri = Nerdiversary.TRIANGULAR;
+    const tri = Milestones.TRIANGULAR;
     for (let i = 0; i < Math.min(tri.length, 50); i++) {
         const n = i + 1;
         const expected = n * (n + 1) / 2;
@@ -161,7 +162,7 @@ test('Triangular numbers are correct (T(n) = n*(n+1)/2)', () => {
 });
 
 test('Palindromes read the same forwards and backwards', () => {
-    for (const pal of Nerdiversary.PALINDROMES.slice(0, 50)) {
+    for (const pal of Milestones.PALINDROMES.slice(0, 50)) {
         const str = String(pal);
         const reversed = str.split('').reverse().join('');
         assertEqual(str, reversed, `${pal} should be a palindrome: `);
@@ -169,7 +170,7 @@ test('Palindromes read the same forwards and backwards', () => {
 });
 
 test('Repunits are all 1s', () => {
-    for (const rep of Nerdiversary.REPUNITS) {
+    for (const rep of Milestones.REPUNITS) {
         const str = String(rep);
         assertTrue(str.split('').every(c => c === '1'),
             `${rep} should be all 1s`);
@@ -194,14 +195,14 @@ const expectedPlanets = {
 
 for (const [key, expected] of Object.entries(expectedPlanets)) {
     test(`${key.charAt(0).toUpperCase() + key.slice(1)} orbital period is ~${expected.days} days`, () => {
-        const planet = Nerdiversary.PLANETS[key];
+        const planet = Milestones.PLANETS[key];
         assertTrue(planet !== undefined, `Planet ${key} should exist`);
         assertClose(planet.days, expected.days, expected.tolerance);
     });
 }
 
 test('All 7 planets are defined', () => {
-    assertEqual(Object.keys(Nerdiversary.PLANETS).length, 7);
+    assertEqual(Object.keys(Milestones.PLANETS).length, 7);
 });
 
 // ============================================
@@ -345,36 +346,36 @@ test('1 million minutes = ~1.90 years', () => {
 console.log('\n--- Planetary Year Calculations ---');
 
 test('Mercury year 1 occurs at ~88 Earth days', () => {
-    const earthDays = Nerdiversary.PLANETS.mercury.days;
+    const earthDays = Milestones.PLANETS.mercury.days;
     assertClose(earthDays, 88, 0.1);
 });
 
 test('Mars year 1 occurs at ~687 Earth days (~1.88 years)', () => {
-    const earthDays = Nerdiversary.PLANETS.mars.days;
+    const earthDays = Milestones.PLANETS.mars.days;
     const years = earthDays / 365.2425;
     assertClose(years, 1.88, 0.01);
 });
 
 test('Jupiter year 1 occurs at ~11.86 Earth years', () => {
-    const earthDays = Nerdiversary.PLANETS.jupiter.days;
+    const earthDays = Milestones.PLANETS.jupiter.days;
     const years = earthDays / 365.2425;
     assertClose(years, 11.86, 0.01);
 });
 
 test('Saturn year 1 occurs at ~29.46 Earth years', () => {
-    const earthDays = Nerdiversary.PLANETS.saturn.days;
+    const earthDays = Milestones.PLANETS.saturn.days;
     const years = earthDays / 365.2425;
     assertClose(years, 29.46, 0.01);
 });
 
 test('Uranus year 1 occurs at ~84.01 Earth years', () => {
-    const earthDays = Nerdiversary.PLANETS.uranus.days;
+    const earthDays = Milestones.PLANETS.uranus.days;
     const years = earthDays / 365.2425;
     assertClose(years, 84.01, 0.1);
 });
 
 test('Neptune year 1 occurs at ~164.79 Earth years', () => {
-    const earthDays = Nerdiversary.PLANETS.neptune.days;
+    const earthDays = Milestones.PLANETS.neptune.days;
     const years = earthDays / 365.2425;
     assertClose(years, 164.79, 0.1);
 });
@@ -397,13 +398,13 @@ test('e × 10⁹ seconds = ~86.14 years', () => {
 });
 
 test('φ × 10⁹ seconds = ~51.27 years', () => {
-    const seconds = Nerdiversary.PHI * 1e9;
+    const seconds = Milestones.PHI * 1e9;
     const years = seconds / (365.2425 * 24 * 60 * 60);
     assertClose(years, 51.27, 0.01);
 });
 
 test('τ × 10⁸ seconds = ~19.91 years', () => {
-    const seconds = Nerdiversary.TAU * 1e8;
+    const seconds = Milestones.TAU * 1e8;
     const years = seconds / (365.2425 * 24 * 60 * 60);
     assertClose(years, 19.91, 0.01);
 });
@@ -415,21 +416,21 @@ console.log('\n--- Fibonacci Milestone Calculations ---');
 
 test('Fibonacci 1,346,269 seconds = ~42.67 years', () => {
     const fib = 1346269;
-    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    assertTrue(Milestones.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
     const years = (fib * 1000) / (365.2425 * 24 * 60 * 60);
     assertClose(years, 42.67, 0.01);
 });
 
 test('Fibonacci 832,040 seconds = ~26.37 years', () => {
     const fib = 832040;
-    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    assertTrue(Milestones.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
     const years = (fib * 1000) / (365.2425 * 24 * 60 * 60);
     assertClose(years, 26.37, 0.02);
 });
 
 test('Fibonacci 10,946 days = ~29.96 years', () => {
     const fib = 10946;
-    assertTrue(Nerdiversary.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
+    assertTrue(Milestones.FIBONACCI.includes(fib), 'Should be in FIBONACCI array');
     const years = fib / 365.2425;
     assertClose(years, 29.96, 0.01);
 });
@@ -534,140 +535,60 @@ test('toSuperscript converts numbers correctly', () => {
 // ============================================
 console.log('\n--- Worker.js Sync Tests ---');
 
-// Read worker.js as text to extract its definitions
+// Load worker module for comparison
 const fs = require('fs');
+const vm = require('vm');
 const workerPath = path.join(__dirname, '..', 'worker', 'worker.js');
 const workerCode = fs.readFileSync(workerPath, 'utf8');
 
-test('Worker has matching time constants', () => {
-    assertTrue(workerCode.includes('MS_PER_SECOND = 1000'), 'MS_PER_SECOND');
-    assertTrue(workerCode.includes('MS_PER_MINUTE = 60 * 1000'), 'MS_PER_MINUTE');
-    assertTrue(workerCode.includes('MS_PER_HOUR = 60 * 60 * 1000'), 'MS_PER_HOUR');
-    assertTrue(workerCode.includes('MS_PER_DAY = 24 * 60 * 60 * 1000'), 'MS_PER_DAY');
-    assertTrue(workerCode.includes('MS_PER_YEAR = 365.2425'), 'MS_PER_YEAR uses Gregorian');
-});
+// Execute worker code in a sandbox to get calculateNerdiversaries
+const workerSandbox = { Math, Date, Object, Array, console, module: { exports: {} } };
+vm.createContext(workerSandbox);
+vm.runInContext(workerCode.replace(/^export default.*$/m, ''), workerSandbox);
+const Worker = workerSandbox.module.exports;
 
-test('Worker has matching planetary periods', () => {
-    assertTrue(workerCode.includes("mercury: { name: 'Mercury', days: 87.969"), 'Mercury');
-    assertTrue(workerCode.includes("venus: { name: 'Venus', days: 224.701"), 'Venus');
-    assertTrue(workerCode.includes("mars: { name: 'Mars', days: 686.980"), 'Mars');
-    assertTrue(workerCode.includes("jupiter: { name: 'Jupiter', days: 4332.59"), 'Jupiter');
-    assertTrue(workerCode.includes("saturn: { name: 'Saturn', days: 10759.22"), 'Saturn');
-    assertTrue(workerCode.includes("uranus: { name: 'Uranus', days: 30688.5"), 'Uranus');
-    assertTrue(workerCode.includes("neptune: { name: 'Neptune', days: 60182"), 'Neptune');
-});
+test('Website and calendar generate same events for a birthday', () => {
+    const testBirthday = new Date('2020-06-15T10:30:00');
+    const yearsAhead = 50;
 
-test('Worker has matching mathematical constants', () => {
-    assertTrue(workerCode.includes('const PI = Math.PI'), 'PI');
-    assertTrue(workerCode.includes('const E = Math.E'), 'E');
-    assertTrue(workerCode.includes('const PHI = (1 + Math.sqrt(5)) / 2'), 'PHI');
-    assertTrue(workerCode.includes('const TAU = 2 * Math.PI') || workerCode.includes('TAU'), 'TAU should exist');
-});
+    // Get events from website (Nerdiversary)
+    const websiteEvents = Nerdiversary.calculate(testBirthday, yearsAhead);
 
-test('Worker has matching FIBONACCI array', () => {
-    // Check that worker has the extended FIBONACCI covering 95 years
-    assertTrue(workerCode.includes('2971215073'), 'FIBONACCI should include 2971215073 for 94+ year coverage');
-    assertTrue(workerCode.includes('1346269'), 'FIBONACCI should include 1346269');
-});
+    // Get events from worker (calendar)
+    const workerEvents = Worker.calculateNerdiversaries(testBirthday, yearsAhead);
 
-test('Worker has Lucas numbers', () => {
-    assertTrue(workerCode.includes('LUCAS') || workerCode.includes('Lucas'),
-        'Worker should have Lucas number milestones');
-});
-
-test('Worker has Perfect numbers', () => {
-    assertTrue(workerCode.includes('PERFECT') || workerCode.includes('Perfect'),
-        'Worker should have Perfect number milestones');
-});
-
-test('Worker has Triangular numbers', () => {
-    assertTrue(workerCode.includes('TRIANGULAR') || workerCode.includes('Triangular'),
-        'Worker should have Triangular number milestones');
-});
-
-test('Worker has Palindrome milestones', () => {
-    assertTrue(workerCode.includes('palindrome') || workerCode.includes('Palindrome'),
-        'Worker should have Palindrome milestones');
-});
-
-test('Worker has Repunit milestones', () => {
-    assertTrue(workerCode.includes('REPUNIT') || workerCode.includes('Repunit') || workerCode.includes('repunit'),
-        'Worker should have Repunit milestones');
-});
-
-test('Worker has scientific milestones (speed of light)', () => {
-    assertTrue(workerCode.includes('299792458') || workerCode.includes('speed of light') || workerCode.includes('Speed of Light'),
-        'Worker should have speed of light milestone');
-});
-
-test('Worker generates Fibonacci seconds milestones', () => {
-    assertTrue(workerCode.includes('fib-seconds') || workerCode.includes('Fibonacci Second'),
-        'Worker should generate Fibonacci seconds');
-});
-
-test('Worker generates Fibonacci minutes milestones', () => {
-    assertTrue(workerCode.includes('fib-minutes') || workerCode.includes('Fibonacci Minute'),
-        'Worker should generate Fibonacci minutes');
-});
-
-test('Worker generates Fibonacci hours milestones', () => {
-    assertTrue(workerCode.includes('fib-hours') || workerCode.includes('Fibonacci Hour'),
-        'Worker should generate Fibonacci hours');
-});
-
-// Load shared Milestones module for comparison
-const Milestones = require(path.join(__dirname, '..', 'js', 'milestones.js'));
-
-test('Shared module constants match Nerdiversary', () => {
-    // Time constants
-    assertEqual(Milestones.MS_PER_SECOND, Nerdiversary.MS_PER_SECOND, 'MS_PER_SECOND: ');
-    assertEqual(Milestones.MS_PER_MINUTE, Nerdiversary.MS_PER_MINUTE, 'MS_PER_MINUTE: ');
-    assertEqual(Milestones.MS_PER_HOUR, Nerdiversary.MS_PER_HOUR, 'MS_PER_HOUR: ');
-    assertEqual(Milestones.MS_PER_DAY, Nerdiversary.MS_PER_DAY, 'MS_PER_DAY: ');
-    assertEqual(Milestones.MS_PER_WEEK, Nerdiversary.MS_PER_WEEK, 'MS_PER_WEEK: ');
-    assertEqual(Milestones.MS_PER_YEAR, Nerdiversary.MS_PER_YEAR, 'MS_PER_YEAR: ');
-
-    // Math constants
-    assertEqual(Milestones.PI, Nerdiversary.PI, 'PI: ');
-    assertEqual(Milestones.E, Nerdiversary.E, 'E: ');
-    assertEqual(Milestones.PHI, Nerdiversary.PHI, 'PHI: ');
-    assertEqual(Milestones.TAU, Nerdiversary.TAU, 'TAU: ');
-});
-
-test('Shared module planetary periods match Nerdiversary', () => {
-    for (const planet of Object.keys(Nerdiversary.PLANETS)) {
-        assertEqual(
-            Milestones.PLANETS[planet].days,
-            Nerdiversary.PLANETS[planet].days,
-            `${planet} orbital period: `
-        );
-    }
-});
-
-test('Shared module sequences match Nerdiversary', () => {
-    // Check FIBONACCI arrays match
-    assertEqual(Milestones.FIBONACCI.length, Nerdiversary.FIBONACCI.length, 'FIBONACCI length: ');
-    for (let i = 0; i < Milestones.FIBONACCI.length; i++) {
-        assertEqual(Milestones.FIBONACCI[i], Nerdiversary.FIBONACCI[i], `FIBONACCI[${i}]: `);
+    // Build maps of id -> date for comparison
+    const websiteMap = new Map();
+    for (const e of websiteEvents) {
+        websiteMap.set(e.id, e.date.getTime());
     }
 
-    // Check key sequences exist
-    assertTrue(Milestones.LUCAS.length > 0, 'LUCAS should exist');
-    assertTrue(Milestones.PERFECT_NUMBERS.length > 0, 'PERFECT_NUMBERS should exist');
-    assertTrue(Milestones.TRIANGULAR.length > 0, 'TRIANGULAR should exist');
-    assertTrue(Milestones.PALINDROMES.length > 0, 'PALINDROMES should exist');
-    assertTrue(Milestones.REPUNITS.length > 0, 'REPUNITS should exist');
-});
-
-test('Worker code uses same constants as shared module', () => {
-    // Verify worker has all the shared constants
-    const sharedKeys = ['MS_PER_SECOND', 'MS_PER_MINUTE', 'MS_PER_HOUR', 'MS_PER_DAY',
-                        'MS_PER_WEEK', 'MS_PER_YEAR', 'PI', 'E', 'PHI', 'TAU'];
-
-    for (const key of sharedKeys) {
-        const pattern = new RegExp(`(const\\s+${key}|${key}\\s*[=:])`);
-        assertTrue(workerCode.match(pattern) !== null, `Worker should define ${key}`);
+    const workerMap = new Map();
+    for (const e of workerEvents) {
+        workerMap.set(e.id, e.date.getTime());
     }
+
+    // Find events in both and verify dates match
+    let matchCount = 0;
+    let mismatchCount = 0;
+    const mismatches = [];
+
+    for (const [id, websiteTime] of websiteMap) {
+        if (workerMap.has(id)) {
+            const workerTime = workerMap.get(id);
+            if (websiteTime === workerTime) {
+                matchCount++;
+            } else {
+                mismatchCount++;
+                if (mismatches.length < 5) {
+                    mismatches.push(`${id}: website=${new Date(websiteTime).toISOString()} worker=${new Date(workerTime).toISOString()}`);
+                }
+            }
+        }
+    }
+
+    assertTrue(matchCount > 100, `Should have many matching events (got ${matchCount})`);
+    assertTrue(mismatchCount === 0, `Should have no date mismatches (got ${mismatchCount}): ${mismatches.join(', ')}`);
 });
 
 // ============================================

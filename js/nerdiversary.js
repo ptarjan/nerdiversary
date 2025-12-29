@@ -10,38 +10,18 @@ if (typeof Milestones === 'undefined' && typeof require !== 'undefined') {
     globalThis.Milestones = require('./milestones.js');
 }
 
-const Nerdiversary = {
-    // Re-export shared constants for backward compatibility
-    get MS_PER_SECOND() { return Milestones.MS_PER_SECOND; },
-    get MS_PER_MINUTE() { return Milestones.MS_PER_MINUTE; },
-    get MS_PER_HOUR() { return Milestones.MS_PER_HOUR; },
-    get MS_PER_DAY() { return Milestones.MS_PER_DAY; },
-    get MS_PER_WEEK() { return Milestones.MS_PER_WEEK; },
-    get MS_PER_YEAR() { return Milestones.MS_PER_YEAR; },
-    get PI() { return Milestones.PI; },
-    get E() { return Milestones.E; },
-    get PHI() { return Milestones.PHI; },
-    get TAU() { return Milestones.TAU; },
-    get FIBONACCI() { return Milestones.FIBONACCI; },
-    get LUCAS() { return Milestones.LUCAS; },
-    get PERFECT_NUMBERS() { return Milestones.PERFECT_NUMBERS; },
-    get TRIANGULAR() { return Milestones.TRIANGULAR; },
-    get PALINDROMES() { return Milestones.PALINDROMES; },
-    get REPUNITS() { return Milestones.REPUNITS; },
-    get POWERS_OF_2() { return Milestones.POWERS_OF_2; },
+// Planet colors for website display
+const PLANET_COLORS = {
+    mercury: '#8c8c8c',
+    venus: '#e6c229',
+    mars: '#e04f39',
+    jupiter: '#d8a066',
+    saturn: '#f4d58d',
+    uranus: '#4fd0e7',
+    neptune: '#4b70dd'
+};
 
-    // Planetary data with colors for website
-    get PLANETS() {
-        return {
-            mercury: { ...Milestones.PLANETS.mercury, color: '#8c8c8c' },
-            venus: { ...Milestones.PLANETS.venus, color: '#e6c229' },
-            mars: { ...Milestones.PLANETS.mars, color: '#e04f39' },
-            jupiter: { ...Milestones.PLANETS.jupiter, color: '#d8a066' },
-            saturn: { ...Milestones.PLANETS.saturn, color: '#f4d58d' },
-            uranus: { ...Milestones.PLANETS.uranus, color: '#4fd0e7' },
-            neptune: { ...Milestones.PLANETS.neptune, color: '#4b70dd' }
-        };
-    },
+const Nerdiversary = {
 
     /**
      * Calculate all nerdiversaries for a given birthdate
@@ -52,7 +32,7 @@ const Nerdiversary = {
     calculate(birthDate, yearsAhead = 100) {
         const events = [];
         const now = new Date();
-        const maxDate = new Date(birthDate.getTime() + yearsAhead * this.MS_PER_YEAR);
+        const maxDate = new Date(birthDate.getTime() + yearsAhead * Milestones.MS_PER_YEAR);
 
         // Add planetary years
         events.push(...this.calculatePlanetaryYears(birthDate, maxDate));
@@ -103,7 +83,7 @@ const Nerdiversary = {
         return events.map(event => ({
             ...event,
             isPast: event.date < now,
-            daysFromNow: Math.floor((event.date - now) / this.MS_PER_DAY)
+            daysFromNow: Math.floor((event.date - now) / Milestones.MS_PER_DAY)
         }));
     },
 
@@ -113,8 +93,8 @@ const Nerdiversary = {
     calculatePlanetaryYears(birthDate, maxDate) {
         const events = [];
 
-        for (const [key, planet] of Object.entries(this.PLANETS)) {
-            const periodMs = planet.days * this.MS_PER_DAY;
+        for (const [key, planet] of Object.entries(Milestones.PLANETS)) {
+            const periodMs = planet.days * Milestones.MS_PER_DAY;
             let yearNum = 1;
             let eventDate = new Date(birthDate.getTime() + periodMs);
 
@@ -173,7 +153,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of secondMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `seconds-${milestone.value}`,
@@ -204,7 +184,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of minuteMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_MINUTE);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_MINUTE);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `minutes-${milestone.value}`,
@@ -296,7 +276,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of hourMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `hours-${milestone.value}`,
@@ -327,7 +307,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of dayMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_DAY);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_DAY);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `days-${milestone.value}`,
@@ -356,7 +336,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of weekMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_WEEK);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_WEEK);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `weeks-${milestone.value}`,
@@ -371,7 +351,7 @@ const Nerdiversary = {
         }
 
         // Months milestones (using average month length)
-        const MS_PER_MONTH = this.MS_PER_DAY * 30.4375;
+        const MS_PER_MONTH = Milestones.MS_PER_DAY * 30.4375;
         const monthMilestones = [
             { value: 100, label: '100 Months', short: '100 months' },
             { value: 200, label: '200 Months', short: '200 months' },
@@ -409,9 +389,9 @@ const Nerdiversary = {
         const events = [];
 
         // Powers of 2 in seconds
-        for (const power of this.POWERS_OF_2) {
+        for (const power of Milestones.POWERS_OF_2) {
             const value = Math.pow(2, power);
-            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate && eventDate > birthDate) {
                 events.push({
                     id: `binary-seconds-${power}`,
@@ -429,7 +409,7 @@ const Nerdiversary = {
         const minutePowers = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
         for (const power of minutePowers) {
             const value = Math.pow(2, power);
-            const eventDate = new Date(birthDate.getTime() + value * this.MS_PER_MINUTE);
+            const eventDate = new Date(birthDate.getTime() + value * Milestones.MS_PER_MINUTE);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `binary-minutes-${power}`,
@@ -453,7 +433,7 @@ const Nerdiversary = {
         ];
 
         for (const milestone of hexMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `hex-${milestone.hex}`,
@@ -471,52 +451,52 @@ const Nerdiversary = {
         const baseMilestones = [
             // Ternary (base 3)
             { base: 3, name: 'ternary', icon: '🔺', units: [
-                { powers: [15, 16, 17, 18, 19, 20], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [11, 12, 13, 14, 15], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [8, 9, 10, 11, 12], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [6, 7, 8, 9], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [15, 16, 17, 18, 19, 20], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [11, 12, 13, 14, 15], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [8, 9, 10, 11, 12], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [6, 7, 8, 9], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Quinary (base 5)
             { base: 5, name: 'quinary', icon: '🖐️', units: [
-                { powers: [10, 11, 12, 13, 14], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [8, 9, 10, 11], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [6, 7, 8, 9], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [5, 6, 7], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [10, 11, 12, 13, 14], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [8, 9, 10, 11], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [6, 7, 8, 9], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [5, 6, 7], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Senary (base 6)
             { base: 6, name: 'senary', icon: '🎲', units: [
-                { powers: [9, 10, 11, 12, 13], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [7, 8, 9, 10], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [5, 6, 7, 8], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [9, 10, 11, 12, 13], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [7, 8, 9, 10], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [5, 6, 7, 8], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [4, 5, 6], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Septenary (base 7)
             { base: 7, name: 'septenary', icon: '🌈', units: [
-                { powers: [8, 9, 10, 11, 12], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [6, 7, 8, 9], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [5, 6, 7, 8], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [8, 9, 10, 11, 12], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [6, 7, 8, 9], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [5, 6, 7, 8], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [4, 5, 6], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Octal (base 8)
             { base: 8, name: 'octal', icon: '🐙', units: [
-                { powers: [7, 8, 9, 10, 11], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [5, 6, 7, 8], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [4, 5, 6, 7], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [3, 4, 5, 6], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [7, 8, 9, 10, 11], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [5, 6, 7, 8], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [4, 5, 6, 7], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [3, 4, 5, 6], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Duodecimal (base 12)
             { base: 12, name: 'dozenal', icon: '🕛', units: [
-                { powers: [6, 7, 8, 9], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [5, 6, 7], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [4, 5, 6], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [3, 4, 5], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [6, 7, 8, 9], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [5, 6, 7], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [4, 5, 6], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [3, 4, 5], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]},
             // Sexagesimal (base 60) - Babylonian!
             { base: 60, name: 'Babylonian', icon: '🏛️', units: [
-                { powers: [4, 5], unit: 'seconds', ms: this.MS_PER_SECOND },
-                { powers: [3, 4], unit: 'minutes', ms: this.MS_PER_MINUTE },
-                { powers: [2, 3], unit: 'hours', ms: this.MS_PER_HOUR },
-                { powers: [2], unit: 'days', ms: this.MS_PER_DAY }
+                { powers: [4, 5], unit: 'seconds', ms: Milestones.MS_PER_SECOND },
+                { powers: [3, 4], unit: 'minutes', ms: Milestones.MS_PER_MINUTE },
+                { powers: [2, 3], unit: 'hours', ms: Milestones.MS_PER_HOUR },
+                { powers: [2], unit: 'days', ms: Milestones.MS_PER_DAY }
             ]}
         ];
 
@@ -551,13 +531,13 @@ const Nerdiversary = {
 
         // Pi milestones
         const piMilestones = [
-            { multiplier: 1e7, label: 'π × 10⁷ Seconds', value: this.PI * 1e7 },
-            { multiplier: 1e8, label: 'π × 10⁸ Seconds', value: this.PI * 1e8 },
-            { multiplier: 1e9, label: 'π × 10⁹ Seconds', value: this.PI * 1e9 }
+            { multiplier: 1e7, label: 'π × 10⁷ Seconds', value: Milestones.PI * 1e7 },
+            { multiplier: 1e8, label: 'π × 10⁸ Seconds', value: Milestones.PI * 1e8 },
+            { multiplier: 1e9, label: 'π × 10⁹ Seconds', value: Milestones.PI * 1e9 }
         ];
 
         for (const milestone of piMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `pi-${milestone.multiplier}`,
@@ -573,13 +553,13 @@ const Nerdiversary = {
 
         // e (Euler's number) milestones
         const eMilestones = [
-            { multiplier: 1e7, label: 'e × 10⁷ Seconds', value: this.E * 1e7 },
-            { multiplier: 1e8, label: 'e × 10⁸ Seconds', value: this.E * 1e8 },
-            { multiplier: 1e9, label: 'e × 10⁹ Seconds', value: this.E * 1e9 }
+            { multiplier: 1e7, label: 'e × 10⁷ Seconds', value: Milestones.E * 1e7 },
+            { multiplier: 1e8, label: 'e × 10⁸ Seconds', value: Milestones.E * 1e8 },
+            { multiplier: 1e9, label: 'e × 10⁹ Seconds', value: Milestones.E * 1e9 }
         ];
 
         for (const milestone of eMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `e-${milestone.multiplier}`,
@@ -595,13 +575,13 @@ const Nerdiversary = {
 
         // Golden ratio milestones
         const phiMilestones = [
-            { multiplier: 1e7, label: 'φ × 10⁷ Seconds', value: this.PHI * 1e7 },
-            { multiplier: 1e8, label: 'φ × 10⁸ Seconds', value: this.PHI * 1e8 },
-            { multiplier: 1e9, label: 'φ × 10⁹ Seconds', value: this.PHI * 1e9 }
+            { multiplier: 1e7, label: 'φ × 10⁷ Seconds', value: Milestones.PHI * 1e7 },
+            { multiplier: 1e8, label: 'φ × 10⁸ Seconds', value: Milestones.PHI * 1e8 },
+            { multiplier: 1e9, label: 'φ × 10⁹ Seconds', value: Milestones.PHI * 1e9 }
         ];
 
         for (const milestone of phiMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `phi-${milestone.multiplier}`,
@@ -617,12 +597,12 @@ const Nerdiversary = {
 
         // Tau milestones (2π)
         const tauMilestones = [
-            { multiplier: 1e7, label: 'τ × 10⁷ Seconds', value: this.TAU * 1e7 },
-            { multiplier: 1e8, label: 'τ × 10⁸ Seconds', value: this.TAU * 1e8 }
+            { multiplier: 1e7, label: 'τ × 10⁷ Seconds', value: Milestones.TAU * 1e7 },
+            { multiplier: 1e8, label: 'τ × 10⁸ Seconds', value: Milestones.TAU * 1e8 }
         ];
 
         for (const milestone of tauMilestones) {
-            const eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `tau-${milestone.multiplier}`,
@@ -646,9 +626,9 @@ const Nerdiversary = {
         const events = [];
 
         // Fibonacci seconds (larger ones that span a lifetime)
-        const fibSeconds = this.FIBONACCI.filter(n => n >= 1e6 && n <= 3e9);
+        const fibSeconds = Milestones.FIBONACCI.filter(n => n >= 1e6 && n <= 3e9);
         for (const fib of fibSeconds) {
-            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + fib * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `fib-seconds-${fib}`,
@@ -657,15 +637,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🌀',
-                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} seconds`
+                    milestone: `F(${Milestones.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} seconds`
                 });
             }
         }
 
         // Fibonacci minutes
-        const fibMinutes = this.FIBONACCI.filter(n => n >= 1e5 && n <= 5e7);
+        const fibMinutes = Milestones.FIBONACCI.filter(n => n >= 1e5 && n <= 5e7);
         for (const fib of fibMinutes) {
-            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_MINUTE);
+            const eventDate = new Date(birthDate.getTime() + fib * Milestones.MS_PER_MINUTE);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `fib-minutes-${fib}`,
@@ -674,15 +654,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🌀',
-                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} minutes`
+                    milestone: `F(${Milestones.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} minutes`
                 });
             }
         }
 
         // Fibonacci hours
-        const fibHours = this.FIBONACCI.filter(n => n >= 10000 && n <= 1000000);
+        const fibHours = Milestones.FIBONACCI.filter(n => n >= 10000 && n <= 1000000);
         for (const fib of fibHours) {
-            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + fib * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `fib-hours-${fib}`,
@@ -691,15 +671,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🌀',
-                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} hours`
+                    milestone: `F(${Milestones.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} hours`
                 });
             }
         }
 
         // Fibonacci days
-        const fibDays = this.FIBONACCI.filter(n => n >= 100 && n <= 40000);
+        const fibDays = Milestones.FIBONACCI.filter(n => n >= 100 && n <= 40000);
         for (const fib of fibDays) {
-            const eventDate = new Date(birthDate.getTime() + fib * this.MS_PER_DAY);
+            const eventDate = new Date(birthDate.getTime() + fib * Milestones.MS_PER_DAY);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `fib-days-${fib}`,
@@ -708,7 +688,7 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🌀',
-                    milestone: `F(${this.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} days`
+                    milestone: `F(${Milestones.FIBONACCI.indexOf(fib) + 1}) = ${fib.toLocaleString()} days`
                 });
             }
         }
@@ -723,9 +703,9 @@ const Nerdiversary = {
         const events = [];
 
         // Lucas seconds
-        const lucasSeconds = this.LUCAS.filter(n => n >= 1e6 && n <= 3e9);
+        const lucasSeconds = Milestones.LUCAS.filter(n => n >= 1e6 && n <= 3e9);
         for (const luc of lucasSeconds) {
-            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + luc * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `lucas-seconds-${luc}`,
@@ -734,15 +714,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🔷',
-                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} seconds`
+                    milestone: `L(${Milestones.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} seconds`
                 });
             }
         }
 
         // Lucas minutes
-        const lucasMinutes = this.LUCAS.filter(n => n >= 1e5 && n <= 5e7);
+        const lucasMinutes = Milestones.LUCAS.filter(n => n >= 1e5 && n <= 5e7);
         for (const luc of lucasMinutes) {
-            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_MINUTE);
+            const eventDate = new Date(birthDate.getTime() + luc * Milestones.MS_PER_MINUTE);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `lucas-minutes-${luc}`,
@@ -751,15 +731,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🔷',
-                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} minutes`
+                    milestone: `L(${Milestones.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} minutes`
                 });
             }
         }
 
         // Lucas hours
-        const lucasHours = this.LUCAS.filter(n => n >= 10000 && n <= 1000000);
+        const lucasHours = Milestones.LUCAS.filter(n => n >= 10000 && n <= 1000000);
         for (const luc of lucasHours) {
-            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + luc * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `lucas-hours-${luc}`,
@@ -768,15 +748,15 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🔷',
-                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} hours`
+                    milestone: `L(${Milestones.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} hours`
                 });
             }
         }
 
         // Lucas days
-        const lucasDays = this.LUCAS.filter(n => n >= 100 && n <= 40000);
+        const lucasDays = Milestones.LUCAS.filter(n => n >= 100 && n <= 40000);
         for (const luc of lucasDays) {
-            const eventDate = new Date(birthDate.getTime() + luc * this.MS_PER_DAY);
+            const eventDate = new Date(birthDate.getTime() + luc * Milestones.MS_PER_DAY);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `lucas-days-${luc}`,
@@ -785,7 +765,7 @@ const Nerdiversary = {
                     date: eventDate,
                     category: 'fibonacci',
                     icon: '🔷',
-                    milestone: `L(${this.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} days`
+                    milestone: `L(${Milestones.LUCAS.indexOf(luc) + 1}) = ${luc.toLocaleString()} days`
                 });
             }
         }
@@ -800,8 +780,8 @@ const Nerdiversary = {
         const events = [];
 
         // Perfect number days (6, 28, 496, 8128)
-        for (const perfect of this.PERFECT_NUMBERS) {
-            const eventDate = new Date(birthDate.getTime() + perfect * this.MS_PER_DAY);
+        for (const perfect of Milestones.PERFECT_NUMBERS) {
+            const eventDate = new Date(birthDate.getTime() + perfect * Milestones.MS_PER_DAY);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `perfect-days-${perfect}`,
@@ -817,7 +797,7 @@ const Nerdiversary = {
 
         // Perfect number hours (for larger ones)
         for (const perfect of [496, 8128]) {
-            const eventDate = new Date(birthDate.getTime() + perfect * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + perfect * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `perfect-hours-${perfect}`,
@@ -841,7 +821,7 @@ const Nerdiversary = {
         const events = [];
 
         // Only use interesting triangular numbers (every 10th or special ones)
-        const interestingTriangular = this.TRIANGULAR.filter((t, i) =>
+        const interestingTriangular = Milestones.TRIANGULAR.filter((t, i) =>
             (i + 1) % 10 === 0 || // Every 10th triangular number (T10, T20, T30...)
             t === 666 ||  // Number of the beast
             t === 5050 || // Famous 1+2+...+100
@@ -854,7 +834,7 @@ const Nerdiversary = {
 
         for (const tri of interestingTriangular) {
             if (tri >= 100 && tri <= 15000) {
-                const eventDate = new Date(birthDate.getTime() + tri * this.MS_PER_DAY);
+                const eventDate = new Date(birthDate.getTime() + tri * Milestones.MS_PER_DAY);
                 if (eventDate <= maxDate) {
                     const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
                     events.push({
@@ -871,10 +851,10 @@ const Nerdiversary = {
         }
 
         // Triangular hours for larger numbers
-        const triangularHours = this.TRIANGULAR.filter(t => t >= 10000 && t <= 100000 &&
-            this.TRIANGULAR.indexOf(t) % 5 === 0);
+        const triangularHours = Milestones.TRIANGULAR.filter(t => t >= 10000 && t <= 100000 &&
+            Milestones.TRIANGULAR.indexOf(t) % 5 === 0);
         for (const tri of triangularHours) {
-            const eventDate = new Date(birthDate.getTime() + tri * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + tri * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
                 events.push({
@@ -899,7 +879,7 @@ const Nerdiversary = {
         const events = [];
 
         // Palindrome days (only interesting ones)
-        const interestingPalindromes = this.PALINDROMES.filter(p =>
+        const interestingPalindromes = Milestones.PALINDROMES.filter(p =>
             p >= 1000 && p <= 15000 && (
                 p % 1111 === 0 || // Like 1111, 2222, 3333...
                 String(p).split('').every((c, i, a) => c === a[0]) || // All same digits
@@ -912,7 +892,7 @@ const Nerdiversary = {
         );
 
         for (const pal of interestingPalindromes) {
-            const eventDate = new Date(birthDate.getTime() + pal * this.MS_PER_DAY);
+            const eventDate = new Date(birthDate.getTime() + pal * Milestones.MS_PER_DAY);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `palindrome-days-${pal}`,
@@ -929,7 +909,7 @@ const Nerdiversary = {
         // Palindrome hours
         const palindromeHours = [10001, 10101, 10201, 11011, 11111, 11211, 12021, 12121, 12221, 12321];
         for (const pal of palindromeHours) {
-            const eventDate = new Date(birthDate.getTime() + pal * this.MS_PER_HOUR);
+            const eventDate = new Date(birthDate.getTime() + pal * Milestones.MS_PER_HOUR);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `palindrome-hours-${pal}`,
@@ -953,9 +933,9 @@ const Nerdiversary = {
         const events = [];
 
         // Repunit days
-        for (const rep of this.REPUNITS) {
+        for (const rep of Milestones.REPUNITS) {
             if (rep >= 111 && rep <= 11111) {
-                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_DAY);
+                const eventDate = new Date(birthDate.getTime() + rep * Milestones.MS_PER_DAY);
                 if (eventDate <= maxDate) {
                     events.push({
                         id: `repunit-days-${rep}`,
@@ -971,9 +951,9 @@ const Nerdiversary = {
         }
 
         // Repunit hours
-        for (const rep of this.REPUNITS) {
+        for (const rep of Milestones.REPUNITS) {
             if (rep >= 1111 && rep <= 111111) {
-                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_HOUR);
+                const eventDate = new Date(birthDate.getTime() + rep * Milestones.MS_PER_HOUR);
                 if (eventDate <= maxDate) {
                     events.push({
                         id: `repunit-hours-${rep}`,
@@ -989,9 +969,9 @@ const Nerdiversary = {
         }
 
         // Repunit minutes
-        for (const rep of this.REPUNITS) {
+        for (const rep of Milestones.REPUNITS) {
             if (rep >= 111111 && rep <= 11111111) {
-                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_MINUTE);
+                const eventDate = new Date(birthDate.getTime() + rep * Milestones.MS_PER_MINUTE);
                 if (eventDate <= maxDate) {
                     events.push({
                         id: `repunit-minutes-${rep}`,
@@ -1007,9 +987,9 @@ const Nerdiversary = {
         }
 
         // Repunit seconds
-        for (const rep of this.REPUNITS) {
+        for (const rep of Milestones.REPUNITS) {
             if (rep >= 11111111 && rep <= 1111111111) {
-                const eventDate = new Date(birthDate.getTime() + rep * this.MS_PER_SECOND);
+                const eventDate = new Date(birthDate.getTime() + rep * Milestones.MS_PER_SECOND);
                 if (eventDate <= maxDate) {
                     events.push({
                         id: `repunit-seconds-${rep}`,
@@ -1035,7 +1015,7 @@ const Nerdiversary = {
 
         // Speed of light: 299,792,458 m/s - use as seconds!
         const speedOfLight = 299792458;
-        const solEvent = new Date(birthDate.getTime() + speedOfLight * this.MS_PER_SECOND);
+        const solEvent = new Date(birthDate.getTime() + speedOfLight * Milestones.MS_PER_SECOND);
         if (solEvent <= maxDate) {
             events.push({
                 id: 'speed-of-light-seconds',
@@ -1051,7 +1031,7 @@ const Nerdiversary = {
         // Euler's identity related: e^π ≈ 23.14
         const ePi = Math.pow(Math.E, Math.PI);
         for (const [mult, label] of [[1e6, 'Million'], [1e7, '10 Million'], [1e8, '100 Million']]) {
-            const eventDate = new Date(birthDate.getTime() + ePi * mult * this.MS_PER_SECOND);
+            const eventDate = new Date(birthDate.getTime() + ePi * mult * Milestones.MS_PER_SECOND);
             if (eventDate <= maxDate) {
                 events.push({
                     id: `e-pi-${mult}`,
@@ -1085,11 +1065,11 @@ const Nerdiversary = {
         for (const milestone of answer42) {
             let eventDate;
             if (milestone.unit === 'seconds') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             } else if (milestone.unit === 'days') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_DAY);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_DAY);
             } else if (milestone.unit === 'hours') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_HOUR);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_HOUR);
             }
 
             if (eventDate <= maxDate) {
@@ -1115,11 +1095,11 @@ const Nerdiversary = {
         for (const milestone of leetMilestones) {
             let eventDate;
             if (milestone.unit === 'seconds') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_SECOND);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_SECOND);
             } else if (milestone.unit === 'days') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_DAY);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_DAY);
             } else if (milestone.unit === 'hours') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_HOUR);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_HOUR);
             }
 
             if (eventDate <= maxDate) {
@@ -1145,9 +1125,9 @@ const Nerdiversary = {
         for (const milestone of piDayMilestones) {
             let eventDate;
             if (milestone.unit === 'days') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_DAY);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_DAY);
             } else if (milestone.unit === 'hours') {
-                eventDate = new Date(birthDate.getTime() + milestone.value * this.MS_PER_HOUR);
+                eventDate = new Date(birthDate.getTime() + milestone.value * Milestones.MS_PER_HOUR);
             }
 
             if (eventDate <= maxDate) {
