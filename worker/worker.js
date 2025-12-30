@@ -8,6 +8,7 @@
 // Import shared modules
 // Wrangler's bundler (esbuild) handles CommonJS -> ESM conversion
 import Calculator from '../js/calculator.js';
+import Milestones from '../js/milestones.js';
 
 // ============================================================================
 // WORKER HANDLER
@@ -84,7 +85,7 @@ function handleFamilyRequest(url, familyParam) {
 
     for (const member of members) {
       const events = Calculator.calculate(member.birthDate, {
-        yearsAhead: 120,
+        yearsAhead: Milestones.MAX_YEARS,
         includePast: false,
         transformEvent: (event) => ({
           ...event,

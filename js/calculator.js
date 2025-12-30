@@ -78,7 +78,7 @@ const Calculator = {
     _addPlanetaryYears(birthDate, maxDate, addEvent) {
         for (const [key, planet] of Object.entries(Milestones.PLANETS)) {
             const periodMs = planet.days * Milestones.MS_PER_DAY;
-            for (let yearNum = 1; yearNum <= 200; yearNum++) {
+            for (let yearNum = 1; yearNum <= Milestones.MAX_PLANETARY_YEARS; yearNum++) {
                 const eventDate = new Date(birthDate.getTime() + yearNum * periodMs);
                 if (eventDate > maxDate) { break; }
 
@@ -452,9 +452,7 @@ const Calculator = {
 
     _addScientificMilestones(birthDate, addEvent) {
         // Speed of light multiples (c = 299,792,458 m/s)
-        const maxMultiple = 10; // Up to 10c (about 95 years)
-
-        for (let mult = 1; mult <= maxMultiple; mult++) {
+        for (let mult = 1; mult <= Milestones.SPEED_OF_LIGHT_MAX_MULTIPLE; mult++) {
             const seconds = Milestones.SPEED_OF_LIGHT * mult;
             const label = mult === 1 ? 'c' : `${mult}c`;
             addEvent({
@@ -518,7 +516,7 @@ const Calculator = {
             } else if (dest.meters >= Milestones.DISTANCE_THRESHOLD_BILLION_KM) {
                 distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_BILLION_KM).toFixed(1)} billion km`;
             } else {
-                distanceStr = `${(dest.meters / 1e6).toFixed(0)} million km`;
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_MILLION_KM).toFixed(0)} million km`;
             }
 
             // Use key directly - WIKI_URLS keys match COSMIC_DISTANCES keys

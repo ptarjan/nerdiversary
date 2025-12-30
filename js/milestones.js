@@ -134,6 +134,11 @@ const INTERESTING_PALINDROME_DAYS = [
 const DISTANCE_THRESHOLD_LIGHT_YEAR = 1e15;
 const DISTANCE_THRESHOLD_TRILLION_KM = 1e12;
 const DISTANCE_THRESHOLD_BILLION_KM = 1e9;
+const DISTANCE_THRESHOLD_MILLION_KM = 1e6;
+
+// Milestone calculation limits
+const MAX_PLANETARY_YEARS = 200;
+const SPEED_OF_LIGHT_MAX_MULTIPLE = 10;
 
 // ============================================================================
 // WIKIPEDIA URLS
@@ -454,9 +459,12 @@ const MilestonesExports = {
     DISTANCE_THRESHOLD_LIGHT_YEAR,
     DISTANCE_THRESHOLD_TRILLION_KM,
     DISTANCE_THRESHOLD_BILLION_KM,
+    DISTANCE_THRESHOLD_MILLION_KM,
 
     // Limits
     MAX_YEARS,
+    MAX_PLANETARY_YEARS,
+    SPEED_OF_LIGHT_MAX_MULTIPLE,
 
     // Wikipedia URLs
     WIKI_URLS,
