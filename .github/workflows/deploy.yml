@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-      - master
-      - claude/nerdiversary-birthday-calculator-WK3L1
   # Allow manual trigger
   workflow_dispatch:
 
