@@ -67,8 +67,12 @@
             <h1>Your Nerdiversaries</h1>
             <div class="family-info" id="family-info">Loading...</div>
             <div class="action-buttons">
-                <button id="subscribe-calendar" class="action-btn primary">
+                <button id="enable-notifications" class="action-btn notification-btn">
                     <span class="btn-icon">🔔</span>
+                    <span>Enable Notifications</span>
+                </button>
+                <button id="subscribe-calendar" class="action-btn primary">
+                    <span class="btn-icon">📅</span>
                     <span>Subscribe to Calendar</span>
                 </button>
                 <button id="download-ical" class="action-btn">
@@ -137,17 +141,7 @@
     <script type="module" src="js/calculator.js"></script>
     <script type="module" src="js/nerdiversary.js"></script>
     <script type="module" src="js/ical.js"></script>
+    <script type="module" src="js/notifications.js"></script>
     <script type="module" src="js/results.js"></script>
-    <script>
-        // Unregister any existing service workers and clear caches
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(reg => reg.unregister());
-            });
-            caches.keys().then(keys => {
-                keys.forEach(key => caches.delete(key));
-            });
-        }
-    </script>
 </body>
 </html>

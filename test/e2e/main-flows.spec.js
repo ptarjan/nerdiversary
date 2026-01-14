@@ -400,4 +400,32 @@ test.describe('Nerdiversary Main Flows', () => {
       expect(filterCategories, `Filter button missing for category: ${category}`).toContain(category);
     }
   });
+
+  test('notification button is visible on results page', async ({ page }) => {
+    await page.goto(`/results.html?family=${encodeURIComponent('Test|1990-01-01')}`);
+    await page.waitForSelector('.event-card');
+
+    // Check notification button exists
+    const notifyBtn = page.locator('#enable-notifications');
+    await expect(notifyBtn).toBeVisible();
+
+    // Check it has the expected text (either "Enable Notifications" or "Notifications On")
+    const btnText = await notifyBtn.textContent();
+    expect(btnText).toMatch(/Enable Notifications|Notifications On|Notifications Blocked/);
+  });
+
+  test('notification button has correct initial state', async ({ page }) => {
+    await page.goto(`/results.html?family=${encodeURIComponent('Test|1990-01-01')}`);
+    await page.waitForSelector('.event-card');
+
+    const notifyBtn = page.locator('#enable-notifications');
+    await expect(notifyBtn).toBeVisible();
+
+    // Button should have notification-btn class
+    await expect(notifyBtn).toHaveClass(/notification-btn/);
+
+    // Button should have an icon
+    const icon = notifyBtn.locator('.btn-icon');
+    await expect(icon).toBeVisible();
+  });
 });
