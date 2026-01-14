@@ -1013,6 +1013,55 @@ body {
     border-color: transparent;
 }
 
+/* PWA Install Modal Steps */
+.pwa-install-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.pwa-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+}
+
+.pwa-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.pwa-step span:last-child {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.pwa-step .share-icon {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    color: var(--accent-primary);
+}
+
+.pwa-note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
 /* Footer */
 .footer {
     text-align: center;

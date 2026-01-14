@@ -510,6 +510,12 @@ async function setupNotifications() {
 
     // Handle button click
     notifyBtn.addEventListener('click', async () => {
+        // Check if iOS/iPadOS requires PWA installation first
+        if (Notifications.requiresPWAInstall()) {
+            showPWAInstallModal();
+            return;
+        }
+
         const currentPermission = Notifications.getPermissionStatus();
         const isEnabled = Notifications.isEnabled();
 
@@ -613,6 +619,45 @@ function subscribeToCalendar() {
 
     // Show subscription modal
     showSubscribeModal(calendarUrl);
+}
+
+/**
+ * Show modal explaining PWA installation requirement for iOS notifications
+ */
+function showPWAInstallModal() {
+    const modal = document.createElement('div');
+    modal.className = 'import-modal';
+    modal.innerHTML = `
+        <div class="import-modal-content">
+            <h3>Add to Home Screen</h3>
+            <p>To enable notifications on iPad/iPhone, you need to install this app first:</p>
+            <div class="pwa-install-steps">
+                <div class="pwa-step">
+                    <span class="pwa-step-number">1</span>
+                    <span>Tap the <strong>Share</strong> button <span class="share-icon">&#xFEFF;<svg width="18" height="18" viewBox="0 0 50 50" fill="currentColor"><path d="M30.3 13.7L25 8.4l-5.3 5.3-1.4-1.4L25 5.6l6.7 6.7z"/><path d="M24 7h2v21h-2z"/><path d="M35 40H15c-1.7 0-3-1.3-3-3V19c0-1.7 1.3-3 3-3h7v2h-7c-.6 0-1 .4-1 1v18c0 .6.4 1 1 1h20c.6 0 1-.4 1-1V19c0-.6-.4-1-1-1h-7v-2h7c1.7 0 3 1.3 3 3v18c0 1.7-1.3 3-3 3z"/></svg></span> in Safari</span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">2</span>
+                    <span>Scroll down and tap <strong>"Add to Home Screen"</strong></span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">3</span>
+                    <span>Open the app from your Home Screen</span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">4</span>
+                    <span>Tap "Enable Notifications" again</span>
+                </div>
+            </div>
+            <p class="pwa-note">This is required by Apple for web app notifications.</p>
+            <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) { modal.remove(); }
+    });
 }
 
 /**
