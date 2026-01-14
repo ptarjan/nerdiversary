@@ -32,9 +32,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         hasStoredData = await loadStoredData();
     }
 
-    // Auto-navigate to results if we have stored data
+    // Auto-navigate to results if we have stored data (unless user clicked "New Calculation")
     // This improves the experience - users see their nerdiversaries immediately
-    if (hasStoredData) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isNewCalculation = urlParams.get('new') === '1';
+    if (hasStoredData && !isNewCalculation) {
         submitForm();
         return; // Skip rest of initialization since we're navigating away
     }
