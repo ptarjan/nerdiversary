@@ -510,6 +510,12 @@ async function setupNotifications() {
 
     // Handle button click
     notifyBtn.addEventListener('click', async () => {
+        // Check if on iOS with unsupported browser (Chrome, Firefox, etc.)
+        if (Notifications.isUnsupportedIOSBrowser()) {
+            showUnsupportedBrowserModal();
+            return;
+        }
+
         // Check if iOS/iPadOS requires PWA installation first
         if (Notifications.requiresPWAInstall()) {
             showPWAInstallModal();
@@ -650,6 +656,46 @@ function showPWAInstallModal() {
                 </div>
             </div>
             <p class="pwa-note">This is required by Apple for web app notifications.</p>
+            <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) { modal.remove(); }
+    });
+}
+
+/**
+ * Show modal explaining that notifications aren't supported in this iOS browser
+ */
+function showUnsupportedBrowserModal() {
+    const modal = document.createElement('div');
+    modal.className = 'import-modal';
+    modal.innerHTML = `
+        <div class="import-modal-content">
+            <h3>Safari Required</h3>
+            <p>On iOS, only apps installed from <strong>Safari</strong> can send notifications.</p>
+            <p>To enable notifications:</p>
+            <div class="pwa-install-steps">
+                <div class="pwa-step">
+                    <span class="pwa-step-number">1</span>
+                    <span>Copy this page's URL</span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">2</span>
+                    <span>Open it in <strong>Safari</strong></span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">3</span>
+                    <span>Tap Share → "Add to Home Screen"</span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">4</span>
+                    <span>Open the app and enable notifications</span>
+                </div>
+            </div>
+            <p class="pwa-note">This is an Apple limitation for web apps.</p>
             <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it</button>
         </div>
     `;

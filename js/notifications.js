@@ -24,6 +24,17 @@ function isIOS() {
 }
 
 /**
+ * Check if we're in Safari on iOS (not Chrome, Firefox, etc.)
+ * iOS Chrome has "CriOS", Firefox has "FxiOS", Edge has "EdgiOS", etc.
+ */
+function isIOSSafari() {
+    if (!isIOS()) return false;
+    const ua = navigator.userAgent;
+    // Check for non-Safari iOS browsers
+    return !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+}
+
+/**
  * Check if running as a standalone PWA (added to Home Screen)
  */
 function isStandalonePWA() {
@@ -42,7 +53,15 @@ function isSupported() {
  * Check if notifications require PWA installation (iOS Safari)
  */
 function requiresPWAInstall() {
-    return isIOS() && !isStandalonePWA();
+    return isIOS() && isIOSSafari() && !isStandalonePWA();
+}
+
+/**
+ * Check if we're on an iOS browser that doesn't support notifications at all
+ * (Chrome, Firefox, etc. on iOS don't support PWA notifications)
+ */
+function isUnsupportedIOSBrowser() {
+    return isIOS() && !isIOSSafari();
 }
 
 /**
@@ -429,8 +448,10 @@ const Notifications = {
     isSupported,
     isPushSupported,
     isIOS,
+    isIOSSafari,
     isStandalonePWA,
     requiresPWAInstall,
+    isUnsupportedIOSBrowser,
     getPermissionStatus,
     isEnabled,
     setEnabled,
