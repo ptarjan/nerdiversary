@@ -3,22 +3,6 @@
  */
 
 /**
- * Check if localStorage is available and working
- * @returns {boolean} true if localStorage is available
- */
-function isLocalStorageAvailable() {
-    try {
-        const testKey = '__storage_test__';
-        localStorage.setItem(testKey, testKey);
-        const result = localStorage.getItem(testKey);
-        localStorage.removeItem(testKey);
-        return result === testKey;
-    } catch (e) {
-        return false;
-    }
-}
-
-/**
  * Find the next available member index
  */
 function getNextMemberIndex() {
@@ -33,7 +17,7 @@ function getNextMemberIndex() {
     return index;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('birthday-form');
     const addMemberBtn = document.getElementById('add-member');
 
@@ -41,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDateConstraints(0);
 
     // Check URL parameters first - if present, use those (shared link)
-    // Otherwise load from localStorage (returning user)
+    // Otherwise load from storage (localStorage + IndexedDB fallback)
     const hasUrlParams = loadFromUrlParams();
     if (!hasUrlParams) {
-        loadStoredData();
+        await loadStoredData();
     }
 
     // Add family member button
@@ -84,42 +68,29 @@ function setupDateConstraints(index) {
 }
 
 /**
- * Load stored family data from localStorage
+ * Load stored family data from localStorage/IndexedDB
  */
-function loadStoredData() {
-    if (!isLocalStorageAvailable()) {
-        return;
-    }
+async function loadStoredData() {
+    try {
+        const family = await window.NerdiversaryStorage.loadFamily();
+        if (family && family.length > 0) {
+            // Load first member
+            const first = family[0];
+            const nameEl = document.getElementById('name-0');
+            const dateEl = document.getElementById('birthdate-0');
+            const timeEl = document.getElementById('birthtime-0');
 
-    const storedFamily = localStorage.getItem('nerdiversary_family');
-    if (storedFamily) {
-        try {
-            const family = JSON.parse(storedFamily);
-            if (Array.isArray(family) && family.length > 0) {
-                // Validate data has required fields before loading
-                const validFamily = family.filter(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
-                if (validFamily.length === 0) {
-                    return;
-                }
+            if (nameEl) { nameEl.value = first.name || ''; }
+            if (dateEl) { dateEl.value = first.date || ''; }
+            if (timeEl && first.time) { timeEl.value = first.time; }
 
-                // Load first member
-                const first = validFamily[0];
-                const nameEl = document.getElementById('name-0');
-                const dateEl = document.getElementById('birthdate-0');
-                const timeEl = document.getElementById('birthtime-0');
-
-                if (nameEl) { nameEl.value = first.name || ''; }
-                if (dateEl) { dateEl.value = first.date || ''; }
-                if (timeEl && first.time) { timeEl.value = first.time; }
-
-                // Add and load additional members
-                for (let i = 1; i < validFamily.length; i++) {
-                    addFamilyMember(validFamily[i]);
-                }
+            // Add and load additional members
+            for (let i = 1; i < family.length; i++) {
+                addFamilyMember(family[i]);
             }
-        } catch (e) {
-            console.error('Failed to load stored family data:', e);
         }
+    } catch (e) {
+        console.error('Failed to load stored family data:', e);
     }
 }
 
@@ -285,7 +256,7 @@ function renumberMembers() {
 /**
  * Submit the form and navigate to results
  */
-function submitForm() {
+async function submitForm() {
     const members = document.querySelectorAll('.family-member');
     const family = [];
 
@@ -319,20 +290,8 @@ function submitForm() {
         return;
     }
 
-    // Store in localStorage with verification
-    let saveSucceeded = false;
-    if (isLocalStorageAvailable()) {
-        try {
-            const dataToSave = JSON.stringify(family);
-            localStorage.setItem('nerdiversary_family', dataToSave);
-
-            // Verify the save succeeded by reading it back
-            const savedData = localStorage.getItem('nerdiversary_family');
-            saveSucceeded = savedData === dataToSave;
-        } catch (e) {
-            console.warn('Failed to save to localStorage:', e);
-        }
-    }
+    // Store in localStorage + IndexedDB for iOS PWA persistence
+    const saveSucceeded = await window.NerdiversaryStorage.saveFamily(family);
 
     // Warn user if save failed (they can still view results via URL)
     if (!saveSucceeded) {
