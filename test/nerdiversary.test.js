@@ -565,6 +565,82 @@ test('Worker does not duplicate constant definitions', () => {
 });
 
 // ============================================
+// NOTIFICATION MODULE TESTS
+// ============================================
+console.log('\n--- Notification Module Verification ---');
+
+const notificationsPath = path.join(__dirname, '..', 'js', 'notifications.js');
+const notificationsCode = fs.readFileSync(notificationsPath, 'utf8');
+
+test('Notifications module exports expected functions', () => {
+    const hasIsSupported = notificationsCode.includes('isSupported');
+    assertTrue(hasIsSupported, 'Should export isSupported');
+
+    const hasRequestPermission = notificationsCode.includes('requestPermission');
+    assertTrue(hasRequestPermission, 'Should export requestPermission');
+
+    const hasShowNotification = notificationsCode.includes('showNotification');
+    assertTrue(hasShowNotification, 'Should export showNotification');
+
+    const hasScheduleNotification = notificationsCode.includes('scheduleNotification');
+    assertTrue(hasScheduleNotification, 'Should export scheduleNotification');
+});
+
+test('Notifications module has default notification times', () => {
+    const hasDefaultTimes = notificationsCode.includes('DEFAULT_NOTIFICATION_TIMES');
+    assertTrue(hasDefaultTimes, 'Should have DEFAULT_NOTIFICATION_TIMES constant');
+
+    // Verify it includes sensible defaults (1 day = 1440 min, 1 hour = 60 min)
+    const has1DayDefault = notificationsCode.includes('1440');
+    assertTrue(has1DayDefault, 'Should include 1 day (1440 min) notification');
+});
+
+test('Notifications module uses localStorage for persistence', () => {
+    const usesLocalStorage = notificationsCode.includes('localStorage');
+    assertTrue(usesLocalStorage, 'Should use localStorage for preferences');
+});
+
+// ============================================
+// SERVICE WORKER TESTS
+// ============================================
+console.log('\n--- Service Worker Verification ---');
+
+const swPath = path.join(__dirname, '..', 'sw.js');
+const swCode = fs.readFileSync(swPath, 'utf8');
+
+test('Service worker handles push events', () => {
+    const hasPushListener = swCode.includes("addEventListener('push'");
+    assertTrue(hasPushListener, 'Should have push event listener');
+});
+
+test('Service worker handles notification clicks', () => {
+    const hasClickListener = swCode.includes("addEventListener('notificationclick'");
+    assertTrue(hasClickListener, 'Should have notificationclick event listener');
+});
+
+test('Service worker has offline caching', () => {
+    const hasCacheName = swCode.includes('CACHE_NAME');
+    assertTrue(hasCacheName, 'Should define CACHE_NAME');
+
+    const hasInstallListener = swCode.includes("addEventListener('install'");
+    assertTrue(hasInstallListener, 'Should have install event listener');
+
+    const hasFetchListener = swCode.includes("addEventListener('fetch'");
+    assertTrue(hasFetchListener, 'Should have fetch event listener');
+});
+
+test('Service worker caches essential assets', () => {
+    const cachesHtml = swCode.includes('index.html') && swCode.includes('results.html');
+    assertTrue(cachesHtml, 'Should cache HTML files');
+
+    const cachesJs = swCode.includes('milestones.js') || swCode.includes('./js/');
+    assertTrue(cachesJs, 'Should cache JavaScript files');
+
+    const cachesManifest = swCode.includes('manifest.json');
+    assertTrue(cachesManifest, 'Should cache manifest.json');
+});
+
+// ============================================
 // SUMMARY
 // ============================================
 console.log('\n=== Test Summary ===');
