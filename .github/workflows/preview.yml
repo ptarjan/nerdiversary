@@ -1,0 +1,80 @@
+# Deploy PR previews to Cloudflare Pages
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build site
+        run: |
+          # Create dist directory
+          mkdir -p dist
+
+          # Copy all static files
+          cp -r index.html results.html sw.js dist/
+          cp -r css dist/
+          cp -r js dist/
+          cp -r assets dist/
+          cp manifest.json favicon.ico _headers dist/
+
+          # Create a simple 404 page that redirects to index
+          cat > dist/404.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta http-equiv="refresh" content="0; url=/">
+              <title>Redirecting...</title>
+          </head>
+          <body>
+              <p>Redirecting to <a href="/">Nerdiversary</a>...</p>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=nerdiversary-preview --branch=${{ github.head_ref }}
+
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- preview-comment -->'
+
+      - name: Create or update preview comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            <!-- preview-comment -->
+            ## Preview Deployment
+
+            | Name | Link |
+            | ---- | ---- |
+            | Preview URL | ${{ steps.deploy.outputs.deployment-url }} |
+            | Branch | `${{ github.head_ref }}` |
+            | Commit | ${{ github.sha }} |
+
+            ---
+            *This preview will be updated when new commits are pushed to this PR.*
