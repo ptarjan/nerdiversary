@@ -674,24 +674,28 @@ function showUnsupportedBrowserModal() {
     modal.className = 'import-modal';
     modal.innerHTML = `
         <div class="import-modal-content">
-            <h3>Browser Not Supported</h3>
-            <p>Unfortunately, push notifications are not supported in this browser on iOS.</p>
-            <p>To enable notifications, please:</p>
+            <h3>Safari Required</h3>
+            <p>On iOS, only apps installed from <strong>Safari</strong> can send notifications.</p>
+            <p>To enable notifications:</p>
             <div class="pwa-install-steps">
                 <div class="pwa-step">
                     <span class="pwa-step-number">1</span>
-                    <span>Open this page in <strong>Safari</strong></span>
+                    <span>Copy this page's URL</span>
                 </div>
                 <div class="pwa-step">
                     <span class="pwa-step-number">2</span>
-                    <span>Add the app to your Home Screen</span>
+                    <span>Open it in <strong>Safari</strong></span>
                 </div>
                 <div class="pwa-step">
                     <span class="pwa-step-number">3</span>
+                    <span>Tap Share → "Add to Home Screen"</span>
+                </div>
+                <div class="pwa-step">
+                    <span class="pwa-step-number">4</span>
                     <span>Open the app and enable notifications</span>
                 </div>
             </div>
-            <p class="pwa-note">Only Safari supports web app notifications on iOS devices.</p>
+            <p class="pwa-note">This is an Apple limitation for web apps.</p>
             <button class="import-close" onclick="this.closest('.import-modal').remove()">Got it</button>
         </div>
     `;
