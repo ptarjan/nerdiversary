@@ -3,17 +3,6 @@
  */
 
 /**
- * Check if running on iPad
- * @returns {boolean} true if on iPad
- */
-function isIPad() {
-    // Check for iPad in user agent (works for older iPads)
-    // or check for Mac with touch support (iPad with desktop user agent)
-    return /iPad/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-/**
  * Find the next available member index
  */
 function getNextMemberIndex() {
@@ -43,9 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         hasStoredData = await loadStoredData();
     }
 
-    // On iPad, auto-navigate to results if we have stored data
-    // This improves the PWA experience - users see their nerdiversaries immediately
-    if (isIPad() && hasStoredData) {
+    // Auto-navigate to results if we have stored data
+    // This improves the experience - users see their nerdiversaries immediately
+    if (hasStoredData) {
         submitForm();
         return; // Skip rest of initialization since we're navigating away
     }
