@@ -27,8 +27,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check URL parameters first - if present, use those (shared link)
     // Otherwise load from storage (localStorage + IndexedDB fallback)
     const hasUrlParams = loadFromUrlParams();
+    let hasStoredData = false;
     if (!hasUrlParams) {
-        await loadStoredData();
+        hasStoredData = await loadStoredData();
+    }
+
+    // Auto-navigate to results if we have stored data (unless user clicked "New Calculation")
+    // This improves the experience - users see their nerdiversaries immediately
+    const urlParams = new URLSearchParams(window.location.search);
+    const isNewCalculation = urlParams.get('new') === '1';
+    if (hasStoredData && !isNewCalculation) {
+        submitForm();
+        return; // Skip rest of initialization since we're navigating away
     }
 
     // Add family member button
@@ -69,6 +79,7 @@ function setupDateConstraints(index) {
 
 /**
  * Load stored family data from localStorage/IndexedDB
+ * @returns {Promise<boolean>} true if valid data was loaded, false otherwise
  */
 async function loadStoredData() {
     try {
@@ -88,10 +99,14 @@ async function loadStoredData() {
             for (let i = 1; i < family.length; i++) {
                 addFamilyMember(family[i]);
             }
+
+            // Return true if at least one member has a valid date
+            return family.some(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
         }
     } catch (e) {
         console.error('Failed to load stored family data:', e);
     }
+    return false;
 }
 
 /**
