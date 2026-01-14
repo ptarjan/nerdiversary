@@ -3,6 +3,17 @@
  */
 
 /**
+ * Check if running on iPad
+ * @returns {boolean} true if on iPad
+ */
+function isIPad() {
+    // Check for iPad in user agent (works for older iPads)
+    // or check for Mac with touch support (iPad with desktop user agent)
+    return /iPad/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
  * Find the next available member index
  */
 function getNextMemberIndex() {
@@ -27,8 +38,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check URL parameters first - if present, use those (shared link)
     // Otherwise load from storage (localStorage + IndexedDB fallback)
     const hasUrlParams = loadFromUrlParams();
+    let hasStoredData = false;
     if (!hasUrlParams) {
-        await loadStoredData();
+        hasStoredData = await loadStoredData();
+    }
+
+    // On iPad, auto-navigate to results if we have stored data
+    // This improves the PWA experience - users see their nerdiversaries immediately
+    if (isIPad() && hasStoredData) {
+        submitForm();
+        return; // Skip rest of initialization since we're navigating away
     }
 
     // Add family member button
@@ -69,6 +88,7 @@ function setupDateConstraints(index) {
 
 /**
  * Load stored family data from localStorage/IndexedDB
+ * @returns {Promise<boolean>} true if valid data was loaded, false otherwise
  */
 async function loadStoredData() {
     try {
@@ -88,10 +108,14 @@ async function loadStoredData() {
             for (let i = 1; i < family.length; i++) {
                 addFamilyMember(family[i]);
             }
+
+            // Return true if at least one member has a valid date
+            return family.some(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
         }
     } catch (e) {
         console.error('Failed to load stored family data:', e);
     }
+    return false;
 }
 
 /**
