@@ -3,7 +3,7 @@
  * Handles push notifications and offline caching
  */
 
-const CACHE_NAME = 'nerdiversary-v1';
+const CACHE_NAME = 'nerdiversary-v3';
 const OFFLINE_ASSETS = [
     './',
     './index.html',
@@ -14,6 +14,7 @@ const OFFLINE_ASSETS = [
     './js/nerdiversary.js',
     './js/ical.js',
     './js/results.js',
+    './js/storage.js',
     './js/main.js',
     './js/notifications.js',
     './manifest.json',

@@ -17,18 +17,19 @@ function getNextMemberIndex() {
     return index;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('birthday-form');
     const addMemberBtn = document.getElementById('add-member');
 
     // Set date constraints for first member
     setupDateConstraints(0);
 
-    // Check for stored family data on page load
-    loadStoredData();
-
-    // Check URL parameters for shared links
-    loadFromUrlParams();
+    // Check URL parameters first - if present, use those (shared link)
+    // Otherwise load from storage (localStorage + IndexedDB fallback)
+    const hasUrlParams = loadFromUrlParams();
+    if (!hasUrlParams) {
+        await loadStoredData();
+    }
 
     // Add family member button
     if (addMemberBtn) {
@@ -67,37 +68,35 @@ function setupDateConstraints(index) {
 }
 
 /**
- * Load stored family data from localStorage
+ * Load stored family data from localStorage/IndexedDB
  */
-function loadStoredData() {
-    const storedFamily = localStorage.getItem('nerdiversary_family');
-    if (storedFamily) {
-        try {
-            const family = JSON.parse(storedFamily);
-            if (Array.isArray(family) && family.length > 0) {
-                // Load first member
-                const first = family[0];
-                const nameEl = document.getElementById('name-0');
-                const dateEl = document.getElementById('birthdate-0');
-                const timeEl = document.getElementById('birthtime-0');
+async function loadStoredData() {
+    try {
+        const family = await window.NerdiversaryStorage.loadFamily();
+        if (family && family.length > 0) {
+            // Load first member
+            const first = family[0];
+            const nameEl = document.getElementById('name-0');
+            const dateEl = document.getElementById('birthdate-0');
+            const timeEl = document.getElementById('birthtime-0');
 
-                if (nameEl) { nameEl.value = first.name || ''; }
-                if (dateEl) { dateEl.value = first.date || ''; }
-                if (timeEl && first.time) { timeEl.value = first.time; }
+            if (nameEl) { nameEl.value = first.name || ''; }
+            if (dateEl) { dateEl.value = first.date || ''; }
+            if (timeEl && first.time) { timeEl.value = first.time; }
 
-                // Add and load additional members
-                for (let i = 1; i < family.length; i++) {
-                    addFamilyMember(family[i]);
-                }
+            // Add and load additional members
+            for (let i = 1; i < family.length; i++) {
+                addFamilyMember(family[i]);
             }
-        } catch (e) {
-            console.error('Failed to load stored family data:', e);
         }
+    } catch (e) {
+        console.error('Failed to load stored family data:', e);
     }
 }
 
 /**
  * Load family data from URL parameters
+ * @returns {boolean} true if valid URL params were loaded, false otherwise
  */
 function loadFromUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -115,25 +114,29 @@ function loadFromUrlParams() {
                 };
             });
 
-            if (members.length > 0) {
+            // Only use URL params if they contain valid data (at least one member with a date)
+            const validMembers = members.filter(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
+            if (validMembers.length > 0) {
                 // Load first member
                 const nameEl = document.getElementById('name-0');
                 const dateEl = document.getElementById('birthdate-0');
                 const timeEl = document.getElementById('birthtime-0');
 
-                if (nameEl) { nameEl.value = members[0].name; }
-                if (dateEl) { dateEl.value = members[0].date; }
-                if (timeEl && members[0].time) { timeEl.value = members[0].time; }
+                if (nameEl) { nameEl.value = validMembers[0].name; }
+                if (dateEl) { dateEl.value = validMembers[0].date; }
+                if (timeEl && validMembers[0].time) { timeEl.value = validMembers[0].time; }
 
                 // Add additional members
-                for (let i = 1; i < members.length; i++) {
-                    addFamilyMember(members[i]);
+                for (let i = 1; i < validMembers.length; i++) {
+                    addFamilyMember(validMembers[i]);
                 }
+                return true;
             }
         } catch (e) {
             console.error('Failed to parse family URL param:', e);
         }
     }
+    return false;
 }
 
 /**
@@ -253,7 +256,7 @@ function renumberMembers() {
 /**
  * Submit the form and navigate to results
  */
-function submitForm() {
+async function submitForm() {
     const members = document.querySelectorAll('.family-member');
     const family = [];
 
@@ -287,11 +290,19 @@ function submitForm() {
         return;
     }
 
-    // Store in localStorage (may fail in private browsing or if quota exceeded)
-    try {
-        localStorage.setItem('nerdiversary_family', JSON.stringify(family));
-    } catch (e) {
-        console.warn('Failed to save to localStorage:', e);
+    // Store in localStorage + IndexedDB for iOS PWA persistence
+    const saveSucceeded = await window.NerdiversaryStorage.saveFamily(family);
+
+    // Warn user if save failed (they can still view results via URL)
+    if (!saveSucceeded) {
+        const proceed = confirm(
+            'Unable to save your data (you may be in private browsing mode). ' +
+            'Your birthdays will still appear on the next page, but won\'t be saved for next time.\n\n' +
+            'Continue anyway?'
+        );
+        if (!proceed) {
+            return;
+        }
     }
 
     // Build URL params
