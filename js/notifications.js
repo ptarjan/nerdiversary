@@ -16,10 +16,33 @@ const PUSH_WORKER_URL = 'https://nerdiversary-calendar.curly-unit-b9e0.workers.d
 const DEFAULT_NOTIFICATION_TIMES = [1440, 60, 0]; // 1 day, 1 hour, at event time
 
 /**
+ * Check if we're on iOS/iPadOS
+ */
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * Check if running as a standalone PWA (added to Home Screen)
+ */
+function isStandalonePWA() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+}
+
+/**
  * Check if notifications are supported
  */
 function isSupported() {
     return 'Notification' in window && 'serviceWorker' in navigator;
+}
+
+/**
+ * Check if notifications require PWA installation (iOS Safari)
+ */
+function requiresPWAInstall() {
+    return isIOS() && !isStandalonePWA();
 }
 
 /**
@@ -405,6 +428,9 @@ async function initialize() {
 const Notifications = {
     isSupported,
     isPushSupported,
+    isIOS,
+    isStandalonePWA,
+    requiresPWAInstall,
     getPermissionStatus,
     isEnabled,
     setEnabled,
