@@ -9,6 +9,7 @@ const STORAGE_KEY_NOTIFICATION_TIMES = 'nerdiversary-notification-times';
 const STORAGE_KEY_PUSH_SUBSCRIPTION = 'nerdiversary-push-subscription';
 
 // Cloudflare Worker URL for push subscriptions
+// To use a different endpoint, update this URL to your deployed worker
 const PUSH_WORKER_URL = 'https://nerdiversary-calendar.curly-unit-b9e0.workers.dev';
 
 // Default notification times (minutes before event)
@@ -174,7 +175,7 @@ async function showNotification(title, options = {}) {
  * Schedule a notification for a future time
  */
 function scheduleNotification(event, minutesBefore = 0) {
-    if (!isSupported() || !isEnabled()) {
+    if (!isSupported() || !isEnabled() || Notification.permission !== 'granted') {
         return null;
     }
 

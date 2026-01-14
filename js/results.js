@@ -96,8 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up action buttons
     setupActionButtons();
 
-    // Set up notifications
-    setupNotifications();
+    // Set up notifications (async, errors handled internally)
+    setupNotifications().catch(err => {
+        console.error('Failed to setup notifications:', err);
+    });
 
     // Start countdown timer
     startCountdownTimer();

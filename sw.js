@@ -49,19 +49,19 @@ self.addEventListener('activate', event => {
 });
 
 /**
- * Fetch event - serve from cache, fallback to network
+ * Fetch event - serve from cache, fallback to network (stale-while-revalidate)
  */
 self.addEventListener('fetch', event => {
     // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
+    if (event.request.method !== 'GET') { return; }
 
     // Skip cross-origin requests
-    if (!event.request.url.startsWith(self.location.origin)) return;
+    if (!event.request.url.startsWith(self.location.origin)) { return; }
 
     event.respondWith(
         caches.match(event.request)
             .then(cached => {
-                // Return cached version or fetch from network
+                // Always initiate network fetch to update cache
                 const fetchPromise = fetch(event.request)
                     .then(response => {
                         // Don't cache non-successful responses
@@ -76,8 +76,17 @@ self.addEventListener('fetch', event => {
 
                         return response;
                     })
-                    .catch(() => cached);
+                    .catch(() => {
+                        // Network failed - return cached version if available
+                        if (cached) { return cached; }
+                        // No cache and network failed - return offline fallback for navigation
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('./index.html');
+                        }
+                        return null;
+                    });
 
+                // Return cached immediately if available, otherwise wait for network
                 return cached || fetchPromise;
             })
     );
@@ -101,7 +110,7 @@ self.addEventListener('push', event => {
         try {
             const pushData = event.data.json();
             data = { ...data, ...pushData };
-        } catch (e) {
+        } catch {
             // If not JSON, use as body text
             data.body = event.data.text();
         }
