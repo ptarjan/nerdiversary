@@ -6,11 +6,13 @@
 import NerdiversaryModule from './nerdiversary.js';
 import MilestonesModule from './milestones.js';
 import ICalGeneratorModule from './ical.js';
+import NotificationsModule from './notifications.js';
 
 // Use window globals if available (backwards compat), otherwise imported modules
 const Nerdiversary = typeof window !== 'undefined' && window.Nerdiversary ? window.Nerdiversary : NerdiversaryModule;
 const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
 const ICalGenerator = typeof window !== 'undefined' && window.ICalGenerator ? window.ICalGenerator : ICalGeneratorModule;
+const Notifications = typeof window !== 'undefined' && window.Notifications ? window.Notifications : NotificationsModule;
 
 let allEvents = [];
 let familyMembers = [];
@@ -18,6 +20,7 @@ let currentFilter = 'all';
 let currentPerson = 'all';
 let currentView = 'upcoming';
 let countdownInterval = null;
+let scheduledNotifications = [];
 
 // Cached DOM elements for countdown (to avoid querying every second)
 const countdownElements = {
@@ -92,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up action buttons
     setupActionButtons();
+
+    // Set up notifications
+    setupNotifications();
 
     // Start countdown timer
     startCountdownTimer();
@@ -482,6 +488,119 @@ function setupActionButtons() {
 }
 
 /**
+ * Set up push notifications
+ */
+async function setupNotifications() {
+    const notifyBtn = document.getElementById('enable-notifications');
+    if (!notifyBtn) { return; }
+
+    // Initialize notifications system
+    const status = await Notifications.initialize();
+
+    // Hide button if notifications aren't supported
+    if (!status.supported) {
+        notifyBtn.style.display = 'none';
+        return;
+    }
+
+    // Update button state based on current status
+    updateNotificationButton(notifyBtn, status.permissionStatus, status.enabled);
+
+    // Handle button click
+    notifyBtn.addEventListener('click', async () => {
+        const currentPermission = Notifications.getPermissionStatus();
+        const isEnabled = Notifications.isEnabled();
+
+        if (currentPermission === 'denied') {
+            showToast('Notifications blocked. Please enable in browser settings.');
+            return;
+        }
+
+        if (isEnabled) {
+            // Disable notifications
+            Notifications.setEnabled(false);
+            Notifications.cancelScheduledNotifications(scheduledNotifications);
+            scheduledNotifications = [];
+            updateNotificationButton(notifyBtn, currentPermission, false);
+            showToast('Notifications disabled');
+        } else {
+            // Request permission if needed
+            if (currentPermission !== 'granted') {
+                const result = await Notifications.requestPermission();
+                if (!result.granted) {
+                    if (result.reason === 'denied') {
+                        showToast('Notifications blocked. Please enable in browser settings.');
+                    }
+                    return;
+                }
+            }
+
+            // Enable notifications
+            Notifications.setEnabled(true);
+            updateNotificationButton(notifyBtn, 'granted', true);
+            scheduleUpcomingNotifications();
+            showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+
+            // Show a test notification
+            await Notifications.showNotification('Notifications Enabled!', {
+                body: 'You\'ll be notified when your nerdiversaries are approaching.',
+                tag: 'nerdiversary-enabled'
+            });
+        }
+    });
+
+    // Schedule notifications if already enabled
+    if (status.enabled && status.permissionStatus === 'granted') {
+        scheduleUpcomingNotifications();
+    }
+}
+
+/**
+ * Update notification button appearance
+ */
+function updateNotificationButton(button, permission, enabled) {
+    const icon = button.querySelector('.btn-icon');
+    const text = button.querySelector('span:not(.btn-icon)');
+
+    if (permission === 'denied') {
+        button.classList.add('disabled');
+        button.classList.remove('active');
+        if (icon) { icon.textContent = '🔕'; }
+        if (text) { text.textContent = 'Notifications Blocked'; }
+    } else if (enabled) {
+        button.classList.add('active');
+        button.classList.remove('disabled');
+        if (icon) { icon.textContent = '🔔'; }
+        if (text) { text.textContent = 'Notifications On'; }
+    } else {
+        button.classList.remove('active', 'disabled');
+        if (icon) { icon.textContent = '🔕'; }
+        if (text) { text.textContent = 'Enable Notifications'; }
+    }
+}
+
+/**
+ * Schedule notifications for upcoming events
+ */
+function scheduleUpcomingNotifications() {
+    // Cancel existing scheduled notifications
+    Notifications.cancelScheduledNotifications(scheduledNotifications);
+
+    // Get upcoming events (next 10 events within the next month)
+    const now = new Date();
+    const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const upcomingEvents = allEvents
+        .filter(e => e.date > now && e.date < oneMonthFromNow)
+        .slice(0, 10);
+
+    // Schedule notifications for these events
+    scheduledNotifications = Notifications.scheduleEventNotifications(upcomingEvents);
+
+    console.log(`Scheduled ${scheduledNotifications.length} notifications for ${upcomingEvents.length} events`);
+}
+
+/**
  * Subscribe to calendar via Cloudflare Worker
  */
 function subscribeToCalendar() {
@@ -683,6 +802,22 @@ function showToast(message) {
  * Show celebration overlay when a nerdiversary happens
  */
 function showCelebration(event) {
+    // Show push notification if enabled (useful if user is on another tab)
+    if (Notifications.isEnabled() && Notifications.getPermissionStatus() === 'granted') {
+        const notificationBody = familyMembers.length > 1
+            ? `${event.personName}: ${event.title}`
+            : event.title;
+
+        Notifications.showNotification(`${event.icon} It's Happening NOW!`, {
+            body: notificationBody,
+            tag: `nerdiversary-celebration-${event.id}`,
+            data: {
+                eventId: event.id,
+                url: window.location.href
+            }
+        });
+    }
+
     // Create celebration overlay FIRST (lower z-index)
     const showPerson = familyMembers.length > 1;
     const overlay = document.createElement('div');

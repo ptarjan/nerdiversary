@@ -136,9 +136,9 @@
                     <p>Fibonacci sequence milestones in seconds, minutes, and days!</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>iCal Export</h3>
-                    <p>Never miss a nerdiversary with calendar exports!</p>
+                    <div class="feature-icon">🔔</div>
+                    <h3>Push Notifications</h3>
+                    <p>Get notified when your nerdiversaries are about to happen!</p>
                 </div>
             </div>
         </section>
@@ -152,17 +152,12 @@
     <script type="module" src="js/milestones.js"></script>
     <script type="module" src="js/calculator.js"></script>
     <script type="module" src="js/nerdiversary.js"></script>
+    <script type="module" src="js/notifications.js"></script>
     <script type="module" src="js/main.js"></script>
-    <script>
-        // Unregister any existing service workers and clear caches
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(reg => reg.unregister());
-            });
-            caches.keys().then(keys => {
-                keys.forEach(key => caches.delete(key));
-            });
-        }
+    <script type="module">
+        // Register service worker for PWA and push notifications
+        import Notifications from './js/notifications.js';
+        Notifications.registerServiceWorker();
     </script>
 </body>
 </html>

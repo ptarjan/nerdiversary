@@ -536,6 +536,33 @@ body {
     box-shadow: var(--shadow-glow);
 }
 
+/* Notification Button States */
+.notification-btn {
+    order: -1; /* Show notification button first */
+}
+
+.notification-btn.active {
+    background: var(--accent-success);
+    border-color: var(--accent-success);
+    color: white;
+}
+
+.notification-btn.active:hover {
+    background: #0d9668;
+    border-color: #0d9668;
+}
+
+.notification-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: rgba(244, 63, 94, 0.5);
+}
+
+.notification-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 .calendar-hint {
     font-size: 0.85rem;
     color: var(--text-muted);

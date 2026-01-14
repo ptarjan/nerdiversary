@@ -1,6 +1,7 @@
 /**
  * Nerdiversary Cloudflare Worker
  * Generates .ics calendar files for nerdiversary events
+ * Handles push notification subscriptions
  *
  * Deployed via GitHub Actions
  */
@@ -11,25 +12,42 @@ import Calculator from '../js/calculator.js';
 import Milestones from '../js/milestones.js';
 
 // ============================================================================
+// CORS Headers
+// ============================================================================
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// ============================================================================
 // WORKER HANDLER
 // ============================================================================
 
 const workerHandler = {
-  async fetch(request, _env, _ctx) {
+  async fetch(request, env, _ctx) {
     const url = new URL(request.url);
 
-    // Handle CORS
+    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
+      return new Response(null, { headers: CORS_HEADERS });
     }
 
-    // Require family format
+    // Route push notification endpoints
+    if (url.pathname === '/push/vapid-public-key') {
+      return handleVapidPublicKey(env);
+    }
+
+    if (url.pathname === '/push/subscribe' && request.method === 'POST') {
+      return handlePushSubscribe(request, env);
+    }
+
+    if (url.pathname === '/push/unsubscribe' && request.method === 'POST') {
+      return handlePushUnsubscribe(request, env);
+    }
+
+    // Calendar feed - require family format
     const familyParam = url.searchParams.get('family');
     if (familyParam) {
       return handleFamilyRequest(url, familyParam);
@@ -44,11 +62,158 @@ const workerHandler = {
       status: 400,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...CORS_HEADERS,
       },
     });
   },
 };
+
+// ============================================================================
+// PUSH NOTIFICATION HANDLERS
+// Note: To enable full push notifications, add these to wrangler.toml:
+// - KV namespace binding: PUSH_SUBSCRIPTIONS
+// - Environment variables: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+// - Scheduled trigger for sending notifications
+// ============================================================================
+
+/**
+ * Return VAPID public key for push subscription
+ */
+function handleVapidPublicKey(env) {
+  // VAPID public key should be set as environment variable
+  const publicKey = env.VAPID_PUBLIC_KEY;
+
+  if (!publicKey) {
+    return new Response(JSON.stringify({
+      error: 'Push notifications not configured',
+      message: 'VAPID keys not set up on server'
+    }), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  }
+
+  return new Response(JSON.stringify({ publicKey }), {
+    headers: {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+/**
+ * Handle push subscription
+ */
+async function handlePushSubscribe(request, env) {
+  // Check if KV storage is configured
+  if (!env.PUSH_SUBSCRIPTIONS) {
+    return new Response(JSON.stringify({
+      error: 'Push notifications not configured',
+      message: 'KV storage not set up'
+    }), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  }
+
+  try {
+    const { subscription, family } = await request.json();
+
+    if (!subscription || !subscription.endpoint) {
+      return new Response(JSON.stringify({
+        error: 'Invalid subscription',
+        message: 'Missing subscription endpoint'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
+    // Store subscription in KV with family data
+    // Key is a hash of the endpoint to ensure uniqueness
+    const key = await hashEndpoint(subscription.endpoint);
+    await env.PUSH_SUBSCRIPTIONS.put(key, JSON.stringify({
+      subscription,
+      family,
+      createdAt: new Date().toISOString()
+    }));
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({
+      error: 'Failed to save subscription',
+      message: e.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  }
+}
+
+/**
+ * Handle push unsubscription
+ */
+async function handlePushUnsubscribe(request, env) {
+  if (!env.PUSH_SUBSCRIPTIONS) {
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  }
+
+  try {
+    const { endpoint } = await request.json();
+
+    if (endpoint) {
+      const key = await hashEndpoint(endpoint);
+      await env.PUSH_SUBSCRIPTIONS.delete(key);
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  } catch {
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
+  }
+}
+
+/**
+ * Hash endpoint URL for use as KV key
+ */
+async function hashEndpoint(endpoint) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(endpoint);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 /**
  * Handle family calendar request with multiple people
@@ -75,7 +240,7 @@ function handleFamilyRequest(url, familyParam) {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...CORS_HEADERS,
         },
       });
     }
@@ -109,8 +274,8 @@ function handleFamilyRequest(url, familyParam) {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': 'inline; filename="family-nerdiversaries.ics"',
-        'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=3600',
+        ...CORS_HEADERS,
       },
     });
   } catch (e) {
@@ -121,7 +286,7 @@ function handleFamilyRequest(url, familyParam) {
       status: 400,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...CORS_HEADERS,
       },
     });
   }
