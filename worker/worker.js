@@ -511,9 +511,19 @@ async function signJWT(header, payload, privateKeyBase64) {
   const payloadB64 = base64urlEncode(JSON.stringify(payload));
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
+  // web-push generates raw 32-byte EC private keys, wrap in PKCS8 for import
   const privateKeyRaw = base64urlDecode(privateKeyBase64);
+  const pkcs8Header = new Uint8Array([
+    0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48,
+    0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
+    0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20
+  ]);
+  const pkcs8Key = new Uint8Array(pkcs8Header.length + privateKeyRaw.length);
+  pkcs8Key.set(pkcs8Header);
+  pkcs8Key.set(privateKeyRaw, pkcs8Header.length);
+
   const privateKey = await crypto.subtle.importKey(
-    'pkcs8', privateKeyRaw,
+    'pkcs8', pkcs8Key,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false, ['sign']
   );
@@ -524,6 +534,7 @@ async function signJWT(header, payload, privateKeyBase64) {
     new TextEncoder().encode(unsignedToken)
   );
 
+  // Web Crypto returns raw r||s format (64 bytes), which is what JWT expects
   return `${unsignedToken}.${base64urlEncode(new Uint8Array(signature))}`;
 }
 
