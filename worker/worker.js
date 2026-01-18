@@ -395,9 +395,10 @@ async function processSubscription(key, subscriptionData, now, env) {
     for (const minutesBefore of times) {
       const notificationTime = new Date(event.date.getTime() - minutesBefore * 60 * 1000);
 
-      // Check if this notification is due (within the last 20 minutes window)
+      // Check if this notification is due (within the last 2 minutes window)
+      // Cron runs every minute, so 2-min window ensures we don't miss any
       const timeDiff = now.getTime() - notificationTime.getTime();
-      if (timeDiff >= 0 && timeDiff < 20 * 60 * 1000) { // Due and within 20 min window
+      if (timeDiff >= 0 && timeDiff < 2 * 60 * 1000) { // Due and within 2 min window
 
         // Generate unique notification ID
         const notificationId = `${key}-${event.id}-${minutesBefore}`;
