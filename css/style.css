@@ -410,17 +410,23 @@ body {
 }
 
 .countdown-person {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-bottom: 0.5rem;
-    color: white !important;
-    opacity: 0.9;
+    color: white;
 }
 
 .celebration-person {
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    border-radius: 16px;
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     margin-bottom: 0.5rem;
+    color: white;
 }
 
 /* Features Grid */
