@@ -428,4 +428,68 @@ test.describe('Nerdiversary Main Flows', () => {
     const icon = notifyBtn.locator('.btn-icon');
     await expect(icon).toBeVisible();
   });
+
+  test('PWA persistence - results page loads from storage when no URL params', async ({ page }) => {
+    // First, navigate to index and submit a birthday to populate storage
+    await page.goto('/index.html');
+    await page.fill('#birthdate-0', '1990-05-15');
+    await page.fill('#name-0', 'TestPerson');
+    await page.click('button[type="submit"]');
+
+    // Wait for navigation to results
+    await expect(page).toHaveURL(/results\.html\?family=/);
+    await expect(page.locator('.family-info')).toBeVisible({ timeout: 10000 });
+
+    // Now navigate directly to results.html WITHOUT URL params (simulating PWA reopen)
+    await page.goto('/results.html');
+
+    // Page should NOT redirect to index - it should load from storage
+    await expect(page).toHaveURL(/results\.html/);
+
+    // Family info should be displayed
+    await expect(page.locator('.family-info')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.family-info')).toContainText('TestPerson');
+
+    // Events should be displayed
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // URL should have been updated with family params for shareability
+    await expect(page).toHaveURL(/family=TestPerson/);
+  });
+
+  test('PWA persistence - index auto-navigates to results when data is stored', async ({ page }) => {
+    // First populate storage by submitting form
+    await page.goto('/index.html');
+    await page.fill('#birthdate-0', '1985-12-25');
+    await page.click('button[type="submit"]');
+
+    // Wait for navigation to results
+    await expect(page).toHaveURL(/results\.html\?family=/);
+
+    // Now go back to index without ?new=1 flag
+    await page.goto('/index.html');
+
+    // Should auto-navigate to results because storage has data
+    await expect(page).toHaveURL(/results\.html\?family=/, { timeout: 5000 });
+  });
+
+  test('PWA persistence - index shows form with new=1 flag even when data is stored', async ({ page }) => {
+    // First populate storage by submitting form
+    await page.goto('/index.html');
+    await page.fill('#birthdate-0', '1985-12-25');
+    await page.click('button[type="submit"]');
+
+    // Wait for navigation to results
+    await expect(page).toHaveURL(/results\.html\?family=/);
+
+    // Now go back to index WITH ?new=1 flag
+    await page.goto('/index.html?new=1');
+
+    // Should stay on index (not auto-navigate)
+    await expect(page).toHaveURL(/index\.html\?new=1/);
+
+    // Form should be visible and pre-populated with stored data
+    await expect(page.locator('#birthday-form')).toBeVisible();
+    await expect(page.locator('#birthdate-0')).toHaveValue('1985-12-25');
+  });
 });

@@ -49,13 +49,13 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Parse family data from URL params
+document.addEventListener('DOMContentLoaded', async () => {
+    // Parse family data from URL params first
     const urlParams = new URLSearchParams(window.location.search);
-
-    // Check for new family format
     const familyParam = urlParams.get('family');
+
     if (familyParam) {
+        // Load from URL params (shared link or navigation from index)
         try {
             familyMembers = familyParam.split(',').map(m => {
                 const parts = m.split('|');
@@ -68,6 +68,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
         } catch (e) {
             console.error('Failed to parse family param:', e);
+        }
+    }
+
+    // If no URL params or parsing failed, try loading from storage (PWA persistence)
+    if (familyMembers.length === 0 && window.NerdiversaryStorage) {
+        try {
+            const storedFamily = await window.NerdiversaryStorage.loadFamily();
+            if (storedFamily && storedFamily.length > 0) {
+                familyMembers = storedFamily.map(m => {
+                    const timeStr = m.time || '00:00';
+                    const birthDate = new Date(`${m.date}T${timeStr}:00`);
+                    return {
+                        name: m.name,
+                        dateStr: m.date,
+                        timeStr: m.time || '',
+                        birthDate
+                    };
+                }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
+
+                // Update URL for shareability (without triggering navigation)
+                if (familyMembers.length > 0) {
+                    const newFamilyParam = storedFamily.map(m =>
+                        `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
+                    ).join(',');
+                    const newUrl = `${window.location.pathname}?family=${newFamilyParam}`;
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load from storage:', e);
         }
     }
 
@@ -963,7 +993,7 @@ function showShareModal(event) {
     const fullShareText = `${shareText}\n\nFind your nerdy milestones:`;
 
     // Escape text for use in inline onclick attributes
-    const escapeForOnclick = (str) => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+    const escapeForOnclick = str => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
 
     // Social share URLs
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;

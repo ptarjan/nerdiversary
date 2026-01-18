@@ -28,7 +28,7 @@ function isIOS() {
  * iOS Chrome has "CriOS", Firefox has "FxiOS", Edge has "EdgiOS", etc.
  */
 function isIOSSafari() {
-    if (!isIOS()) return false;
+    if (!isIOS()) { return false; }
     const ua = navigator.userAgent;
     // Check for non-Safari iOS browsers
     return !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
