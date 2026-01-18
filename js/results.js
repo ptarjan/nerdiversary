@@ -397,7 +397,12 @@ function displayTimeline() {
                         <span class="event-category">${categoryInfo.icon} ${categoryInfo.name}</span>
                     </div>
                 </div>
-                ${!isPast ? `<button class="event-add-btn" data-event-id="${event.id}" title="Add to Google Calendar">📅</button>` : ''}
+                ${!isPast ? `
+                    <div class="event-actions">
+                        <button class="event-share-btn" data-event-id="${event.id}" title="Share this milestone">📤</button>
+                        <button class="event-add-btn" data-event-id="${event.id}" title="Add to Google Calendar">📅</button>
+                    </div>
+                ` : ''}
             </div>
         `;
     }).join('');
@@ -414,6 +419,18 @@ function displayTimeline() {
                 if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
                     window.location.href = gcalUrl;
                 }
+            }
+        });
+    });
+
+    // Add click handlers for share buttons
+    timeline.querySelectorAll('.event-share-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const { eventId } = btn.dataset;
+            const event = allEvents.find(ev => ev.id === eventId);
+            if (event) {
+                showShareModal(event);
             }
         });
     });
@@ -859,6 +876,129 @@ function shareResults() {
         copyToClipboard(shareUrl);
     }
 }
+
+/**
+ * Generate viral share text for an event
+ */
+function generateShareText(event) {
+    const dateStr = Nerdiversary.formatDate(event.date);
+    const isPast = event.date < new Date();
+    const personPrefix = familyMembers.length > 1 && event.personName !== 'Everyone'
+        ? `${event.personName} `
+        : 'I ';
+
+    // Category-specific viral hooks
+    const hooks = {
+        planetary: [
+            `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} a birthday on another planet! ${event.icon}`,
+            `Forget Earth birthdays. ${personPrefix}${isPast ? 'turned' : 'will turn'} ${event.title.match(/\d+/)?.[0] || 'another year'} in ${event.title.split(' ').pop()} years!`,
+        ],
+        decimal: [
+            `${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title}! ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title} on ${dateStr}!`,
+        ],
+        binary: [
+            `${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}! Only true nerds celebrate this. ${event.icon}`,
+            `${event.icon} Programmers assemble! ${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title}`,
+        ],
+        mathematical: [
+            `${event.icon} ${personPrefix}${isPast ? 'just lived' : 'will live'} ${event.title}! Math is beautiful.`,
+            `${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} ${event.title}! ${event.icon}`,
+        ],
+        fibonacci: [
+            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} a Fibonacci milestone: ${event.title}!`,
+            `The golden ratio approves! ${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title} ${event.icon}`,
+        ],
+        scientific: [
+            `${event.icon} ${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}!`,
+            `Science nerds unite! ${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title} ${event.icon}`,
+        ],
+        'pop-culture': [
+            `${event.icon} ${event.title}! ${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} on ${dateStr}`,
+            `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} ${event.title}! ${event.icon}`,
+        ],
+    };
+
+    const categoryHooks = hooks[event.category] || hooks.decimal;
+    const baseText = categoryHooks[Math.floor(Math.random() * categoryHooks.length)];
+
+    return baseText;
+}
+
+/**
+ * Show share modal for a specific event
+ */
+function showShareModal(event) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
+    const shareText = generateShareText(event);
+    const fullShareText = `${shareText}\n\nFind your nerdy milestones:`;
+
+    // Social share URLs
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    const redditUrl = `https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareText)}`;
+    const threadsUrl = `https://threads.net/intent/post?text=${encodeURIComponent(`${fullShareText} ${shareUrl}`)}`;
+
+    const modal = document.createElement('div');
+    modal.className = 'import-modal';
+    modal.innerHTML = `
+        <div class="import-modal-content share-modal-content">
+            <h3>${event.icon} Share This Milestone</h3>
+            <div class="share-preview">
+                <p class="share-preview-text">"${escapeHtml(shareText)}"</p>
+            </div>
+            <div class="share-options">
+                <a href="${twitterUrl}" target="_blank" class="share-option twitter" title="Share on X/Twitter">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                <a href="${threadsUrl}" target="_blank" class="share-option threads" title="Share on Threads">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.912 3.589 12c.027 3.086.718 5.494 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.17.408-2.253 1.332-3.05.857-.74 2.063-1.201 3.476-1.335.89-.084 2.412-.089 3.626.338v-.477c0-1.263-.258-2.153-.832-2.86-.516-.637-1.29-.973-2.37-1.029-2.074.006-3.193.888-3.496 1.648l-1.9-.702c.604-1.539 2.392-2.803 5.456-2.803 1.712.014 3.065.497 4.02 1.437.917.9 1.382 2.17 1.382 3.778v4.063c0 .201.015.403.046.602.078.506.37.907.87 1.193l-.978 1.764c-.745-.414-1.27-.96-1.578-1.622-.814.566-1.782.893-2.857 1.016-.215.024-.432.037-.65.043zm1.608-8.394c-2.33.153-3.576 1.004-3.513 2.396.032.701.376 1.265.967 1.586.536.292 1.255.414 1.988.374 1.055-.057 1.876-.45 2.443-1.168.478-.607.784-1.443.891-2.472-.872-.303-1.823-.399-2.776-.716z"/></svg>
+                </a>
+                <a href="${facebookUrl}" target="_blank" class="share-option facebook" title="Share on Facebook">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="${redditUrl}" target="_blank" class="share-option reddit" title="Share on Reddit">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+                </a>
+                <a href="${linkedinUrl}" target="_blank" class="share-option linkedin" title="Share on LinkedIn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                </a>
+                <button class="share-option copy" title="Copy to clipboard" onclick="copyMilestoneShare('${escapeHtml(fullShareText.replace(/'/g, "\\'"))}', '${escapeHtml(shareUrl)}')">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            </div>
+            <button class="import-close" onclick="this.closest('.import-modal').remove()">Done</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', e => {
+        if (e.target === modal) { modal.remove(); }
+    });
+}
+
+/**
+ * Copy milestone share text and URL to clipboard
+ */
+function copyMilestoneShare(text, url) {
+    const fullText = `${text} ${url}`;
+    navigator.clipboard.writeText(fullText).then(() => {
+        showToast('Copied to clipboard!');
+    }).catch(() => {
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Copied to clipboard!');
+    });
+}
+
+// Expose to window for onclick handlers
+window.copyMilestoneShare = copyMilestoneShare;
 
 /**
  * Copy text to clipboard
