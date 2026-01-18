@@ -268,7 +268,7 @@ function displayNextEvent() {
 
     container.innerHTML = `
         <div class="countdown-title">${nextEvent.icon} ${nextEvent.title}</div>
-        ${showPerson ? `<div class="countdown-person" style="color: ${nextEvent.personColor}">${escapeHtml(nextEvent.personName)}</div>` : ''}
+        ${showPerson ? `<div class="countdown-person" style="background: ${nextEvent.personColor}">${escapeHtml(nextEvent.personName)}</div>` : ''}
         <div class="countdown-date">${Nerdiversary.formatDate(nextEvent.date)}</div>
         <div class="countdown-timer">
             <div class="countdown-unit">
@@ -1059,7 +1059,7 @@ function showCelebration(event) {
         <div class="celebration-content">
             <span class="celebration-emoji">${event.icon}</span>
             <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
-            ${showPerson ? `<p class="celebration-person" style="color: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
+            ${showPerson ? `<p class="celebration-person" style="background: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
             <p class="celebration-event">${event.title}</p>
             <p class="celebration-description">${event.description}</p>
             <button class="celebration-dismiss">Continue to Next Event</button>
