@@ -1,13 +1,15 @@
 /**
  * Nerdiversary Cloudflare Worker
  * Generates .ics calendar files for nerdiversary events
- * Handles push notification subscriptions
+ * Handles push notification subscriptions with D1 database
  *
- * Deployed via GitHub Actions
+ * Architecture: Birthday-indexed D1 queries (scales to 1M+ users)
+ * - On subscribe: store subscription + family birthdates in D1
+ * - Every minute: query birthdates matching any milestone offset, send notifications
+ * - Cost: ~1 query/minute regardless of user count
  */
 
 // Import shared modules
-// Wrangler's bundler (esbuild) handles CommonJS -> ESM conversion
 import Calculator from '../js/calculator.js';
 import Milestones from '../js/milestones.js';
 
@@ -20,6 +22,91 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+// ============================================================================
+// MILESTONE OFFSETS (precomputed for cron queries)
+// ============================================================================
+
+/**
+ * Generate all milestone offsets in milliseconds from birth
+ * These are the fixed offsets we check against birthdates
+ */
+function generateMilestoneOffsets() {
+  const offsets = [];
+  const { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY, MS_PER_WEEK, MS_PER_MONTH, MS_PER_YEAR } = Milestones;
+
+  // Second milestones
+  for (const m of Milestones.secondMilestones) {
+    offsets.push({ ms: m.value * MS_PER_SECOND, label: m.label, icon: '⏱️' });
+  }
+
+  // Minute milestones
+  for (const m of Milestones.minuteMilestones) {
+    offsets.push({ ms: m.value * MS_PER_MINUTE, label: m.label, icon: '⏱️' });
+  }
+
+  // Hour milestones
+  for (const m of Milestones.hourMilestones) {
+    offsets.push({ ms: m.value * MS_PER_HOUR, label: m.label, icon: '⏰' });
+  }
+
+  // Day milestones
+  for (const m of Milestones.dayMilestones) {
+    offsets.push({ ms: m.value * MS_PER_DAY, label: m.label, icon: '📅' });
+  }
+
+  // Week milestones
+  for (const m of Milestones.weekMilestones) {
+    offsets.push({ ms: m.value * MS_PER_WEEK, label: m.label, icon: '📆' });
+  }
+
+  // Month milestones
+  for (const m of Milestones.monthMilestones) {
+    offsets.push({ ms: m.value * MS_PER_MONTH, label: m.label, icon: '🗓️' });
+  }
+
+  // Planetary years (first 5 years of each planet)
+  for (const [, planet] of Object.entries(Milestones.PLANETS)) {
+    for (let year = 1; year <= 5; year++) {
+      offsets.push({
+        ms: year * planet.days * MS_PER_DAY,
+        label: `${planet.name} Year ${year}`,
+        icon: planet.icon
+      });
+    }
+  }
+
+  // Fibonacci milestones (in seconds, for reasonable ages)
+  for (const fib of Milestones.FIBONACCI) {
+    const ms = fib * MS_PER_SECOND;
+    // Only include if it's between 1 year and 120 years
+    if (ms > MS_PER_YEAR && ms < 120 * MS_PER_YEAR) {
+      offsets.push({ ms, label: `Fibonacci ${fib.toLocaleString()} seconds`, icon: '🐚' });
+    }
+  }
+
+  // Earth birthdays (1-120 years)
+  for (let year = 1; year <= 120; year++) {
+    offsets.push({ ms: year * MS_PER_YEAR, label: `${year}${getOrdinal(year)} Birthday`, icon: '🎂' });
+  }
+
+  return offsets;
+}
+
+function getOrdinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// Cache milestone offsets (generated once per worker instance)
+let MILESTONE_OFFSETS = null;
+function getMilestoneOffsets() {
+  if (!MILESTONE_OFFSETS) {
+    MILESTONE_OFFSETS = generateMilestoneOffsets();
+  }
+  return MILESTONE_OFFSETS;
+}
 
 // ============================================================================
 // WORKER HANDLER
@@ -69,18 +156,13 @@ const workerHandler = {
 };
 
 // ============================================================================
-// PUSH NOTIFICATION HANDLERS
-// Note: To enable full push notifications, add these to wrangler.toml:
-// - KV namespace binding: PUSH_SUBSCRIPTIONS
-// - Environment variables: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
-// - Scheduled trigger for sending notifications
+// PUSH NOTIFICATION HANDLERS (D1-based)
 // ============================================================================
 
 /**
  * Return VAPID public key for push subscription
  */
 function handleVapidPublicKey(env) {
-  // VAPID public key should be set as environment variable
   const publicKey = env.VAPID_PUBLIC_KEY;
 
   if (!publicKey) {
@@ -89,36 +171,27 @@ function handleVapidPublicKey(env) {
       message: 'VAPID keys not set up on server'
     }), {
       status: 503,
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
   return new Response(JSON.stringify({ publicKey }), {
-    headers: {
-      'Content-Type': 'application/json',
-      ...CORS_HEADERS,
-    },
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
 }
 
 /**
- * Handle push subscription
+ * Handle push subscription - stores in D1
  */
 async function handlePushSubscribe(request, env) {
-  // Check if KV storage is configured
-  if (!env.PUSH_SUBSCRIPTIONS) {
+  // Check if D1 is configured
+  if (!env.DB) {
     return new Response(JSON.stringify({
       error: 'Push notifications not configured',
-      message: 'KV storage not set up'
+      message: 'D1 database not set up'
     }), {
       status: 503,
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -131,46 +204,60 @@ async function handlePushSubscribe(request, env) {
         message: 'Missing subscription endpoint'
       }), {
         status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          ...CORS_HEADERS,
-        },
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
       });
     }
 
-    // Store subscription in KV with family data and notification times
-    // Key is a hash of the endpoint to ensure uniqueness
-    const key = await hashEndpoint(subscription.endpoint);
-    const times = notificationTimes || [1440, 60, 0]; // Default: 1 day, 1 hour, at event
+    // Generate subscription ID from endpoint hash
+    const subscriptionId = await hashEndpoint(subscription.endpoint);
+    const times = JSON.stringify(notificationTimes || [1440, 60, 0]);
 
-    await env.PUSH_SUBSCRIPTIONS.put(key, JSON.stringify({
-      subscription,
-      family,
-      notificationTimes: times,
-      createdAt: new Date().toISOString()
-    }));
+    // Upsert subscription
+    await env.DB.prepare(`
+      INSERT INTO subscriptions (id, endpoint, p256dh, auth, notification_times, updated_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET
+        endpoint = excluded.endpoint,
+        p256dh = excluded.p256dh,
+        auth = excluded.auth,
+        notification_times = excluded.notification_times,
+        updated_at = datetime('now')
+    `).bind(
+      subscriptionId,
+      subscription.endpoint,
+      subscription.keys.p256dh,
+      subscription.keys.auth,
+      times
+    ).run();
 
-    // Pre-schedule notifications for the next 30 days (O(1) cron reads)
-    if (env.SCHEDULED_NOTIFICATIONS) {
-      await scheduleNotificationsForSubscription(key, subscription, family, times, env);
+    // Delete existing family members for this subscription
+    await env.DB.prepare('DELETE FROM family_members WHERE subscription_id = ?')
+      .bind(subscriptionId)
+      .run();
+
+    // Parse and insert family members
+    if (family) {
+      const members = parseFamilyParam(family);
+      for (const member of members) {
+        const birthDatetime = formatBirthDatetime(member.birthDate);
+        await env.DB.prepare(`
+          INSERT INTO family_members (subscription_id, name, birth_datetime)
+          VALUES (?, ?, ?)
+        `).bind(subscriptionId, member.name, birthDatetime).run();
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (e) {
+    console.error('Subscribe error:', e);
     return new Response(JSON.stringify({
       error: 'Failed to save subscription',
       message: e.message
     }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 }
@@ -179,256 +266,42 @@ async function handlePushSubscribe(request, env) {
  * Handle push unsubscription
  */
 async function handlePushUnsubscribe(request, env) {
-  if (!env.PUSH_SUBSCRIPTIONS) {
-    return new Response(JSON.stringify({ success: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+  if (!env.DB) {
+    return new Response(JSON.stringify({ error: 'D1 not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
   try {
     const { endpoint } = await request.json();
+    const subscriptionId = await hashEndpoint(endpoint);
 
-    if (endpoint) {
-      const key = await hashEndpoint(endpoint);
-      await env.PUSH_SUBSCRIPTIONS.delete(key);
-    }
+    // Delete cascade will remove family_members too
+    await env.DB.prepare('DELETE FROM subscriptions WHERE id = ?')
+      .bind(subscriptionId)
+      .run();
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
-  } catch {
-    return new Response(JSON.stringify({ success: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 }
 
 /**
- * Hash endpoint URL for use as KV key
+ * Hash endpoint to create subscription ID
  */
 async function hashEndpoint(endpoint) {
   const encoder = new TextEncoder();
   const data = encoder.encode(endpoint);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Handle family calendar request with multiple people
- */
-function handleFamilyRequest(url, familyParam) {
-  try {
-    // Parse family members: Name|YYYY-MM-DD|HH:MM,Name2|YYYY-MM-DD
-    const members = familyParam.split(',').map(m => {
-      const parts = m.split('|');
-      const name = decodeURIComponent(parts[0] || '');
-      const dateStr = parts[1] || '';
-      const timeStr = parts[2] || '00:00';
-      const birthDate = new Date(`${dateStr}T${timeStr}:00`);
-
-      return { name, birthDate };
-    }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
-
-    if (members.length === 0) {
-      return new Response(JSON.stringify({
-        error: 'No valid family members found',
-        usage: '?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
-        example: url.origin + '/?family=Alice|1990-05-15,Bob|1988-03-22'
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          ...CORS_HEADERS,
-        },
-      });
-    }
-
-    // Generate events for all family members
-    let allEvents = [];
-
-    for (const member of members) {
-      const events = Calculator.calculate(member.birthDate, {
-        yearsAhead: Milestones.MAX_YEARS,
-        includePast: false,
-        transformEvent: (event) => ({
-          ...event,
-          personName: member.name,
-          title: `${event.icon} ${member.name}: ${event.title}`,
-          id: `${member.name}-${event.id}`
-        })
-      });
-
-      allEvents = allEvents.concat(events);
-    }
-
-    // Sort by date
-    allEvents.sort((a, b) => a.date - b.date);
-
-    // Generate iCal content
-    const icalContent = generateICal(allEvents, true);
-
-    // Return .ics file
-    return new Response(icalContent, {
-      headers: {
-        'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'inline; filename="family-nerdiversaries.ics"',
-        'Cache-Control': 'public, max-age=3600',
-        ...CORS_HEADERS,
-      },
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({
-      error: 'Failed to parse family parameter',
-      message: e.message
-    }), {
-      status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...CORS_HEADERS,
-      },
-    });
-  }
-}
-
-// ============================================================================
-// SCHEDULED HANDLER - Push Notification Sender (O(1) approach)
-// ============================================================================
-
-/**
- * Scheduled handler - runs on cron trigger to send push notifications
- * Reads ONE KV key per minute instead of scanning all subscriptions
- */
-async function handleScheduled(env) {
-  // Check if push notifications are configured
-  if (!env.SCHEDULED_NOTIFICATIONS || !env.VAPID_PRIVATE_KEY) {
-    console.log('Push notifications not configured - skipping scheduled run');
-    return;
-  }
-
-  const now = new Date();
-  const minuteKey = getMinuteKey(now);
-  console.log(`Checking notifications for ${minuteKey}`);
-
-  // Read ONE key for current minute - O(1) regardless of subscriber count
-  const notifications = await env.SCHEDULED_NOTIFICATIONS.get(minuteKey, { type: 'json' });
-
-  if (!notifications || notifications.length === 0) {
-    console.log('No notifications scheduled for this minute');
-    return;
-  }
-
-  console.log(`Found ${notifications.length} notifications to send`);
-
-  let sentCount = 0;
-  let errorCount = 0;
-
-  for (const notification of notifications) {
-    try {
-      const success = await sendPushNotification(
-        notification.subscription,
-        { title: notification.title, body: notification.body, data: notification.data },
-        env
-      );
-
-      if (success) {
-        sentCount++;
-        console.log(`Sent: ${notification.title}`);
-      } else {
-        errorCount++;
-      }
-    } catch (error) {
-      console.error(`Error sending notification:`, error);
-      errorCount++;
-    }
-  }
-
-  // Delete the processed key (cleanup)
-  await env.SCHEDULED_NOTIFICATIONS.delete(minuteKey);
-
-  console.log(`Complete: ${sentCount} sent, ${errorCount} errors`);
-}
-
-/**
- * Get the KV key for a specific minute (YYYY-MM-DDTHH:MM)
- */
-function getMinuteKey(date) {
-  return date.toISOString().slice(0, 16); // "2024-01-15T10:30"
-}
-
-/**
- * Schedule notifications for a subscription (called on subscribe)
- * Pre-calculates all notifications for next 30 days
- */
-async function scheduleNotificationsForSubscription(subscriptionKey, subscription, family, notificationTimes, env) {
-  const members = parseFamilyParam(family);
-  if (members.length === 0) return;
-
-  const times = notificationTimes || [1440, 60, 0];
-  const now = new Date();
-  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-  // Group notifications by minute for batch writes
-  const notificationsByMinute = new Map();
-
-  for (const member of members) {
-    const events = Calculator.calculate(member.birthDate, {
-      yearsAhead: 1,
-      includePast: false,
-      transformEvent: (event) => ({
-        ...event,
-        personName: member.name,
-        title: `${member.name}: ${event.title}`
-      })
-    });
-
-    for (const event of events) {
-      for (const minutesBefore of times) {
-        const notificationTime = new Date(event.date.getTime() - minutesBefore * 60 * 1000);
-
-        // Only schedule if within next 30 days
-        if (notificationTime > now && notificationTime <= thirtyDaysFromNow) {
-          const minuteKey = getMinuteKey(notificationTime);
-          const { title, body } = generateNotificationContent(event, minutesBefore);
-
-          if (!notificationsByMinute.has(minuteKey)) {
-            notificationsByMinute.set(minuteKey, []);
-          }
-
-          notificationsByMinute.get(minuteKey).push({
-            subscriptionKey,
-            subscription,
-            title,
-            body,
-            data: { eventId: event.id }
-          });
-        }
-      }
-    }
-  }
-
-  // Write all scheduled notifications to KV
-  // Each key expires after 31 days (auto-cleanup)
-  for (const [minuteKey, notifications] of notificationsByMinute) {
-    // Merge with existing notifications for this minute (from other subscribers)
-    const existing = await env.SCHEDULED_NOTIFICATIONS.get(minuteKey, { type: 'json' }) || [];
-    const merged = [...existing, ...notifications];
-
-    await env.SCHEDULED_NOTIFICATIONS.put(minuteKey, JSON.stringify(merged), {
-      expirationTtl: 31 * 24 * 60 * 60 // 31 days
-    });
-  }
-
-  console.log(`Scheduled ${notificationsByMinute.size} notification time slots for subscription`);
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
 }
 
 /**
@@ -450,22 +323,125 @@ function parseFamilyParam(familyParam) {
 }
 
 /**
- * Generate notification content based on event and timing
+ * Format birth date to YYYY-MM-DDTHH:MM for DB storage
  */
-function generateNotificationContent(event, minutesBefore) {
+function formatBirthDatetime(date) {
+  return date.toISOString().slice(0, 16); // "1990-05-15T14:30"
+}
+
+// ============================================================================
+// SCHEDULED HANDLER - Birthday-indexed queries
+// ============================================================================
+
+/**
+ * Scheduled handler - runs every minute
+ * Queries D1 for birthdates matching any milestone offset
+ */
+async function handleScheduled(env) {
+  if (!env.DB || !env.VAPID_PRIVATE_KEY) {
+    console.log('Push notifications not configured - skipping');
+    return;
+  }
+
+  const now = new Date();
+  const currentMinute = now.toISOString().slice(0, 16); // "2024-01-15T10:30"
+  console.log(`Checking notifications for ${currentMinute}`);
+
+  const offsets = getMilestoneOffsets();
+  const notificationTimes = [0, 60, 1440]; // At event, 1 hour before, 1 day before
+
+  // Calculate all target birth datetimes
+  const targetDatetimes = new Map(); // datetime -> [{offset, notifTime}]
+
+  for (const offset of offsets) {
+    for (const notifMinutes of notificationTimes) {
+      // Target birth datetime = now - milestone_offset + notification_lead_time
+      const targetMs = now.getTime() - offset.ms + (notifMinutes * 60 * 1000);
+      const targetDate = new Date(targetMs);
+      const targetDatetime = targetDate.toISOString().slice(0, 16);
+
+      if (!targetDatetimes.has(targetDatetime)) {
+        targetDatetimes.set(targetDatetime, []);
+      }
+      targetDatetimes.get(targetDatetime).push({
+        offset,
+        notifMinutes,
+        eventTime: new Date(now.getTime() + notifMinutes * 60 * 1000)
+      });
+    }
+  }
+
+  console.log(`Checking ${targetDatetimes.size} unique birth datetimes`);
+
+  // Query D1 with IN clause for all target datetimes
+  const datetimeList = Array.from(targetDatetimes.keys());
+
+  // D1 has a limit on query size, so batch if needed
+  const BATCH_SIZE = 100;
+  let totalNotifications = 0;
+
+  for (let i = 0; i < datetimeList.length; i += BATCH_SIZE) {
+    const batch = datetimeList.slice(i, i + BATCH_SIZE);
+    const placeholders = batch.map(() => '?').join(',');
+
+    const result = await env.DB.prepare(`
+      SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
+      FROM family_members fm
+      JOIN subscriptions s ON fm.subscription_id = s.id
+      WHERE fm.birth_datetime IN (${placeholders})
+    `).bind(...batch).all();
+
+    if (result.results && result.results.length > 0) {
+      // Group by subscription and send
+      for (const row of result.results) {
+        const milestones = targetDatetimes.get(row.birth_datetime) || [];
+
+        for (const milestone of milestones) {
+          // Check if this notification time is enabled for this subscription
+          const times = JSON.parse(row.notification_times || '[1440,60,0]');
+          if (!times.includes(milestone.notifMinutes)) continue;
+
+          const { title, body } = generateNotificationContent(
+            row.name,
+            milestone.offset,
+            milestone.notifMinutes
+          );
+
+          const subscription = {
+            endpoint: row.endpoint,
+            keys: { p256dh: row.p256dh, auth: row.auth }
+          };
+
+          const success = await sendPushNotification(subscription, { title, body }, env);
+          if (success) {
+            totalNotifications++;
+            console.log(`Sent: ${title} to ${row.name}`);
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`Sent ${totalNotifications} notifications`);
+}
+
+/**
+ * Generate notification content
+ */
+function generateNotificationContent(personName, offset, minutesBefore) {
   let title;
-  let body = event.title;
+  const body = `${personName}: ${offset.label}`;
 
   if (minutesBefore === 0) {
-    title = `${event.icon} It's happening NOW!`;
+    title = `${offset.icon} It's happening NOW!`;
   } else if (minutesBefore < 60) {
-    title = `${event.icon} ${minutesBefore} minutes away!`;
+    title = `${offset.icon} ${minutesBefore} minutes away!`;
   } else if (minutesBefore < 1440) {
     const hours = Math.round(minutesBefore / 60);
-    title = `${event.icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
+    title = `${offset.icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
   } else {
     const days = Math.round(minutesBefore / 1440);
-    title = `${event.icon} ${days} day${days > 1 ? 's' : ''} away!`;
+    title = `${offset.icon} ${days} day${days > 1 ? 's' : ''} away!`;
   }
 
   return { title, body };
@@ -475,23 +451,16 @@ function generateNotificationContent(event, minutesBefore) {
 // WEB PUSH IMPLEMENTATION
 // ============================================================================
 
-/**
- * Send a push notification using the Web Push protocol
- */
 async function sendPushNotification(subscription, payload, env) {
   try {
-    const endpoint = subscription.endpoint;
-    const p256dh = subscription.keys.p256dh;
-    const auth = subscription.keys.auth;
+    const vapidHeaders = await createVapidHeaders(subscription.endpoint, env);
+    const encryptedPayload = await encryptPayload(
+      JSON.stringify(payload),
+      subscription.keys.p256dh,
+      subscription.keys.auth
+    );
 
-    // Create VAPID JWT
-    const vapidHeaders = await createVapidHeaders(endpoint, env);
-
-    // Encrypt the payload
-    const encryptedPayload = await encryptPayload(JSON.stringify(payload), p256dh, auth);
-
-    // Send the push notification
-    const response = await fetch(endpoint, {
+    const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -507,23 +476,20 @@ async function sendPushNotification(subscription, payload, env) {
       return true;
     }
 
-    // Handle subscription expiry
     if (response.status === 404 || response.status === 410) {
-      console.log('Subscription expired, should remove from KV');
+      console.log('Subscription expired, removing from DB');
+      // Could delete from DB here
       return false;
     }
 
-    console.error(`Push failed with status ${response.status}: ${await response.text()}`);
+    console.error(`Push failed: ${response.status}`);
     return false;
   } catch (error) {
-    console.error('Push notification error:', error);
+    console.error('Push error:', error);
     return false;
   }
 }
 
-/**
- * Create VAPID Authorization headers
- */
 async function createVapidHeaders(endpoint, env) {
   const vapidSubject = env.VAPID_SUBJECT || 'mailto:nerdiversary@example.com';
   const publicKey = env.VAPID_PUBLIC_KEY;
@@ -532,202 +498,125 @@ async function createVapidHeaders(endpoint, env) {
   const url = new URL(endpoint);
   const audience = `${url.protocol}//${url.host}`;
 
-  // Create JWT
   const header = { typ: 'JWT', alg: 'ES256' };
   const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    aud: audience,
-    exp: now + 12 * 60 * 60, // 12 hours
-    sub: vapidSubject
-  };
+  const jwtPayload = { aud: audience, exp: now + 12 * 60 * 60, sub: vapidSubject };
 
-  const jwt = await signJWT(header, payload, privateKey);
-
-  return {
-    'Authorization': `vapid t=${jwt}, k=${publicKey}`
-  };
+  const jwt = await signJWT(header, jwtPayload, privateKey);
+  return { 'Authorization': `vapid t=${jwt}, k=${publicKey}` };
 }
 
-/**
- * Sign a JWT using ES256 (ECDSA with P-256 and SHA-256)
- */
 async function signJWT(header, payload, privateKeyBase64) {
   const headerB64 = base64urlEncode(JSON.stringify(header));
   const payloadB64 = base64urlEncode(JSON.stringify(payload));
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // Import the private key
   const privateKeyRaw = base64urlDecode(privateKeyBase64);
   const privateKey = await crypto.subtle.importKey(
-    'pkcs8',
-    privateKeyRaw,
+    'pkcs8', privateKeyRaw,
     { name: 'ECDSA', namedCurve: 'P-256' },
-    false,
-    ['sign']
+    false, ['sign']
   );
 
-  // Sign the token
   const signature = await crypto.subtle.sign(
     { name: 'ECDSA', hash: 'SHA-256' },
     privateKey,
     new TextEncoder().encode(unsignedToken)
   );
 
-  // Convert signature from DER to raw format if needed, then base64url encode
-  const signatureB64 = base64urlEncode(new Uint8Array(signature));
-
-  return `${unsignedToken}.${signatureB64}`;
+  return `${unsignedToken}.${base64urlEncode(new Uint8Array(signature))}`;
 }
 
-/**
- * Encrypt payload using aes128gcm content encoding
- */
 async function encryptPayload(payload, p256dhBase64, authBase64) {
-  // Decode subscription keys
   const p256dh = base64urlDecode(p256dhBase64);
   const auth = base64urlDecode(authBase64);
 
-  // Generate local key pair
   const localKeyPair = await crypto.subtle.generateKey(
-    { name: 'ECDH', namedCurve: 'P-256' },
-    true,
-    ['deriveBits']
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']
   );
 
-  // Export local public key
   const localPublicKey = await crypto.subtle.exportKey('raw', localKeyPair.publicKey);
   const localPublicKeyBytes = new Uint8Array(localPublicKey);
 
-  // Import subscriber's public key
   const subscriberPublicKey = await crypto.subtle.importKey(
-    'raw',
-    p256dh,
-    { name: 'ECDH', namedCurve: 'P-256' },
-    false,
-    []
+    'raw', p256dh, { name: 'ECDH', namedCurve: 'P-256' }, false, []
   );
 
-  // Derive shared secret using ECDH
   const sharedSecret = await crypto.subtle.deriveBits(
     { name: 'ECDH', public: subscriberPublicKey },
-    localKeyPair.privateKey,
-    256
+    localKeyPair.privateKey, 256
   );
 
-  // Generate salt
   const salt = crypto.getRandomValues(new Uint8Array(16));
-
-  // Derive encryption key using HKDF
   const ikm = await deriveIKM(new Uint8Array(sharedSecret), auth, localPublicKeyBytes, p256dh);
   const contentEncryptionKey = await deriveKey(ikm, salt, 'Content-Encoding: aes128gcm\0', 16);
   const nonce = await deriveKey(ikm, salt, 'Content-Encoding: nonce\0', 12);
 
-  // Pad and encode payload
   const payloadBytes = new TextEncoder().encode(payload);
   const paddedPayload = new Uint8Array(payloadBytes.length + 2);
   paddedPayload.set(payloadBytes);
-  paddedPayload[payloadBytes.length] = 2; // Delimiter
-  paddedPayload[payloadBytes.length + 1] = 0; // Padding
+  paddedPayload[payloadBytes.length] = 2;
 
-  // Encrypt with AES-GCM
   const encryptionKey = await crypto.subtle.importKey(
-    'raw',
-    contentEncryptionKey,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt']
+    'raw', contentEncryptionKey, { name: 'AES-GCM' }, false, ['encrypt']
   );
 
   const encrypted = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: nonce, tagLength: 128 },
-    encryptionKey,
-    paddedPayload
+    encryptionKey, paddedPayload
   );
 
-  // Build the aes128gcm header
-  // Format: salt (16) + record size (4) + key id length (1) + key id (65 for P-256 public key)
   const recordSize = new Uint8Array(4);
-  new DataView(recordSize.buffer).setUint32(0, encrypted.byteLength + 86, false); // header + ciphertext
+  new DataView(recordSize.buffer).setUint32(0, encrypted.byteLength + 86, false);
 
   const header = new Uint8Array(86);
-  header.set(salt, 0); // salt
-  header.set(recordSize, 16); // record size
-  header[20] = 65; // key id length
-  header.set(localPublicKeyBytes, 21); // local public key
+  header.set(salt, 0);
+  header.set(recordSize, 16);
+  header[20] = 65;
+  header.set(localPublicKeyBytes, 21);
 
-  // Combine header and encrypted content
   const result = new Uint8Array(header.length + encrypted.byteLength);
   result.set(header);
   result.set(new Uint8Array(encrypted), header.length);
-
   return result;
 }
 
-/**
- * Derive IKM (Input Keying Material) for HKDF
- */
 async function deriveIKM(sharedSecret, auth, localPublicKey, subscriberPublicKey) {
-  // Import shared secret for HKDF
   const sharedSecretKey = await crypto.subtle.importKey(
-    'raw',
-    sharedSecret,
-    { name: 'HKDF' },
-    false,
-    ['deriveBits']
+    'raw', sharedSecret, { name: 'HKDF' }, false, ['deriveBits']
   );
 
-  // Create info for auth secret derivation
-  // "WebPush: info\0" + subscriber_public_key + local_public_key
   const infoPrefix = new TextEncoder().encode('WebPush: info\0');
   const info = new Uint8Array(infoPrefix.length + subscriberPublicKey.length + localPublicKey.length);
   info.set(infoPrefix, 0);
   info.set(subscriberPublicKey, infoPrefix.length);
   info.set(localPublicKey, infoPrefix.length + subscriberPublicKey.length);
 
-  // Derive IKM using HKDF with auth as salt
   const ikm = await crypto.subtle.deriveBits(
     { name: 'HKDF', hash: 'SHA-256', salt: auth, info },
-    sharedSecretKey,
-    256
+    sharedSecretKey, 256
   );
-
   return new Uint8Array(ikm);
 }
 
-/**
- * Derive a key using HKDF
- */
 async function deriveKey(ikm, salt, info, length) {
   const key = await crypto.subtle.importKey(
-    'raw',
-    ikm,
-    { name: 'HKDF' },
-    false,
-    ['deriveBits']
+    'raw', ikm, { name: 'HKDF' }, false, ['deriveBits']
   );
-
   const infoBytes = new TextEncoder().encode(info);
   const derived = await crypto.subtle.deriveBits(
     { name: 'HKDF', hash: 'SHA-256', salt, info: infoBytes },
-    key,
-    length * 8
+    key, length * 8
   );
-
   return new Uint8Array(derived);
 }
 
-/**
- * Base64url encode
- */
 function base64urlEncode(input) {
   const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
   const base64 = btoa(String.fromCharCode(...bytes));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
-/**
- * Base64url decode
- */
 function base64urlDecode(input) {
   const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
   const padding = '='.repeat((4 - base64.length % 4) % 4);
@@ -735,19 +624,58 @@ function base64urlDecode(input) {
   return new Uint8Array([...decoded].map(c => c.charCodeAt(0)));
 }
 
-// ES module export for Cloudflare Workers
-const workerExport = {
-  ...workerHandler,
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(handleScheduled(env));
-  }
-};
-
-export default workerExport;
-
 // ============================================================================
 // ICAL GENERATION
 // ============================================================================
+
+function handleFamilyRequest(url, familyParam) {
+  const members = parseFamilyParam(familyParam);
+
+  if (members.length === 0) {
+    return new Response(JSON.stringify({
+      error: 'Invalid family parameter format',
+      usage: '?family=Name|YYYY-MM-DD|HH:MM',
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  let allEvents = [];
+  for (const member of members) {
+    const events = Calculator.calculate(member.birthDate, {
+      yearsAhead: 2,
+      includePast: true,
+      transformEvent: (event) => ({
+        ...event,
+        personName: member.name,
+        title: `${member.name}: ${event.title}`
+      })
+    });
+    allEvents = allEvents.concat(events);
+  }
+
+  allEvents.sort((a, b) => a.date - b.date);
+
+  const format = url.searchParams.get('format');
+  if (format === 'json') {
+    return new Response(JSON.stringify(allEvents.map(e => ({
+      ...e,
+      date: e.date.toISOString()
+    }))), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  const ical = generateICal(allEvents, members.length > 1);
+  return new Response(ical, {
+    headers: {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="nerdiversary.ics"',
+      ...CORS_HEADERS,
+    },
+  });
+}
 
 function generateICal(events, isFamily = false) {
   const calName = isFamily ? 'Family Nerdiversaries' : 'Nerdiversaries';
@@ -758,7 +686,6 @@ function generateICal(events, isFamily = false) {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${calName}`,
-    'X-WR-CALDESC:Your nerdy anniversary milestones',
   ];
 
   for (const event of events) {
@@ -767,22 +694,16 @@ function generateICal(events, isFamily = false) {
 
     lines.push('BEGIN:VEVENT');
     lines.push(`UID:${uid}`);
-    lines.push(`DTSTAMP:${formatICalDate(new Date())}`);
     lines.push(`DTSTART:${dateStr}`);
     lines.push(`DTEND:${dateStr}`);
     lines.push(`SUMMARY:${escapeICalText(event.title)}`);
-    lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
-    lines.push(`CATEGORIES:${event.category}`);
-    lines.push('BEGIN:VALARM');
-    lines.push('TRIGGER:-P1D');
-    lines.push('ACTION:DISPLAY');
-    lines.push(`DESCRIPTION:Tomorrow: ${escapeICalText(event.title)}`);
-    lines.push('END:VALARM');
+    if (event.description) {
+      lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
+    }
     lines.push('END:VEVENT');
   }
 
   lines.push('END:VCALENDAR');
-
   return lines.join('\r\n');
 }
 
@@ -790,14 +711,20 @@ function formatICalDate(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-function stripHtml(text) {
-  return text.replace(/<[^>]*>/g, '');
+function escapeICalText(text) {
+  return text.replace(/[\\;,\n]/g, (match) => {
+    if (match === '\n') return '\\n';
+    return '\\' + match;
+  });
 }
 
-function escapeICalText(text) {
-  return stripHtml(text)
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
-}
+// ============================================================================
+// EXPORT
+// ============================================================================
+
+export default {
+  ...workerHandler,
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(handleScheduled(env));
+  }
+};

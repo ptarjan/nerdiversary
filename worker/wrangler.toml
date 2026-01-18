@@ -11,39 +11,38 @@ compatibility_date = "2024-01-01"
 # Push Notification Configuration
 # ============================================================================
 #
-# Architecture: O(1) cron reads using time-bucketed scheduling
-# - On subscribe: pre-calculate notifications for next 30 days, store by minute
-# - Every minute: read ONE KV key for current minute, send those notifications
-# - Cost: 1 KV read per minute (1,440/day) regardless of subscriber count
+# Architecture: Birthday-indexed D1 queries (scales to 1M+ users)
+# - On subscribe: store subscription + family birthdates in D1
+# - Every minute: query birthdates matching any milestone offset, send notifications
+# - Cost: ~1 query/minute + ~few reads (O(1) regardless of user count)
 #
 # To enable push notifications:
 #
-# 1. Create KV namespaces:
-#    wrangler kv:namespace create PUSH_SUBSCRIPTIONS
-#    wrangler kv:namespace create SCHEDULED_NOTIFICATIONS
+# 1. Create D1 database:
+#    wrangler d1 create nerdiversary-db
 #
-# 2. Generate VAPID keys (one-time):
+# 2. Run schema migration:
+#    wrangler d1 execute nerdiversary-db --file=./schema.sql
+#
+# 3. Generate VAPID keys (one-time):
 #    npx web-push generate-vapid-keys
 #
-# 3. Set the VAPID keys as secrets:
+# 4. Set the VAPID keys as secrets:
 #    wrangler secret put VAPID_PUBLIC_KEY
 #    wrangler secret put VAPID_PRIVATE_KEY
 #    wrangler secret put VAPID_SUBJECT   # e.g., "mailto:you@example.com"
 #
-# 4. Uncomment the KV bindings below and add your namespace IDs
+# 5. Uncomment the D1 binding below and add your database ID
 # ============================================================================
 
-# KV namespace bindings for push notifications
-# Uncomment and add your namespace IDs after running `wrangler kv:namespace create`
-# [[kv_namespaces]]
-# binding = "PUSH_SUBSCRIPTIONS"
-# id = "your-push-subscriptions-namespace-id"
-#
-# [[kv_namespaces]]
-# binding = "SCHEDULED_NOTIFICATIONS"
-# id = "your-scheduled-notifications-namespace-id"
+# D1 database binding for push notifications
+# Uncomment and add your database ID after running `wrangler d1 create`
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "nerdiversary-db"
+# database_id = "your-database-id-here"
 
 # Scheduled trigger - runs every minute to check for notifications
-# Cost: 1 KV read per minute (O(1) regardless of subscriber count)
+# Cost: 1 D1 query per minute (scales to millions of users)
 [triggers]
 crons = ["* * * * *"]
