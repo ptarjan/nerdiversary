@@ -535,6 +535,12 @@ async function setupNotifications() {
             Notifications.setEnabled(false);
             Notifications.cancelScheduledNotifications(scheduledNotifications);
             scheduledNotifications = [];
+            // Unsubscribe from push notifications
+            if (Notifications.isPushSupported()) {
+                Notifications.unsubscribeFromPush().catch(err => {
+                    console.log('Failed to unsubscribe from push:', err);
+                });
+            }
             updateNotificationButton(notifyBtn, currentPermission, false);
             showToast('Notifications disabled');
         } else {
@@ -553,7 +559,21 @@ async function setupNotifications() {
             Notifications.setEnabled(true);
             updateNotificationButton(notifyBtn, 'granted', true);
             scheduleUpcomingNotifications();
-            showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+
+            // Subscribe to push notifications (server-side)
+            const familyParam = new URLSearchParams(window.location.search).get('family');
+            if (familyParam && Notifications.isPushSupported()) {
+                const pushResult = await Notifications.subscribeToPush(familyParam);
+                if (pushResult.success) {
+                    console.log('Push notifications subscribed');
+                    showToast('Notifications enabled! You\'ll be notified even when the app is closed.');
+                } else {
+                    console.log('Push subscription failed, using local notifications:', pushResult.reason);
+                    showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+                }
+            } else {
+                showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+            }
 
             // Show a test notification
             await Notifications.showNotification('Notifications Enabled!', {
@@ -566,6 +586,14 @@ async function setupNotifications() {
     // Schedule notifications if already enabled
     if (status.enabled && status.permissionStatus === 'granted') {
         scheduleUpcomingNotifications();
+
+        // Re-subscribe to push to sync family data
+        const familyParam = new URLSearchParams(window.location.search).get('family');
+        if (familyParam && Notifications.isPushSupported()) {
+            Notifications.subscribeToPush(familyParam).catch(err => {
+                console.log('Failed to sync push subscription:', err);
+            });
+        }
     }
 }
 

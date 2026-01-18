@@ -36,11 +36,10 @@ compatibility_date = "2024-01-01"
 # ============================================================================
 
 # D1 database binding for push notifications
-# Uncomment and add your database ID after running `wrangler d1 create`
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "nerdiversary-db"
-# database_id = "your-database-id-here"
+[[d1_databases]]
+binding = "DB"
+database_name = "nerdiversary-db"
+database_id = "a9e7cd62-6a7f-4ea1-9671-6794ecf2b59d"
 
 # Scheduled trigger - runs every minute to check for notifications
 # Cost: 1 D1 query per minute (scales to millions of users)
