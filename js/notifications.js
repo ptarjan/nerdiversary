@@ -344,7 +344,7 @@ async function subscribeToPush(familyParam) {
             });
         }
 
-        // Send subscription to server
+        // Send subscription to server with notification times
         const saveResponse = await fetch(`${PUSH_WORKER_URL}/push/subscribe`, {
             method: 'POST',
             headers: {
@@ -352,7 +352,8 @@ async function subscribeToPush(familyParam) {
             },
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
-                family: familyParam
+                family: familyParam,
+                notificationTimes: getNotificationTimes()
             })
         });
 

@@ -6,3 +6,38 @@ compatibility_date = "2024-01-01"
 # routes = [
 #   { pattern = "calendar.nerdiversary.com", custom_domain = true }
 # ]
+
+# ============================================================================
+# Push Notification Configuration
+# ============================================================================
+#
+# To enable push notifications, you need to:
+#
+# 1. Create a KV namespace:
+#    wrangler kv:namespace create PUSH_SUBSCRIPTIONS
+#    wrangler kv:namespace create SENT_NOTIFICATIONS
+#
+# 2. Generate VAPID keys (one-time):
+#    npx web-push generate-vapid-keys
+#
+# 3. Set the VAPID keys as secrets:
+#    wrangler secret put VAPID_PUBLIC_KEY
+#    wrangler secret put VAPID_PRIVATE_KEY
+#    wrangler secret put VAPID_SUBJECT   # e.g., "mailto:you@example.com"
+#
+# 4. Uncomment the KV bindings below and add your namespace IDs
+# ============================================================================
+
+# KV namespace bindings for push notifications
+# Uncomment and add your namespace IDs after running `wrangler kv:namespace create`
+# [[kv_namespaces]]
+# binding = "PUSH_SUBSCRIPTIONS"
+# id = "your-push-subscriptions-namespace-id"
+#
+# [[kv_namespaces]]
+# binding = "SENT_NOTIFICATIONS"
+# id = "your-sent-notifications-namespace-id"
+
+# Scheduled trigger - runs every 15 minutes to check for notifications to send
+[triggers]
+crons = ["*/15 * * * *"]
