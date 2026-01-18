@@ -11,11 +11,16 @@ compatibility_date = "2024-01-01"
 # Push Notification Configuration
 # ============================================================================
 #
-# To enable push notifications, you need to:
+# Architecture: O(1) cron reads using time-bucketed scheduling
+# - On subscribe: pre-calculate notifications for next 30 days, store by minute
+# - Every minute: read ONE KV key for current minute, send those notifications
+# - Cost: 1 KV read per minute (1,440/day) regardless of subscriber count
 #
-# 1. Create a KV namespace:
+# To enable push notifications:
+#
+# 1. Create KV namespaces:
 #    wrangler kv:namespace create PUSH_SUBSCRIPTIONS
-#    wrangler kv:namespace create SENT_NOTIFICATIONS
+#    wrangler kv:namespace create SCHEDULED_NOTIFICATIONS
 #
 # 2. Generate VAPID keys (one-time):
 #    npx web-push generate-vapid-keys
@@ -35,10 +40,10 @@ compatibility_date = "2024-01-01"
 # id = "your-push-subscriptions-namespace-id"
 #
 # [[kv_namespaces]]
-# binding = "SENT_NOTIFICATIONS"
-# id = "your-sent-notifications-namespace-id"
+# binding = "SCHEDULED_NOTIFICATIONS"
+# id = "your-scheduled-notifications-namespace-id"
 
-# Scheduled trigger - runs every minute to check for notifications to send
-# Cost: ~1,440 requests/day (well within free tier of 100,000/day)
+# Scheduled trigger - runs every minute to check for notifications
+# Cost: 1 KV read per minute (O(1) regardless of subscriber count)
 [triggers]
 crons = ["* * * * *"]
