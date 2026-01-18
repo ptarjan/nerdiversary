@@ -934,12 +934,15 @@ function showShareModal(event) {
     const shareText = generateShareText(event);
     const fullShareText = `${shareText}\n\nFind your nerdy milestones:`;
 
+    // Escape text for use in inline onclick attributes
+    const escapeForOnclick = (str) => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+
     // Social share URLs
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
     const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
     const redditUrl = `https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareText)}`;
-    const threadsUrl = `https://threads.net/intent/post?text=${encodeURIComponent(`${fullShareText} ${shareUrl}`)}`;
+    const threadsUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(fullShareText)}&url=${encodeURIComponent(shareUrl)}`;
 
     const modal = document.createElement('div');
     modal.className = 'import-modal';
@@ -965,7 +968,7 @@ function showShareModal(event) {
                 <a href="${linkedinUrl}" target="_blank" class="share-option linkedin" title="Share on LinkedIn">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 </a>
-                <button class="share-option copy" title="Copy to clipboard" onclick="copyMilestoneShare('${escapeHtml(fullShareText.replace(/'/g, "\\'"))}', '${escapeHtml(shareUrl)}')">
+                <button class="share-option copy" title="Copy to clipboard" onclick="copyMilestoneShare('${escapeForOnclick(fullShareText)}', '${escapeForOnclick(shareUrl)}')">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
             </div>
