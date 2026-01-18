@@ -141,12 +141,19 @@ async function handlePushSubscribe(request, env) {
     // Store subscription in KV with family data and notification times
     // Key is a hash of the endpoint to ensure uniqueness
     const key = await hashEndpoint(subscription.endpoint);
+    const times = notificationTimes || [1440, 60, 0]; // Default: 1 day, 1 hour, at event
+
     await env.PUSH_SUBSCRIPTIONS.put(key, JSON.stringify({
       subscription,
       family,
-      notificationTimes: notificationTimes || [1440, 60, 0], // Default: 1 day, 1 hour, at event
+      notificationTimes: times,
       createdAt: new Date().toISOString()
     }));
+
+    // Pre-schedule notifications for the next 30 days (O(1) cron reads)
+    if (env.SCHEDULED_NOTIFICATIONS) {
+      await scheduleNotificationsForSubscription(key, subscription, family, times, env);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: {
@@ -294,90 +301,88 @@ function handleFamilyRequest(url, familyParam) {
 }
 
 // ============================================================================
-// SCHEDULED HANDLER - Push Notification Sender
+// SCHEDULED HANDLER - Push Notification Sender (O(1) approach)
 // ============================================================================
 
 /**
  * Scheduled handler - runs on cron trigger to send push notifications
- * Checks all subscriptions for events that need notifications
+ * Reads ONE KV key per minute instead of scanning all subscriptions
  */
 async function handleScheduled(env) {
   // Check if push notifications are configured
-  if (!env.PUSH_SUBSCRIPTIONS || !env.SENT_NOTIFICATIONS || !env.VAPID_PRIVATE_KEY) {
+  if (!env.SCHEDULED_NOTIFICATIONS || !env.VAPID_PRIVATE_KEY) {
     console.log('Push notifications not configured - skipping scheduled run');
     return;
   }
 
   const now = new Date();
-  console.log(`Running scheduled notification check at ${now.toISOString()}`);
+  const minuteKey = getMinuteKey(now);
+  console.log(`Checking notifications for ${minuteKey}`);
 
-  // List all subscriptions from KV
-  const subscriptions = await listAllSubscriptions(env);
-  console.log(`Found ${subscriptions.length} subscriptions`);
+  // Read ONE key for current minute - O(1) regardless of subscriber count
+  const notifications = await env.SCHEDULED_NOTIFICATIONS.get(minuteKey, { type: 'json' });
+
+  if (!notifications || notifications.length === 0) {
+    console.log('No notifications scheduled for this minute');
+    return;
+  }
+
+  console.log(`Found ${notifications.length} notifications to send`);
 
   let sentCount = 0;
   let errorCount = 0;
 
-  for (const { key, data } of subscriptions) {
+  for (const notification of notifications) {
     try {
-      const sent = await processSubscription(key, data, now, env);
-      sentCount += sent;
+      const success = await sendPushNotification(
+        notification.subscription,
+        { title: notification.title, body: notification.body, data: notification.data },
+        env
+      );
+
+      if (success) {
+        sentCount++;
+        console.log(`Sent: ${notification.title}`);
+      } else {
+        errorCount++;
+      }
     } catch (error) {
-      console.error(`Error processing subscription ${key}:`, error);
+      console.error(`Error sending notification:`, error);
       errorCount++;
     }
   }
 
-  console.log(`Scheduled run complete: ${sentCount} notifications sent, ${errorCount} errors`);
+  // Delete the processed key (cleanup)
+  await env.SCHEDULED_NOTIFICATIONS.delete(minuteKey);
+
+  console.log(`Complete: ${sentCount} sent, ${errorCount} errors`);
 }
 
 /**
- * List all subscriptions from KV storage
+ * Get the KV key for a specific minute (YYYY-MM-DDTHH:MM)
  */
-async function listAllSubscriptions(env) {
-  const subscriptions = [];
-  let cursor = null;
-
-  do {
-    const result = await env.PUSH_SUBSCRIPTIONS.list({ cursor, limit: 100 });
-
-    for (const key of result.keys) {
-      const data = await env.PUSH_SUBSCRIPTIONS.get(key.name, { type: 'json' });
-      if (data) {
-        subscriptions.push({ key: key.name, data });
-      }
-    }
-
-    cursor = result.list_complete ? null : result.cursor;
-  } while (cursor);
-
-  return subscriptions;
+function getMinuteKey(date) {
+  return date.toISOString().slice(0, 16); // "2024-01-15T10:30"
 }
 
 /**
- * Process a single subscription and send any due notifications
+ * Schedule notifications for a subscription (called on subscribe)
+ * Pre-calculates all notifications for next 30 days
  */
-async function processSubscription(key, subscriptionData, now, env) {
-  const { subscription, family, notificationTimes } = subscriptionData;
-
-  if (!family || !subscription) {
-    return 0;
-  }
-
-  // Parse family members
+async function scheduleNotificationsForSubscription(subscriptionKey, subscription, family, notificationTimes, env) {
   const members = parseFamilyParam(family);
-  if (members.length === 0) {
-    return 0;
-  }
+  if (members.length === 0) return;
 
-  // Default notification times: 1 day, 1 hour, at event time
   const times = notificationTimes || [1440, 60, 0];
+  const now = new Date();
+  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  // Calculate upcoming events for all family members
-  let allEvents = [];
+  // Group notifications by minute for batch writes
+  const notificationsByMinute = new Map();
+
   for (const member of members) {
     const events = Calculator.calculate(member.birthDate, {
-      yearsAhead: 1, // Only check next year for performance
+      yearsAhead: 1,
       includePast: false,
       transformEvent: (event) => ({
         ...event,
@@ -385,47 +390,45 @@ async function processSubscription(key, subscriptionData, now, env) {
         title: `${member.name}: ${event.title}`
       })
     });
-    allEvents = allEvents.concat(events);
-  }
 
-  let sentCount = 0;
+    for (const event of events) {
+      for (const minutesBefore of times) {
+        const notificationTime = new Date(event.date.getTime() - minutesBefore * 60 * 1000);
 
-  // Check each event against notification times
-  for (const event of allEvents) {
-    for (const minutesBefore of times) {
-      const notificationTime = new Date(event.date.getTime() - minutesBefore * 60 * 1000);
+        // Only schedule if within next 30 days
+        if (notificationTime > now && notificationTime <= thirtyDaysFromNow) {
+          const minuteKey = getMinuteKey(notificationTime);
+          const { title, body } = generateNotificationContent(event, minutesBefore);
 
-      // Check if this notification is due (within the last 2 minutes window)
-      // Cron runs every minute, so 2-min window ensures we don't miss any
-      const timeDiff = now.getTime() - notificationTime.getTime();
-      if (timeDiff >= 0 && timeDiff < 2 * 60 * 1000) { // Due and within 2 min window
+          if (!notificationsByMinute.has(minuteKey)) {
+            notificationsByMinute.set(minuteKey, []);
+          }
 
-        // Generate unique notification ID
-        const notificationId = `${key}-${event.id}-${minutesBefore}`;
-
-        // Check if already sent
-        const alreadySent = await env.SENT_NOTIFICATIONS.get(notificationId);
-        if (alreadySent) {
-          continue;
-        }
-
-        // Generate notification content
-        const { title, body } = generateNotificationContent(event, minutesBefore);
-
-        // Send push notification
-        const success = await sendPushNotification(subscription, { title, body, data: { eventId: event.id } }, env);
-
-        if (success) {
-          // Mark as sent with 7-day expiration
-          await env.SENT_NOTIFICATIONS.put(notificationId, 'sent', { expirationTtl: 7 * 24 * 60 * 60 });
-          sentCount++;
-          console.log(`Sent notification: ${title}`);
+          notificationsByMinute.get(minuteKey).push({
+            subscriptionKey,
+            subscription,
+            title,
+            body,
+            data: { eventId: event.id }
+          });
         }
       }
     }
   }
 
-  return sentCount;
+  // Write all scheduled notifications to KV
+  // Each key expires after 31 days (auto-cleanup)
+  for (const [minuteKey, notifications] of notificationsByMinute) {
+    // Merge with existing notifications for this minute (from other subscribers)
+    const existing = await env.SCHEDULED_NOTIFICATIONS.get(minuteKey, { type: 'json' }) || [];
+    const merged = [...existing, ...notifications];
+
+    await env.SCHEDULED_NOTIFICATIONS.put(minuteKey, JSON.stringify(merged), {
+      expirationTtl: 31 * 24 * 60 * 60 // 31 days
+    });
+  }
+
+  console.log(`Scheduled ${notificationsByMinute.size} notification time slots for subscription`);
 }
 
 /**
