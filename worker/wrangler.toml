@@ -38,6 +38,7 @@ compatibility_date = "2024-01-01"
 # binding = "SENT_NOTIFICATIONS"
 # id = "your-sent-notifications-namespace-id"
 
-# Scheduled trigger - runs every 15 minutes to check for notifications to send
+# Scheduled trigger - runs every minute to check for notifications to send
+# Cost: ~1,440 requests/day (well within free tier of 100,000/day)
 [triggers]
-crons = ["*/15 * * * *"]
+crons = ["* * * * *"]
