@@ -3,7 +3,7 @@
  * Handles push notifications and offline caching
  */
 
-const CACHE_NAME = 'nerdiversary-v5';
+const CACHE_NAME = 'nerdiversary-v7';
 const OFFLINE_ASSETS = [
     './',
     './index.html',
@@ -18,9 +18,11 @@ const OFFLINE_ASSETS = [
     './js/main.js',
     './js/notifications.js',
     './manifest.json',
-    './assets/logo.svg',
-    './assets/icon-192.png',
-    './assets/icon-512.png'
+    './android-chrome-192x192.png',
+    './android-chrome-512x512.png',
+    './apple-touch-icon.png',
+    './favicon.ico',
+    './assets/logo.svg'
 ];
 
 /**
