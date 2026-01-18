@@ -832,7 +832,15 @@ body {
     font-size: 0.75rem;
 }
 
-.event-add-btn {
+.event-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.event-add-btn,
+.event-share-btn {
     background: var(--bg-secondary);
     border: 1px solid rgba(124, 58, 237, 0.3);
     border-radius: var(--border-radius);
@@ -843,7 +851,8 @@ body {
     flex-shrink: 0;
 }
 
-.event-add-btn:hover {
+.event-add-btn:hover,
+.event-share-btn:hover {
     background: var(--gradient-primary);
     border-color: transparent;
     transform: scale(1.1);
@@ -1011,6 +1020,85 @@ body {
 .copy-btn:hover {
     background: var(--gradient-primary);
     border-color: transparent;
+}
+
+/* Share Modal */
+.share-modal-content {
+    max-width: 420px;
+}
+
+.share-preview {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.share-preview-text {
+    font-style: italic;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.share-options {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.share-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.share-option:hover {
+    transform: scale(1.1);
+    border-color: transparent;
+}
+
+.share-option.twitter:hover {
+    background: #000;
+    color: #fff;
+}
+
+.share-option.threads:hover {
+    background: #000;
+    color: #fff;
+}
+
+.share-option.facebook:hover {
+    background: #1877f2;
+    color: #fff;
+}
+
+.share-option.reddit:hover {
+    background: #ff4500;
+    color: #fff;
+}
+
+.share-option.linkedin:hover {
+    background: #0a66c2;
+    color: #fff;
+}
+
+.share-option.copy:hover {
+    background: var(--gradient-primary);
+    color: #fff;
 }
 
 /* PWA Install Modal Steps */
@@ -1199,6 +1287,12 @@ body {
         padding: 1rem;
     }
 
+    .event-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
     .event-icon {
         font-size: 1.5rem;
         min-width: auto;
@@ -1211,6 +1305,16 @@ body {
     .event-meta {
         gap: 0.5rem;
         font-size: 0.75rem;
+    }
+
+    /* Share modal mobile */
+    .share-options {
+        gap: 0.5rem;
+    }
+
+    .share-option {
+        width: 44px;
+        height: 44px;
     }
 
     /* Filter section */
