@@ -413,6 +413,8 @@ body {
     font-family: var(--font-display);
     font-size: 1.1rem;
     margin-bottom: 0.5rem;
+    color: white !important;
+    opacity: 0.9;
 }
 
 .celebration-person {
