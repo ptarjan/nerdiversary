@@ -3,7 +3,7 @@
  * Handles push notifications and offline caching
  */
 
-const CACHE_NAME = 'nerdiversary-v7';
+const CACHE_NAME = 'nerdiversary-v6';
 const OFFLINE_ASSETS = [
     './',
     './index.html',
@@ -18,9 +18,9 @@ const OFFLINE_ASSETS = [
     './js/main.js',
     './js/notifications.js',
     './manifest.json',
-    './android-chrome-192x192.png',
-    './android-chrome-512x512.png',
-    './apple-touch-icon.png',
+    './assets/android-chrome-192x192.png',
+    './assets/android-chrome-512x512.png',
+    './assets/apple-touch-icon.png',
     './favicon.ico',
     './assets/logo.svg'
 ];
@@ -102,7 +102,7 @@ self.addEventListener('push', event => {
     let data = {
         title: 'Nerdiversary Alert!',
         body: 'A nerdy milestone is coming up!',
-        icon: './assets/icon-192.png',
+        icon: './assets/icon-192x192.png',
         badge: './assets/favicon-96x96.png',
         tag: 'nerdiversary-notification',
         data: {}
@@ -121,7 +121,7 @@ self.addEventListener('push', event => {
 
     const options = {
         body: data.body,
-        icon: data.icon || './assets/icon-192.png',
+        icon: data.icon || './assets/icon-192x192.png',
         badge: data.badge || './assets/favicon-96x96.png',
         tag: data.tag || 'nerdiversary-notification',
         data: data.data || {},
@@ -196,7 +196,7 @@ self.addEventListener('message', event => {
             setTimeout(() => {
                 self.registration.showNotification(title, {
                     body,
-                    icon: icon || './assets/icon-192.png',
+                    icon: icon || './assets/icon-192x192.png',
                     badge: './assets/favicon-96x96.png',
                     tag: tag || 'nerdiversary-scheduled',
                     data: data || {},
