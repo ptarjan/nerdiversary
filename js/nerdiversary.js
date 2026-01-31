@@ -9,7 +9,6 @@
 // ESM imports for Node.js and bundlers
 import MilestonesModule from './milestones.js';
 import CalculatorModule from './calculator.js';
-
 // Use global versions if available (browser), otherwise use imported modules
 const MilestonesRef = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
 const CalculatorRef = typeof window !== 'undefined' && window.Calculator ? window.Calculator : CalculatorModule;
@@ -94,22 +93,6 @@ const Nerdiversary = {
     getNextEvent(events) {
         const now = new Date();
         return events.find(e => e.date > now);
-    },
-
-    /**
-     * Get category display info
-     */
-    getCategoryInfo(category) {
-        const categories = {
-            planetary: { name: 'Planetary', icon: '🪐', color: '#f4d58d' },
-            decimal: { name: 'Decimal', icon: '🔢', color: '#10b981' },
-            binary: { name: 'Number Bases', icon: '💻', color: '#06b6d4' },
-            mathematical: { name: 'Mathematical', icon: 'π', color: '#a855f7' },
-            fibonacci: { name: 'Fibonacci', icon: '🌀', color: '#f59e0b' },
-            scientific: { name: 'Scientific', icon: '🔬', color: '#3b82f6' },
-            'pop-culture': { name: 'Pop Culture', icon: '🎬', color: '#ef4444' }
-        };
-        return categories[category] || { name: category, icon: '📅', color: '#7c3aed' };
     }
 };
 

@@ -5,13 +5,12 @@
 // ESM imports to ensure module dependency ordering
 import NerdiversaryModule from './nerdiversary.js';
 import MilestonesModule from './milestones.js';
-import ICalGeneratorModule from './ical.js';
 import NotificationsModule from './notifications.js';
+import { parseFamilyParam, formatICalDate, getCategoryInfo, generateICal, WORKER_URL } from './shared.js';
 
 // Use window globals if available (backwards compat), otherwise imported modules
 const Nerdiversary = typeof window !== 'undefined' && window.Nerdiversary ? window.Nerdiversary : NerdiversaryModule;
 const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
-const ICalGenerator = typeof window !== 'undefined' && window.ICalGenerator ? window.ICalGenerator : ICalGeneratorModule;
 const Notifications = typeof window !== 'undefined' && window.Notifications ? window.Notifications : NotificationsModule;
 
 let allEvents = [];
@@ -56,19 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (familyParam) {
         // Load from URL params (shared link or navigation from index)
-        try {
-            familyMembers = familyParam.split(',').map(m => {
-                const parts = m.split('|');
-                const name = decodeURIComponent(parts[0] || '');
-                const dateStr = parts[1] || '';
-                const timeStr = parts[2] || '00:00';
-                const birthDate = new Date(`${dateStr}T${timeStr}:00`);
-
-                return { name, dateStr, timeStr, birthDate };
-            }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
-        } catch (e) {
-            console.error('Failed to parse family param:', e);
-        }
+        familyMembers = parseFamilyParam(familyParam);
     }
 
     // If no URL params or parsing failed, try loading from storage (PWA persistence)
@@ -293,7 +280,7 @@ function displayNextEvent() {
     const minutes = Math.floor((diff % Milestones.MS_PER_HOUR) / Milestones.MS_PER_MINUTE);
     const seconds = Math.floor((diff % Milestones.MS_PER_MINUTE) / Milestones.MS_PER_SECOND);
 
-    const categoryInfo = Nerdiversary.getCategoryInfo(nextEvent.category);
+    const categoryInfo = getCategoryInfo(nextEvent.category);
     const showPerson = familyMembers.length > 1;
 
     container.innerHTML = `
@@ -410,7 +397,7 @@ function displayTimeline() {
     const showPerson = familyMembers.length > 1;
 
     timeline.innerHTML = displayEvents.map(event => {
-        const categoryInfo = Nerdiversary.getCategoryInfo(event.category);
+        const categoryInfo = getCategoryInfo(event.category);
         const isNext = event.id === nextEventId;
         const isPast = event.date < now;
 
@@ -503,8 +490,6 @@ function setupTimelineToggle() {
     });
 }
 
-// Cloudflare Worker URL
-const CALENDAR_WORKER_URL = 'https://nerdiversary-calendar.curly-unit-b9e0.workers.dev';
 
 /**
  * Set up action buttons (subscribe, download iCal, share)
@@ -696,7 +681,7 @@ function subscribeToCalendar() {
     const urlParams = new URLSearchParams(window.location.search);
 
     // Build the calendar URL with family or single person params
-    const calendarUrl = `${CALENDAR_WORKER_URL}/?${urlParams.toString()}`;
+    const calendarUrl = `${WORKER_URL}/?${urlParams.toString()}`;
 
     // Show subscription modal
     showSubscribeModal(calendarUrl);
@@ -861,8 +846,8 @@ window.copyCalendarUrl = copyCalendarUrl;
  * Create Google Calendar URL for an event
  */
 function createGoogleCalendarUrl(event) {
-    const startDate = formatGoogleDate(event.date);
-    const endDate = formatGoogleDate(new Date(event.date.getTime() + Milestones.MS_PER_HOUR));
+    const startDate = formatICalDate(event.date);
+    const endDate = formatICalDate(new Date(event.date.getTime() + Milestones.MS_PER_HOUR));
 
     const title = familyMembers.length > 1
         ? `${event.icon} ${event.personName}: ${event.title}`
@@ -880,13 +865,6 @@ function createGoogleCalendarUrl(event) {
 }
 
 /**
- * Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
- */
-function formatGoogleDate(date) {
-    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-}
-
-/**
  * Download iCalendar file
  */
 function downloadICalendar() {
@@ -895,7 +873,7 @@ function downloadICalendar() {
 
     // Use first person's birthdate as reference
     const { birthDate } = familyMembers[0];
-    const icalContent = ICalGenerator.generate(upcomingEvents, birthDate, familyMembers.length > 1);
+    const icalContent = generateICal(upcomingEvents, familyMembers.length > 1);
 
     // Create download
     const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });

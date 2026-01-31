@@ -14,7 +14,6 @@ export default [
         Milestones: 'readonly',
         Calculator: 'readonly',
         Nerdiversary: 'readonly',
-        ICalGenerator: 'readonly',
       }
     },
     rules: {

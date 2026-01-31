@@ -6,6 +6,7 @@
 // Load the Nerdiversary and Milestones modules
 import Milestones from '../js/milestones.js';
 import Nerdiversary from '../js/nerdiversary.js';
+import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo } from '../js/shared.js';
 
 // Node.js built-ins for worker.js verification tests
 import fs from 'fs';
@@ -552,6 +553,10 @@ test('Worker imports from shared modules', () => {
     // Check that Calculator.calculate is used
     const usesCalculator = workerCode.includes('Calculator.calculate');
     assertTrue(usesCalculator, 'Worker should use Calculator.calculate()');
+
+    // Check shared.js imports
+    const hasSharedImport = workerCode.includes("from '../js/shared.js'");
+    assertTrue(hasSharedImport, 'Worker should import from shared.js');
 });
 
 test('Worker does not duplicate constant definitions', () => {
@@ -777,6 +782,97 @@ test('Milestone offset deduplication works', () => {
 
     const hasMapSet = workerCode.includes('targetDatetimes.set(');
     assertTrue(hasMapSet, 'Should set entries in targetDatetimes Map');
+});
+
+// ============================================
+// SHARED MODULE TESTS
+// ============================================
+console.log('\n--- Shared Module ---');
+
+test('parseFamilyParam handles single member', () => {
+    const result = parseFamilyParam('Alice|1990-05-15|14:30');
+    assertEqual(result.length, 1, 'Should return 1 member');
+    assertEqual(result[0].name, 'Alice');
+    assertEqual(result[0].dateStr, '1990-05-15');
+    assertEqual(result[0].timeStr, '14:30');
+    assertTrue(!isNaN(result[0].birthDate.getTime()), 'birthDate should be valid');
+});
+
+test('parseFamilyParam handles multiple members', () => {
+    const result = parseFamilyParam('Alice|1990-05-15,Bob|1985-03-22');
+    assertEqual(result.length, 2, 'Should return 2 members');
+    assertEqual(result[0].name, 'Alice');
+    assertEqual(result[1].name, 'Bob');
+});
+
+test('parseFamilyParam handles URL-encoded names', () => {
+    const result = parseFamilyParam(`${encodeURIComponent('Alice Smith')}|1990-05-15`);
+    assertEqual(result.length, 1);
+    assertEqual(result[0].name, 'Alice Smith');
+});
+
+test('parseFamilyParam defaults time to 00:00', () => {
+    const result = parseFamilyParam('Alice|1990-05-15');
+    assertEqual(result[0].timeStr, '00:00');
+});
+
+test('parseFamilyParam filters invalid entries', () => {
+    const result = parseFamilyParam('Alice|invalid-date');
+    assertEqual(result.length, 0, 'Should filter out invalid dates');
+});
+
+test('parseFamilyParam returns empty array for empty input', () => {
+    const result = parseFamilyParam('');
+    assertEqual(result.length, 0);
+});
+
+test('formatNotificationTitle returns NOW message for 0 minutes', () => {
+    const title = formatNotificationTitle('\u{1F389}', 0);
+    assertTrue(title.includes("It's happening NOW!"), 'Should contain NOW message');
+});
+
+test('formatNotificationTitle returns minutes message for < 60', () => {
+    const title = formatNotificationTitle('\u{1F389}', 30);
+    assertTrue(title.includes('30 minutes away'), 'Should contain minutes message');
+});
+
+test('formatNotificationTitle returns hours message for < 1440', () => {
+    const title = formatNotificationTitle('\u{1F389}', 120);
+    assertTrue(title.includes('2 hours away'), 'Should contain hours message');
+});
+
+test('formatNotificationTitle returns days message for >= 1440', () => {
+    const title = formatNotificationTitle('\u{1F389}', 2880);
+    assertTrue(title.includes('2 days away'), 'Should contain days message');
+});
+
+test('formatNotificationTitle handles singular hour', () => {
+    const title = formatNotificationTitle('\u{1F389}', 60);
+    assertTrue(title.includes('1 hour away'), 'Should say "hour" not "hours"');
+});
+
+test('formatICalDate formats correctly', () => {
+    const date = new Date('2024-01-15T10:30:00.000Z');
+    const result = formatICalDate(date);
+    assertEqual(result, '20240115T103000Z');
+});
+
+test('escapeICalText strips HTML and escapes special chars', () => {
+    const result = escapeICalText('<b>Hello</b>, world; test\\backslash\nnewline');
+    assertEqual(result, 'Hello\\, world\\; test\\\\backslash\\nnewline');
+});
+
+test('getCategoryInfo returns known categories', () => {
+    const planetary = getCategoryInfo('planetary');
+    assertEqual(planetary.name, 'Planetary');
+
+    const decimal = getCategoryInfo('decimal');
+    assertEqual(decimal.name, 'Decimal');
+});
+
+test('getCategoryInfo returns fallback for unknown category', () => {
+    const unknown = getCategoryInfo('unknown-category');
+    assertEqual(unknown.name, 'unknown-category');
 });
 
 // ============================================

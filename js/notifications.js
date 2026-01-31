@@ -3,14 +3,12 @@
  * Handles service worker registration, permissions, and notification scheduling
  */
 
+import { formatNotificationTitle, WORKER_URL } from './shared.js';
+
 // Storage keys
 const STORAGE_KEY_NOTIFICATIONS_ENABLED = 'nerdiversary-notifications-enabled';
 const STORAGE_KEY_NOTIFICATION_TIMES = 'nerdiversary-notification-times';
 const STORAGE_KEY_PUSH_SUBSCRIPTION = 'nerdiversary-push-subscription';
-
-// Cloudflare Worker URL for push subscriptions
-// To use a different endpoint, update this URL to your deployed worker
-const PUSH_WORKER_URL = 'https://nerdiversary-calendar.curly-unit-b9e0.workers.dev';
 
 // Default notification times (minutes before event)
 const DEFAULT_NOTIFICATION_TIMES = [1440, 60, 0]; // 1 day, 1 hour, at event time
@@ -232,23 +230,8 @@ function scheduleNotification(event, minutesBefore = 0) {
     const delay = notificationTime.getTime() - now.getTime();
 
     // Generate notification content
-    let title;
-    let body;
-    if (minutesBefore === 0) {
-        title = `${event.icon} It's happening NOW!`;
-        body = event.title;
-    } else if (minutesBefore < 60) {
-        title = `${event.icon} ${minutesBefore} minutes away!`;
-        body = event.title;
-    } else if (minutesBefore < 1440) {
-        const hours = Math.round(minutesBefore / 60);
-        title = `${event.icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
-        body = event.title;
-    } else {
-        const days = Math.round(minutesBefore / 1440);
-        title = `${event.icon} ${days} day${days > 1 ? 's' : ''} away!`;
-        body = event.title;
-    }
+    const title = formatNotificationTitle(event.icon, minutesBefore);
+    const body = event.title;
 
     // Store scheduled notification ID for potential cancellation
     const notificationId = `${event.id}-${minutesBefore}`;
@@ -326,7 +309,7 @@ async function subscribeToPush(familyParam) {
 
         if (!subscription) {
             // Get VAPID public key from server
-            const response = await fetch(`${PUSH_WORKER_URL}/push/vapid-public-key`);
+            const response = await fetch(`${WORKER_URL}/push/vapid-public-key`);
             if (!response.ok) {
                 console.log('Push notifications not yet configured on server');
                 return { success: false, reason: 'server-not-configured' };
@@ -345,7 +328,7 @@ async function subscribeToPush(familyParam) {
         }
 
         // Send subscription to server with notification times
-        const saveResponse = await fetch(`${PUSH_WORKER_URL}/push/subscribe`, {
+        const saveResponse = await fetch(`${WORKER_URL}/push/subscribe`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -384,7 +367,7 @@ async function unsubscribeFromPush() {
             await subscription.unsubscribe();
 
             // Notify server
-            await fetch(`${PUSH_WORKER_URL}/push/unsubscribe`, {
+            await fetch(`${WORKER_URL}/push/unsubscribe`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
