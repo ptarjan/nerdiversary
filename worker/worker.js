@@ -50,11 +50,8 @@ function generateMilestoneOffsets() {
     }
   }
 
-  // Earth birthdays use MS_PER_YEAR approximation (works across all birth dates)
-  const { MS_PER_YEAR } = Milestones;
-  for (let year = 1; year <= 120; year++) {
-    offsets.push({ ms: year * MS_PER_YEAR, label: `${year}${getOrdinal(year)} Birthday`, icon: '🎂' });
-  }
+  // Earth birthdays are calendar-based (same month/day each year), not fixed offsets.
+  // They are handled separately in handleScheduled() via handleEarthBirthdays().
 
   return offsets;
 }
@@ -370,7 +367,66 @@ async function handleScheduled(env) {
     }
   }
 
+  // Handle Earth birthdays separately using calendar-based matching
+  totalNotifications += await handleEarthBirthdays(env, now, notificationTimes);
+
   console.log(`Sent ${totalNotifications} notifications`);
+}
+
+/**
+ * Handle Earth birthday notifications using calendar-based matching.
+ * Unlike offset-based milestones, birthdays fall on the same month/day each year,
+ * so we match on the month-day-time portion of birth_datetime directly.
+ */
+async function handleEarthBirthdays(env, now, notificationTimes) {
+  let totalNotifications = 0;
+
+  for (const notifMinutes of notificationTimes) {
+    // The birthday event occurs notifMinutes from now
+    const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
+
+    // Match birth month-day and hour:minute (birth_datetime format: "YYYY-MM-DDTHH:MM")
+    const monthDayTime = eventTime.toISOString().slice(5, 16); // "MM-DDTHH:MM"
+
+    const result = await env.DB.prepare(`
+      SELECT fm.name, fm.birth_datetime, s.id as subscription_id,
+             s.endpoint, s.p256dh, s.auth, s.notification_times
+      FROM family_members fm
+      JOIN subscriptions s ON fm.subscription_id = s.id
+      WHERE SUBSTR(fm.birth_datetime, 6, 11) = ?
+    `).bind(monthDayTime).all();
+
+    if (!result.results || result.results.length === 0) continue;
+
+    for (const row of result.results) {
+      const times = JSON.parse(row.notification_times || '[1440,60,0]');
+      if (!times.includes(notifMinutes)) continue;
+
+      const birthYear = parseInt(row.birth_datetime.slice(0, 4));
+      const age = eventTime.getFullYear() - birthYear;
+      if (age < 1 || age > 120) continue;
+
+      const ordinal = `${age}${getOrdinal(age)}`;
+      const { title, body } = generateNotificationContent(
+        row.name,
+        { label: `${ordinal} Birthday`, icon: '🎂' },
+        notifMinutes
+      );
+
+      const subscription = {
+        endpoint: row.endpoint,
+        keys: { p256dh: row.p256dh, auth: row.auth }
+      };
+
+      const success = await sendPushNotification(subscription, { title, body }, env);
+      if (success) {
+        totalNotifications++;
+        console.log(`Sent birthday: ${title} to ${row.name}`);
+      }
+    }
+  }
+
+  return totalNotifications;
 }
 
 /**
