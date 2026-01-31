@@ -652,15 +652,9 @@ test('Worker generates milestone offsets', () => {
     const hasGenerator = workerCode.includes('function generateMilestoneOffsets()');
     assertTrue(hasGenerator, 'Should have generateMilestoneOffsets function');
 
-    // Check it includes various milestone types
-    const hasSeconds = workerCode.includes('secondMilestones');
-    assertTrue(hasSeconds, 'Should include second milestones');
-
-    const hasPlanets = workerCode.includes('PLANETS');
-    assertTrue(hasPlanets, 'Should include planetary years');
-
-    const hasFibonacci = workerCode.includes('FIBONACCI');
-    assertTrue(hasFibonacci, 'Should include Fibonacci milestones');
+    // Check it uses Calculator.calculate() to generate offsets (matching frontend exactly)
+    const usesCalculator = workerCode.includes('Calculator.calculate(');
+    assertTrue(usesCalculator, 'Should use Calculator.calculate() to generate offsets');
 
     const hasBirthdays = workerCode.includes('Birthday');
     assertTrue(hasBirthdays, 'Should include Earth birthdays');
