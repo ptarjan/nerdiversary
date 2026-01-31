@@ -50,8 +50,8 @@ function generateMilestoneOffsets() {
     }
   }
 
-  // Earth birthdays are calendar-based (same month/day each year), not fixed offsets.
-  // They are handled separately in handleScheduled() via handleEarthBirthdays().
+  // Earth birthdays and nerdy holidays are calendar-based (same month/day each year),
+  // not fixed offsets. They are handled separately via handleCalendarEvents().
 
   return offsets;
 }
@@ -361,44 +361,47 @@ async function handleScheduled(env) {
     }
   }
 
-  // Handle Earth birthdays separately using calendar-based matching
-  totalNotifications += await handleEarthBirthdays(env, now, notificationTimes);
+  // Handle calendar-based events (earth birthdays + nerdy holidays) using shared Calculator
+  totalNotifications += await handleCalendarEvents(env, now, notificationTimes);
 
   console.log(`Sent ${totalNotifications} notifications`);
 }
 
 /**
- * Handle Earth birthday notifications using shared Calculator.
- * Queries users by birth month-day, then uses Calculator.calculate() to get
- * the exact birthday events (with correct calendar dates and special labels).
+ * Handle calendar-based events (earth birthdays + nerdy holidays) using shared Calculator.
+ * These can't be expressed as fixed offsets because they fall on specific calendar dates.
+ * Queries users by birth HH:MM (since all calendar events fire at the user's birth time),
+ * then uses Calculator.calculate() to find matching events for the current minute.
  */
-async function handleEarthBirthdays(env, now, notificationTimes) {
+async function handleCalendarEvents(env, now, notificationTimes) {
   let totalNotifications = 0;
   const currentMinute = now.toISOString().slice(0, 16);
 
-  // Collect unique month-days we need to check (today, +1h, +1day)
-  const monthDays = new Set();
+  // Collect unique birth HH:MM values to query (event times = birth times)
+  const birthTimes = new Set();
   for (const notifMinutes of notificationTimes) {
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
-    monthDays.add(eventTime.toISOString().slice(5, 10)); // "MM-DD"
+    birthTimes.add(eventTime.toISOString().slice(11, 16)); // "HH:MM"
   }
 
-  for (const monthDay of monthDays) {
+  for (const birthTime of birthTimes) {
     const result = await env.DB.prepare(`
       SELECT fm.name, fm.birth_datetime, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
       JOIN subscriptions s ON fm.subscription_id = s.id
-      WHERE SUBSTR(fm.birth_datetime, 6, 5) = ?
-    `).bind(monthDay).all();
+      WHERE SUBSTR(fm.birth_datetime, 12, 5) = ?
+    `).bind(birthTime).all();
 
     if (!result.results || result.results.length === 0) continue;
 
     for (const row of result.results) {
       const birthDate = new Date(row.birth_datetime + ':00Z');
       const events = Calculator.calculate(birthDate, { yearsAhead: 120, includePast: true });
-      const birthdays = events.filter(e => e.id.startsWith('earth-birthday-'));
+      const calendarEvents = events.filter(e =>
+        e.id.startsWith('earth-birthday-') || e.isSharedHoliday
+      );
 
-      for (const event of birthdays) {
+      for (const event of calendarEvents) {
         for (const notifMinutes of notificationTimes) {
           const notifTime = new Date(event.date.getTime() - notifMinutes * 60 * 1000);
           if (notifTime.toISOString().slice(0, 16) !== currentMinute) continue;
@@ -420,7 +423,7 @@ async function handleEarthBirthdays(env, now, notificationTimes) {
           const success = await sendPushNotification(subscription, { title, body }, env);
           if (success) {
             totalNotifications++;
-            console.log(`Sent birthday: ${title} to ${row.name}`);
+            console.log(`Sent: ${title} to ${row.name}`);
           }
         }
       }
