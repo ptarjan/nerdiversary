@@ -12,6 +12,7 @@
 // Import shared modules
 import Calculator from '../js/calculator.js';
 import Milestones from '../js/milestones.js';
+import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, generateICal } from '../js/shared.js';
 
 // ============================================================================
 // CORS Headers
@@ -29,8 +30,9 @@ const CORS_HEADERS = {
 
 /**
  * Generate all milestone offsets in milliseconds from birth.
- * Uses Calculator.calculate() with a reference date to match the frontend exactly.
- * Nerdy holidays are calendar-based (not offset-based) so they need separate handling.
+ * Uses Calculator.calculate() with a reference date to match the frontend exactly,
+ * except for Earth birthdays (approximated with MS_PER_YEAR) and nerdy holidays
+ * (calendar-based, not offset-based — skipped for now).
  */
 function generateMilestoneOffsets() {
   const refBirth = new Date('2000-01-01T00:00:00Z');
@@ -38,8 +40,9 @@ function generateMilestoneOffsets() {
 
   const offsets = [];
   for (const event of events) {
-    // Skip nerdy holidays — they're fixed calendar dates, not offsets from birth
+    // Skip calendar-based events that can't be expressed as fixed offsets
     if (event.isSharedHoliday) continue;
+    if (event.id.startsWith('earth-birthday-')) continue;
 
     const ms = event.date.getTime() - refBirth.getTime();
     if (ms > 0) {
@@ -47,7 +50,19 @@ function generateMilestoneOffsets() {
     }
   }
 
+  // Earth birthdays use MS_PER_YEAR approximation (works across all birth dates)
+  const { MS_PER_YEAR } = Milestones;
+  for (let year = 1; year <= 120; year++) {
+    offsets.push({ ms: year * MS_PER_YEAR, label: `${year}${getOrdinal(year)} Birthday`, icon: '🎂' });
+  }
+
   return offsets;
+}
+
+function getOrdinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 // Cache milestone offsets (generated once per worker instance)
@@ -256,24 +271,6 @@ async function hashEndpoint(endpoint) {
 }
 
 /**
- * Parse family parameter string into array of members
- */
-function parseFamilyParam(familyParam) {
-  try {
-    return familyParam.split(',').map(m => {
-      const parts = m.split('|');
-      const name = decodeURIComponent(parts[0] || '');
-      const dateStr = parts[1] || '';
-      const timeStr = parts[2] || '00:00';
-      const birthDate = new Date(`${dateStr}T${timeStr}:00`);
-      return { name, birthDate };
-    }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
-  } catch {
-    return [];
-  }
-}
-
-/**
  * Format birth date to YYYY-MM-DDTHH:MM for DB storage
  */
 function formatBirthDatetime(date) {
@@ -380,21 +377,8 @@ async function handleScheduled(env) {
  * Generate notification content
  */
 function generateNotificationContent(personName, offset, minutesBefore) {
-  let title;
+  const title = formatNotificationTitle(offset.icon, minutesBefore);
   const body = `${personName}: ${offset.label}`;
-
-  if (minutesBefore === 0) {
-    title = `${offset.icon} It's happening NOW!`;
-  } else if (minutesBefore < 60) {
-    title = `${offset.icon} ${minutesBefore} minutes away!`;
-  } else if (minutesBefore < 1440) {
-    const hours = Math.round(minutesBefore / 60);
-    title = `${offset.icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
-  } else {
-    const days = Math.round(minutesBefore / 1440);
-    title = `${offset.icon} ${days} day${days > 1 ? 's' : ''} away!`;
-  }
-
   return { title, body };
 }
 
@@ -636,47 +620,6 @@ function handleFamilyRequest(url, familyParam) {
       'Content-Disposition': 'attachment; filename="nerdiversary.ics"',
       ...CORS_HEADERS,
     },
-  });
-}
-
-function generateICal(events, isFamily = false) {
-  const calName = isFamily ? 'Family Nerdiversaries' : 'Nerdiversaries';
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Nerdiversary//Nerdy Anniversaries//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    `X-WR-CALNAME:${calName}`,
-  ];
-
-  for (const event of events) {
-    const dateStr = formatICalDate(event.date);
-    const uid = `${event.id}@nerdiversary.com`;
-
-    lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${uid}`);
-    lines.push(`DTSTART:${dateStr}`);
-    lines.push(`DTEND:${dateStr}`);
-    lines.push(`SUMMARY:${escapeICalText(event.title)}`);
-    if (event.description) {
-      lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
-    }
-    lines.push('END:VEVENT');
-  }
-
-  lines.push('END:VCALENDAR');
-  return lines.join('\r\n');
-}
-
-function formatICalDate(date) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-}
-
-function escapeICalText(text) {
-  return text.replace(/[\\;,\n]/g, (match) => {
-    if (match === '\n') return '\\n';
-    return '\\' + match;
   });
 }
 

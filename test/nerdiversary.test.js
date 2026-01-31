@@ -660,22 +660,13 @@ test('Worker generates milestone offsets', () => {
     assertTrue(hasBirthdays, 'Should include Earth birthdays');
 });
 
-test('Worker parseFamilyParam handles various formats', () => {
-    // Check function exists
-    const hasParser = workerCode.includes('function parseFamilyParam(');
-    assertTrue(hasParser, 'Should have parseFamilyParam function');
+test('Worker imports parseFamilyParam from shared module', () => {
+    const importsParser = workerCode.includes('parseFamilyParam');
+    assertTrue(importsParser, 'Should import parseFamilyParam from shared');
 
-    // Check it handles the expected format: Name|Date|Time
-    const handlesPipes = workerCode.includes("split('|')");
-    assertTrue(handlesPipes, 'Should split on pipe character');
-
-    // Check it handles multiple family members
-    const handlesCommas = workerCode.includes("split(',')");
-    assertTrue(handlesCommas, 'Should split multiple members on comma');
-
-    // Check it filters invalid entries
-    const hasFilter = workerCode.includes('.filter(');
-    assertTrue(hasFilter, 'Should filter invalid entries');
+    // Verify it no longer defines its own version
+    const hasLocalParser = workerCode.includes('function parseFamilyParam(');
+    assertTrue(!hasLocalParser, 'Should NOT have a local parseFamilyParam definition');
 });
 
 test('Worker formats birth datetime correctly', () => {
@@ -715,15 +706,9 @@ test('Worker generates correct notification content', () => {
     const hasContentGen = workerCode.includes('function generateNotificationContent(');
     assertTrue(hasContentGen, 'Should have generateNotificationContent function');
 
-    // Check different time-based messages
-    const hasNowMsg = workerCode.includes("It's happening NOW!");
-    assertTrue(hasNowMsg, 'Should have NOW message for immediate notifications');
-
-    const hasHoursMsg = workerCode.includes('hour');
-    assertTrue(hasHoursMsg, 'Should have hours-based message');
-
-    const hasDaysMsg = workerCode.includes('day');
-    assertTrue(hasDaysMsg, 'Should have days-based message');
+    // Check it uses shared formatNotificationTitle
+    const usesSharedTitle = workerCode.includes('formatNotificationTitle(');
+    assertTrue(usesSharedTitle, 'Should use shared formatNotificationTitle');
 });
 
 test('Worker handles subscription upsert correctly', () => {
