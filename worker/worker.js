@@ -56,12 +56,6 @@ function generateMilestoneOffsets() {
   return offsets;
 }
 
-function getOrdinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 // Cache milestone offsets (generated once per worker instance)
 let MILESTONE_OFFSETS = null;
 function getMilestoneOffsets() {
@@ -374,54 +368,61 @@ async function handleScheduled(env) {
 }
 
 /**
- * Handle Earth birthday notifications using calendar-based matching.
- * Unlike offset-based milestones, birthdays fall on the same month/day each year,
- * so we match on the month-day-time portion of birth_datetime directly.
+ * Handle Earth birthday notifications using shared Calculator.
+ * Queries users by birth month-day, then uses Calculator.calculate() to get
+ * the exact birthday events (with correct calendar dates and special labels).
  */
 async function handleEarthBirthdays(env, now, notificationTimes) {
   let totalNotifications = 0;
+  const currentMinute = now.toISOString().slice(0, 16);
 
+  // Collect unique month-days we need to check (today, +1h, +1day)
+  const monthDays = new Set();
   for (const notifMinutes of notificationTimes) {
-    // The birthday event occurs notifMinutes from now
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
+    monthDays.add(eventTime.toISOString().slice(5, 10)); // "MM-DD"
+  }
 
-    // Match birth month-day and hour:minute (birth_datetime format: "YYYY-MM-DDTHH:MM")
-    const monthDayTime = eventTime.toISOString().slice(5, 16); // "MM-DDTHH:MM"
-
+  for (const monthDay of monthDays) {
     const result = await env.DB.prepare(`
-      SELECT fm.name, fm.birth_datetime, s.id as subscription_id,
-             s.endpoint, s.p256dh, s.auth, s.notification_times
+      SELECT fm.name, fm.birth_datetime, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
       JOIN subscriptions s ON fm.subscription_id = s.id
-      WHERE SUBSTR(fm.birth_datetime, 6, 11) = ?
-    `).bind(monthDayTime).all();
+      WHERE SUBSTR(fm.birth_datetime, 6, 5) = ?
+    `).bind(monthDay).all();
 
     if (!result.results || result.results.length === 0) continue;
 
     for (const row of result.results) {
-      const times = JSON.parse(row.notification_times || '[1440,60,0]');
-      if (!times.includes(notifMinutes)) continue;
+      const birthDate = new Date(row.birth_datetime + ':00Z');
+      const events = Calculator.calculate(birthDate, { yearsAhead: 120, includePast: true });
+      const birthdays = events.filter(e => e.id.startsWith('earth-birthday-'));
 
-      const birthYear = parseInt(row.birth_datetime.slice(0, 4));
-      const age = eventTime.getFullYear() - birthYear;
-      if (age < 1 || age > 120) continue;
+      for (const event of birthdays) {
+        for (const notifMinutes of notificationTimes) {
+          const notifTime = new Date(event.date.getTime() - notifMinutes * 60 * 1000);
+          if (notifTime.toISOString().slice(0, 16) !== currentMinute) continue;
 
-      const ordinal = `${age}${getOrdinal(age)}`;
-      const { title, body } = generateNotificationContent(
-        row.name,
-        { label: `${ordinal} Birthday`, icon: '🎂' },
-        notifMinutes
-      );
+          const times = JSON.parse(row.notification_times || '[1440,60,0]');
+          if (!times.includes(notifMinutes)) continue;
 
-      const subscription = {
-        endpoint: row.endpoint,
-        keys: { p256dh: row.p256dh, auth: row.auth }
-      };
+          const { title, body } = generateNotificationContent(
+            row.name,
+            { label: event.title, icon: event.icon },
+            notifMinutes
+          );
 
-      const success = await sendPushNotification(subscription, { title, body }, env);
-      if (success) {
-        totalNotifications++;
-        console.log(`Sent birthday: ${title} to ${row.name}`);
+          const subscription = {
+            endpoint: row.endpoint,
+            keys: { p256dh: row.p256dh, auth: row.auth }
+          };
+
+          const success = await sendPushNotification(subscription, { title, body }, env);
+          if (success) {
+            totalNotifications++;
+            console.log(`Sent birthday: ${title} to ${row.name}`);
+          }
+        }
       }
     }
   }
