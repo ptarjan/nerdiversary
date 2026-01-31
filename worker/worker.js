@@ -28,75 +28,26 @@ const CORS_HEADERS = {
 // ============================================================================
 
 /**
- * Generate all milestone offsets in milliseconds from birth
- * These are the fixed offsets we check against birthdates
+ * Generate all milestone offsets in milliseconds from birth.
+ * Uses Calculator.calculate() with a reference date to match the frontend exactly.
+ * Nerdy holidays are calendar-based (not offset-based) so they need separate handling.
  */
 function generateMilestoneOffsets() {
+  const refBirth = new Date('2000-01-01T00:00:00Z');
+  const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
+
   const offsets = [];
-  const { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY, MS_PER_WEEK, MS_PER_MONTH, MS_PER_YEAR } = Milestones;
+  for (const event of events) {
+    // Skip nerdy holidays — they're fixed calendar dates, not offsets from birth
+    if (event.isSharedHoliday) continue;
 
-  // Second milestones
-  for (const m of Milestones.secondMilestones) {
-    offsets.push({ ms: m.value * MS_PER_SECOND, label: m.label, icon: '⏱️' });
-  }
-
-  // Minute milestones
-  for (const m of Milestones.minuteMilestones) {
-    offsets.push({ ms: m.value * MS_PER_MINUTE, label: m.label, icon: '⏱️' });
-  }
-
-  // Hour milestones
-  for (const m of Milestones.hourMilestones) {
-    offsets.push({ ms: m.value * MS_PER_HOUR, label: m.label, icon: '⏰' });
-  }
-
-  // Day milestones
-  for (const m of Milestones.dayMilestones) {
-    offsets.push({ ms: m.value * MS_PER_DAY, label: m.label, icon: '📅' });
-  }
-
-  // Week milestones
-  for (const m of Milestones.weekMilestones) {
-    offsets.push({ ms: m.value * MS_PER_WEEK, label: m.label, icon: '📆' });
-  }
-
-  // Month milestones
-  for (const m of Milestones.monthMilestones) {
-    offsets.push({ ms: m.value * MS_PER_MONTH, label: m.label, icon: '🗓️' });
-  }
-
-  // Planetary years (first 5 years of each planet)
-  for (const [, planet] of Object.entries(Milestones.PLANETS)) {
-    for (let year = 1; year <= 5; year++) {
-      offsets.push({
-        ms: year * planet.days * MS_PER_DAY,
-        label: `${planet.name} Year ${year}`,
-        icon: planet.icon
-      });
+    const ms = event.date.getTime() - refBirth.getTime();
+    if (ms > 0) {
+      offsets.push({ ms, label: event.title, icon: event.icon });
     }
-  }
-
-  // Fibonacci milestones (in seconds, for reasonable ages)
-  for (const fib of Milestones.FIBONACCI) {
-    const ms = fib * MS_PER_SECOND;
-    // Only include if it's between 1 year and 120 years
-    if (ms > MS_PER_YEAR && ms < 120 * MS_PER_YEAR) {
-      offsets.push({ ms, label: `Fibonacci ${fib.toLocaleString()} seconds`, icon: '🐚' });
-    }
-  }
-
-  // Earth birthdays (1-120 years)
-  for (let year = 1; year <= 120; year++) {
-    offsets.push({ ms: year * MS_PER_YEAR, label: `${year}${getOrdinal(year)} Birthday`, icon: '🎂' });
   }
 
   return offsets;
-}
-
-function getOrdinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 // Cache milestone offsets (generated once per worker instance)
