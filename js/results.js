@@ -48,78 +48,109 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
+/**
+ * Show an error message in place of the loading spinner
+ */
+function showLoadingError(message) {
+    const timeline = document.getElementById('timeline');
+    if (timeline) {
+        timeline.innerHTML = `
+            <div class="empty-state">
+                <p>${message}</p>
+                <p><a href="index.html" style="color: #7c3aed;">Go back and try again</a></p>
+            </div>
+        `;
+    }
+    const nextEvent = document.getElementById('next-event');
+    if (nextEvent) {
+        nextEvent.innerHTML = '<div class="countdown-loading">Unable to load</div>';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Parse family data from URL params first
-    const urlParams = new URLSearchParams(window.location.search);
-    const familyParam = urlParams.get('family');
+    try {
+        // Parse family data from URL params first
+        const urlParams = new URLSearchParams(window.location.search);
+        const familyParam = urlParams.get('family');
 
-    if (familyParam) {
-        // Load from URL params (shared link or navigation from index)
-        familyMembers = parseFamilyParam(familyParam);
-    }
-
-    // If no URL params or parsing failed, try loading from storage (PWA persistence)
-    if (familyMembers.length === 0 && window.NerdiversaryStorage) {
-        try {
-            const storedFamily = await window.NerdiversaryStorage.loadFamily();
-            if (storedFamily && storedFamily.length > 0) {
-                familyMembers = storedFamily.map(m => {
-                    const timeStr = m.time || '00:00';
-                    const birthDate = new Date(`${m.date}T${timeStr}:00`);
-                    return {
-                        name: m.name,
-                        dateStr: m.date,
-                        timeStr: m.time || '',
-                        birthDate
-                    };
-                }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
-
-                // Update URL for shareability (without triggering navigation)
-                if (familyMembers.length > 0) {
-                    const newFamilyParam = storedFamily.map(m =>
-                        `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
-                    ).join(',');
-                    const newUrl = `${window.location.pathname}?family=${newFamilyParam}`;
-                    window.history.replaceState({}, '', newUrl);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to load from storage:', e);
+        if (familyParam) {
+            // Load from URL params (shared link or navigation from index)
+            familyMembers = parseFamilyParam(familyParam);
         }
+
+        // If no URL params or parsing failed, try loading from storage (PWA persistence)
+        if (familyMembers.length === 0 && window.NerdiversaryStorage) {
+            try {
+                // Timeout storage loading in case IndexedDB hangs (common on iOS PWA)
+                const storagePromise = window.NerdiversaryStorage.loadFamily();
+                const storedFamily = await Promise.race([
+                    storagePromise,
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Storage loading timed out')), 5000)
+                    )
+                ]);
+                if (storedFamily && storedFamily.length > 0) {
+                    familyMembers = storedFamily.map(m => {
+                        const timeStr = m.time || '00:00';
+                        const birthDate = new Date(`${m.date}T${timeStr}:00`);
+                        return {
+                            name: m.name,
+                            dateStr: m.date,
+                            timeStr: m.time || '',
+                            birthDate
+                        };
+                    }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
+
+                    // Update URL for shareability (without triggering navigation)
+                    if (familyMembers.length > 0) {
+                        const newFamilyParam = storedFamily.map(m =>
+                            `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
+                        ).join(',');
+                        const newUrl = `${window.location.pathname}?family=${newFamilyParam}`;
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load from storage:', e);
+            }
+        }
+
+        if (familyMembers.length === 0) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Update family info display
+        updateFamilyInfo();
+
+        // Set up person filter if multiple people
+        if (familyMembers.length > 1) {
+            setupPersonFilter();
+        }
+
+        // Calculate events for all family members
+        calculateAndDisplayEvents();
+
+        // Set up filter buttons
+        setupFilters();
+
+        // Set up timeline toggle
+        setupTimelineToggle();
+
+        // Set up action buttons
+        setupActionButtons();
+
+        // Set up notifications (async, errors handled internally)
+        setupNotifications().catch(err => {
+            console.error('Failed to setup notifications:', err);
+        });
+
+        // Start countdown timer
+        startCountdownTimer();
+    } catch (err) {
+        console.error('Failed to initialize results page:', err);
+        showLoadingError('Something went wrong loading your nerdiversaries. Please try again.');
     }
-
-    if (familyMembers.length === 0) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    // Update family info display
-    updateFamilyInfo();
-
-    // Set up person filter if multiple people
-    if (familyMembers.length > 1) {
-        setupPersonFilter();
-    }
-
-    // Calculate events for all family members
-    calculateAndDisplayEvents();
-
-    // Set up filter buttons
-    setupFilters();
-
-    // Set up timeline toggle
-    setupTimelineToggle();
-
-    // Set up action buttons
-    setupActionButtons();
-
-    // Set up notifications (async, errors handled internally)
-    setupNotifications().catch(err => {
-        console.error('Failed to setup notifications:', err);
-    });
-
-    // Start countdown timer
-    startCountdownTimer();
 });
 
 /**

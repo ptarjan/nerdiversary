@@ -11,6 +11,22 @@ const STORAGE_KEY = 'nerdiversary_family';
 let db = null;
 
 /**
+ * Race a promise against a timeout
+ * @param {Promise} promise - The promise to race
+ * @param {number} ms - Timeout in milliseconds
+ * @param {string} label - Label for error message
+ * @returns {Promise}
+ */
+function withTimeout(promise, ms, label) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+        )
+    ]);
+}
+
+/**
  * Initialize IndexedDB
  * @returns {Promise<IDBDatabase>}
  */
@@ -50,15 +66,15 @@ function initDB() {
  */
 async function saveToIndexedDB(family) {
     try {
-        const database = await initDB();
-        return new Promise((resolve, reject) => {
+        const database = await withTimeout(initDB(), 3000, 'IndexedDB init');
+        return await withTimeout(new Promise((resolve, reject) => {
             const transaction = database.transaction([STORE_NAME], 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.put(family, STORAGE_KEY);
 
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve();
-        });
+        }), 3000, 'IndexedDB save');
     } catch (e) {
         console.warn('IndexedDB save failed:', e);
     }
@@ -70,15 +86,15 @@ async function saveToIndexedDB(family) {
  */
 async function loadFromIndexedDB() {
     try {
-        const database = await initDB();
-        return new Promise((resolve, reject) => {
+        const database = await withTimeout(initDB(), 3000, 'IndexedDB init');
+        return await withTimeout(new Promise((resolve, reject) => {
             const transaction = database.transaction([STORE_NAME], 'readonly');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get(STORAGE_KEY);
 
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(request.result || null);
-        });
+        }), 3000, 'IndexedDB load');
     } catch (e) {
         console.warn('IndexedDB load failed:', e);
         return null;
