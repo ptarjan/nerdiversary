@@ -153,7 +153,7 @@ async function handlePushSubscribe(request, env) {
   }
 
   try {
-    const { subscription, family, notificationTimes } = await request.json();
+    const { subscription, family, notificationTimes, timezoneOffset } = await request.json();
 
     if (!subscription || !subscription.endpoint) {
       return new Response(JSON.stringify({
@@ -193,10 +193,12 @@ async function handlePushSubscribe(request, env) {
       .run();
 
     // Parse and insert family members
+    // Use timezone offset to convert local times to UTC for consistent event calculation
     if (family) {
       const members = parseFamilyParam(family);
+      const offset = typeof timezoneOffset === 'number' ? timezoneOffset : 0;
       for (const member of members) {
-        const birthDatetime = formatBirthDatetime(member.birthDate);
+        const birthDatetime = formatBirthDatetime(member.dateStr, member.timeStr, offset);
         await env.DB.prepare(`
           INSERT INTO family_members (subscription_id, name, birth_datetime)
           VALUES (?, ?, ?)
@@ -262,10 +264,22 @@ async function hashEndpoint(endpoint) {
 }
 
 /**
- * Format birth date to YYYY-MM-DDTHH:MM for DB storage
+ * Format birth date to YYYY-MM-DDTHH:MM for DB storage (in UTC)
+ * @param {string} dateStr - Date string in YYYY-MM-DD format
+ * @param {string} timeStr - Time string in HH:MM format
+ * @param {number} timezoneOffset - Browser's timezone offset in minutes (from getTimezoneOffset())
+ * @returns {string} UTC datetime in YYYY-MM-DDTHH:MM format
  */
-function formatBirthDatetime(date) {
-  return date.toISOString().slice(0, 16); // "1990-05-15T14:30"
+function formatBirthDatetime(dateStr, timeStr, timezoneOffset = 0) {
+  // Parse the date/time as if it were UTC (which is what the worker does by default)
+  const localAsUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+
+  // Apply timezone offset to convert from user's local time to actual UTC
+  // getTimezoneOffset() returns minutes to ADD to local time to get UTC
+  // e.g., PDT (UTC-7) returns 420, so 14:30 local + 420min = 21:30 UTC
+  const utcDate = new Date(localAsUtc.getTime() + timezoneOffset * 60 * 1000);
+
+  return utcDate.toISOString().slice(0, 16); // "1990-05-15T21:30" (UTC)
 }
 
 // ============================================================================
