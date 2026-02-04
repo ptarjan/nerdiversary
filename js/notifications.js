@@ -327,7 +327,8 @@ async function subscribeToPush(familyParam) {
             });
         }
 
-        // Send subscription to server with notification times
+        // Send subscription to server with notification times and timezone offset
+        // The timezone offset is needed so the worker can correctly interpret local times
         const saveResponse = await fetch(`${WORKER_URL}/push/subscribe`, {
             method: 'POST',
             headers: {
@@ -336,7 +337,8 @@ async function subscribeToPush(familyParam) {
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
                 family: familyParam,
-                notificationTimes: getNotificationTimes()
+                notificationTimes: getNotificationTimes(),
+                timezoneOffset: new Date().getTimezoneOffset()
             })
         });
 
