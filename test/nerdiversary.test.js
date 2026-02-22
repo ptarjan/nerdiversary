@@ -6,6 +6,7 @@
 // Load the Nerdiversary and Milestones modules
 import Milestones from '../js/milestones.js';
 import Nerdiversary from '../js/nerdiversary.js';
+import Calculator from '../js/calculator.js';
 import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo } from '../js/shared.js';
 
 // Node.js built-ins for worker.js verification tests
@@ -873,6 +874,211 @@ test('getCategoryInfo returns known categories', () => {
 test('getCategoryInfo returns fallback for unknown category', () => {
     const unknown = getCategoryInfo('unknown-category');
     assertEqual(unknown.name, 'unknown-category');
+});
+
+// ============================================
+// NOTIFICATION BACKTEST
+// ============================================
+console.log('\n--- Notification Backtest ---');
+
+test('Some milestone offsets have sub-minute precision (proving rounding fix is needed)', () => {
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
+
+    let nonMinuteCount = 0;
+    for (const event of events) {
+        if (event.isSharedHoliday) continue;
+        if (event.id.startsWith('earth-birthday-')) continue;
+
+        const ms = event.date.getTime() - refBirth.getTime();
+        if (ms > 0 && ms % 60000 !== 0) {
+            nonMinuteCount++;
+        }
+    }
+
+    assertTrue(nonMinuteCount > 0,
+        `Expected milestones with sub-minute offsets, got ${nonMinuteCount}`);
+});
+
+test('Without rounding, some notifications would target wrong birth minute', () => {
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 50, includePast: true });
+
+    const birthDatetime = '1990-05-15T21:30';
+    const birthMs = new Date(birthDatetime + ':00Z').getTime();
+
+    let wouldMiss = 0;
+    let total = 0;
+
+    for (const event of events) {
+        if (event.isSharedHoliday) continue;
+        if (event.id.startsWith('earth-birthday-')) continue;
+
+        const rawMs = event.date.getTime() - refBirth.getTime();
+        if (rawMs <= 0) continue;
+
+        // Simulate cron firing at the start of the notification minute (no rounding)
+        const eventTimeMs = birthMs + rawMs;
+        const cronTime = Math.floor(eventTimeMs / 60000) * 60000;
+        const targetMs = cronTime - rawMs;
+        const targetDatetime = new Date(targetMs).toISOString().slice(0, 16);
+
+        if (targetDatetime !== birthDatetime) {
+            wouldMiss++;
+        }
+        total++;
+    }
+
+    assertTrue(wouldMiss > 0,
+        `Expected some notifications to miss without rounding, got ${wouldMiss}/${total}`);
+});
+
+test('With rounding, all offset-based notifications target correct birth minute', () => {
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
+
+    // Generate rounded offsets (matching fixed worker logic)
+    const offsets = [];
+    for (const event of events) {
+        if (event.isSharedHoliday) continue;
+        if (event.id.startsWith('earth-birthday-')) continue;
+        const ms = event.date.getTime() - refBirth.getTime();
+        if (ms > 0) {
+            offsets.push({ ms: Math.round(ms / 60000) * 60000, label: event.title });
+        }
+    }
+
+    const birthDatetime = '1990-05-15T21:30';
+    const birthMs = new Date(birthDatetime + ':00Z').getTime();
+    const notificationTimes = [0, 60, 1440];
+
+    let tested = 0;
+    let failures = 0;
+
+    for (const offset of offsets) {
+        for (const notifMinutes of notificationTimes) {
+            // Notification fires at: birthMs + offset.ms - notifMinutes * 60000
+            const notifTimeMs = birthMs + offset.ms - notifMinutes * 60 * 1000;
+            // Simulate cron at start of that minute (truncated now)
+            const cronTime = Math.floor(notifTimeMs / 60000) * 60000;
+            // Worker target calculation
+            const targetMs = cronTime - offset.ms + notifMinutes * 60 * 1000;
+            const targetDatetime = new Date(targetMs).toISOString().slice(0, 16);
+
+            tested++;
+            if (targetDatetime !== birthDatetime) {
+                failures++;
+            }
+        }
+    }
+
+    assertEqual(failures, 0,
+        `${failures}/${tested} notifications would target wrong minute. `);
+});
+
+test('Backtest: 1 billion seconds notification fires at correct minute', () => {
+    const birthDatetime = '1990-01-15T12:00';
+    const birthDate = new Date(birthDatetime + ':00Z');
+    const birthMs = birthDate.getTime();
+
+    const events = Calculator.calculate(birthDate, { yearsAhead: 50, includePast: true });
+    const billionSeconds = events.find(e => e.id === 'seconds-1000000000');
+    assertTrue(billionSeconds !== undefined, 'Should find 1 billion seconds milestone');
+
+    // Verify raw offset has sub-minute component
+    const rawOffset = billionSeconds.date.getTime() - birthMs;
+    assertTrue(rawOffset % 60000 !== 0, '1B seconds offset should have sub-minute component');
+
+    // Apply rounding fix
+    const roundedOffset = Math.round(rawOffset / 60000) * 60000;
+
+    // Simulate cron for "at event time" (notifMinutes=0)
+    const eventTimeMs = birthMs + roundedOffset;
+    const cronTime = Math.floor(eventTimeMs / 60000) * 60000;
+    const targetMs = cronTime - roundedOffset;
+    const targetDatetime = new Date(targetMs).toISOString().slice(0, 16);
+
+    assertEqual(targetDatetime, birthDatetime,
+        '1 billion seconds notification should match birth datetime. ');
+
+    // Rounding error should be <= 30 seconds
+    const diffMs = Math.abs(roundedOffset - rawOffset);
+    assertTrue(diffMs <= 30000, `Rounding error should be <= 30s, got ${diffMs}ms`);
+});
+
+test('Backtest: calendar events (earth birthdays) fire at correct minute', () => {
+    const birthDatetime = '1990-05-15T14:30';
+    const birthDate = new Date(birthDatetime + ':00Z');
+
+    const events = Calculator.calculate(birthDate, { yearsAhead: 5, includePast: true });
+    const earthBirthdays = events.filter(e => e.id.startsWith('earth-birthday-'));
+
+    assertTrue(earthBirthdays.length >= 3, 'Should have at least 3 earth birthdays');
+
+    const notificationTimes = [0, 60, 1440];
+    let tested = 0;
+
+    for (const event of earthBirthdays.slice(0, 3)) {
+        for (const notifMinutes of notificationTimes) {
+            const notifTime = new Date(event.date.getTime() - notifMinutes * 60 * 1000);
+
+            // Calendar events are created at exact minute boundaries (seconds=0)
+            assertEqual(event.date.getSeconds(), 0,
+                `Earth birthday should have seconds=0. `);
+
+            // Simulate cron at start of notification minute
+            const cronMinute = new Date(notifTime);
+            cronMinute.setSeconds(0, 0);
+            const currentMinute = cronMinute.toISOString().slice(0, 16);
+            const notifMinuteStr = notifTime.toISOString().slice(0, 16);
+
+            assertEqual(notifMinuteStr, currentMinute,
+                `Earth birthday ${event.title} with ${notifMinutes}min lead should match. `);
+            tested++;
+        }
+    }
+
+    assertTrue(tested >= 9, `Should test at least 9 cases, tested ${tested}`);
+});
+
+test('Backtest: multiple birth datetimes all match correctly', () => {
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 50, includePast: true });
+
+    // Test a variety of birth times including edge cases
+    const testBirths = [
+        '1985-12-31T23:59',  // Near midnight
+        '1990-01-01T00:00',  // Midnight exactly
+        '1995-06-15T12:30',  // Mid-day
+        '2000-03-01T06:00',  // Morning
+    ];
+
+    const offsets = [];
+    for (const event of events) {
+        if (event.isSharedHoliday) continue;
+        if (event.id.startsWith('earth-birthday-')) continue;
+        const ms = event.date.getTime() - refBirth.getTime();
+        if (ms > 0) {
+            offsets.push(Math.round(ms / 60000) * 60000);
+        }
+    }
+
+    // Sample every 100th offset to keep test fast
+    const sampledOffsets = offsets.filter((_, i) => i % 100 === 0);
+
+    for (const birthDatetime of testBirths) {
+        const birthMs = new Date(birthDatetime + ':00Z').getTime();
+
+        for (const offsetMs of sampledOffsets) {
+            const notifTimeMs = birthMs + offsetMs; // at-event notification
+            const cronTime = Math.floor(notifTimeMs / 60000) * 60000;
+            const targetMs = cronTime - offsetMs;
+            const targetDatetime = new Date(targetMs).toISOString().slice(0, 16);
+
+            assertEqual(targetDatetime, birthDatetime,
+                `Birth ${birthDatetime} with offset ${offsetMs} should match. `);
+        }
+    }
 });
 
 // ============================================
