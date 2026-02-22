@@ -93,6 +93,10 @@ const workerHandler = {
       return handlePushUnsubscribe(request, env);
     }
 
+    if (url.pathname === '/push/notification-log' && request.method === 'GET') {
+      return handleNotificationLog(url, env);
+    }
+
     // Calendar feed - require family format
     const familyParam = url.searchParams.get('family');
     if (familyParam) {
@@ -255,6 +259,34 @@ async function handlePushUnsubscribe(request, env) {
 }
 
 /**
+ * Return recent notification log entries
+ */
+async function handleNotificationLog(url, env) {
+  if (!env.DB) {
+    return new Response(JSON.stringify({ error: 'D1 not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  try {
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 1000);
+    const result = await env.DB.prepare(
+      'SELECT id, subscription_id, person_name, title, body, sent_at FROM notification_log ORDER BY sent_at DESC LIMIT ?'
+    ).bind(limit).all();
+
+    return new Response(JSON.stringify(result.results), {
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+}
+
+/**
  * Hash endpoint to create subscription ID
  */
 async function hashEndpoint(endpoint) {
@@ -337,6 +369,7 @@ async function handleScheduled(env) {
   // D1 has a limit on query size, so batch if needed
   const BATCH_SIZE = 100;
   let totalNotifications = 0;
+  const logEntries = [];
 
   for (let i = 0; i < datetimeList.length; i += BATCH_SIZE) {
     const batch = datetimeList.slice(i, i + BATCH_SIZE);
@@ -373,6 +406,7 @@ async function handleScheduled(env) {
           const success = await sendPushNotification(subscription, { title, body }, env);
           if (success) {
             totalNotifications++;
+            logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
             console.log(`Sent: ${title} to ${row.name}`);
           }
         }
@@ -381,7 +415,17 @@ async function handleScheduled(env) {
   }
 
   // Handle calendar-based events (earth birthdays + nerdy holidays) using shared Calculator
-  totalNotifications += await handleCalendarEvents(env, now, notificationTimes);
+  totalNotifications += await handleCalendarEvents(env, now, notificationTimes, logEntries);
+
+  // Batch-insert notification log entries
+  if (logEntries.length > 0) {
+    const stmts = logEntries.map(e =>
+      env.DB.prepare(
+        'INSERT INTO notification_log (subscription_id, person_name, title, body) VALUES (?, ?, ?, ?)'
+      ).bind(e.subscriptionId, e.personName, e.title, e.body)
+    );
+    await env.DB.batch(stmts);
+  }
 
   console.log(`Sent ${totalNotifications} notifications`);
 }
@@ -392,7 +436,7 @@ async function handleScheduled(env) {
  * Queries users by birth HH:MM (since all calendar events fire at the user's birth time),
  * then uses Calculator.calculate() to find matching events for the current minute.
  */
-async function handleCalendarEvents(env, now, notificationTimes) {
+async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
   let totalNotifications = 0;
   const currentMinute = now.toISOString().slice(0, 16);
 
@@ -405,7 +449,7 @@ async function handleCalendarEvents(env, now, notificationTimes) {
 
   for (const birthTime of birthTimes) {
     const result = await env.DB.prepare(`
-      SELECT fm.name, fm.birth_datetime, s.endpoint, s.p256dh, s.auth, s.notification_times
+      SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
       JOIN subscriptions s ON fm.subscription_id = s.id
       WHERE SUBSTR(fm.birth_datetime, 12, 5) = ?
@@ -442,6 +486,7 @@ async function handleCalendarEvents(env, now, notificationTimes) {
           const success = await sendPushNotification(subscription, { title, body }, env);
           if (success) {
             totalNotifications++;
+            logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
             console.log(`Sent: ${title} to ${row.name}`);
           }
         }

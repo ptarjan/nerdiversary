@@ -27,3 +27,14 @@ CREATE INDEX IF NOT EXISTS idx_birth_datetime ON family_members(birth_datetime);
 
 -- Index for cleanup by subscription
 CREATE INDEX IF NOT EXISTS idx_subscription_id ON family_members(subscription_id);
+
+-- Notification log: persistent record of every sent push notification
+CREATE TABLE IF NOT EXISTS notification_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  subscription_id TEXT NOT NULL,
+  person_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  sent_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE
+);
