@@ -46,7 +46,9 @@ function generateMilestoneOffsets() {
 
     const ms = event.date.getTime() - refBirth.getTime();
     if (ms > 0) {
-      offsets.push({ ms, label: event.title, icon: event.icon });
+      // Round to nearest minute for consistent matching with minute-precision birth_datetime in DB
+      const msRounded = Math.round(ms / 60000) * 60000;
+      offsets.push({ ms: msRounded, label: event.title, icon: event.icon });
     }
   }
 
@@ -297,6 +299,9 @@ async function handleScheduled(env) {
   }
 
   const now = new Date();
+  // Truncate to start of current minute for deterministic matching
+  // Without this, sub-second cron jitter can shift target birthdates into the wrong minute
+  now.setSeconds(0, 0);
   const currentMinute = now.toISOString().slice(0, 16); // "2024-01-15T10:30"
   console.log(`Checking notifications for ${currentMinute}`);
 
