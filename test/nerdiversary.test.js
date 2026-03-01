@@ -555,6 +555,10 @@ test('Worker imports from shared modules', () => {
     const usesCalculator = workerCode.includes('Calculator.calculate');
     assertTrue(usesCalculator, 'Worker should use Calculator.calculate()');
 
+    // Calendar events use Calculator.getCalendarEventsAt for single source of truth
+    const usesGetCalendarEventsAt = workerCode.includes('Calculator.getCalendarEventsAt');
+    assertTrue(usesGetCalendarEventsAt, 'Worker should use Calculator.getCalendarEventsAt()');
+
     // Check shared.js imports
     const hasSharedImport = workerCode.includes("from '../js/shared.js'");
     assertTrue(hasSharedImport, 'Worker should import from shared.js');
@@ -1079,6 +1083,146 @@ test('Backtest: multiple birth datetimes all match correctly', () => {
                 `Birth ${birthDatetime} with offset ${offsetMs} should match. `);
         }
     }
+});
+
+// ============================================
+// CALENDAR EVENT CONTRACT TESTS
+// ============================================
+console.log('\n--- Calendar Event Contract Tests ---');
+
+test('getCalendarEventsAt finds earth birthdays', () => {
+    const birthDate = new Date('1990-05-15T14:30:00Z');
+    // 35th birthday at birth time
+    const birthdayTime = new Date(
+        birthDate.getFullYear() + 35,
+        birthDate.getMonth(),
+        birthDate.getDate(),
+        birthDate.getHours(),
+        birthDate.getMinutes()
+    );
+
+    const events = Calculator.getCalendarEventsAt(birthDate, birthdayTime);
+    assertTrue(events.length === 1, `Should find 1 event, got ${events.length}`);
+    assertEqual(events[0].id, 'earth-birthday-35');
+    assertEqual(events[0].title, '35th Birthday');
+    assertEqual(events[0].icon, '🎂');
+});
+
+test('getCalendarEventsAt finds nerdy holidays', () => {
+    const birthDate = new Date('1990-05-15T14:30:00Z');
+    // Pi Day (March 14) at birth time
+    const piDay = new Date(
+        2025,
+        2, // March (0-indexed)
+        14,
+        birthDate.getHours(),
+        birthDate.getMinutes()
+    );
+
+    const events = Calculator.getCalendarEventsAt(birthDate, piDay);
+    const piEvent = events.find(e => e.isSharedHoliday && e.title.includes('Pi Day'));
+    assertTrue(piEvent !== undefined, 'Should find Pi Day event');
+    assertEqual(piEvent.icon, '🥧');
+});
+
+test('getCalendarEventsAt returns empty for non-events', () => {
+    const birthDate = new Date('1990-05-15T14:30:00Z');
+    // Random date that's not a birthday or holiday, but at birth time
+    const randomDate = new Date(
+        2025,
+        6, // July
+        20,
+        birthDate.getHours(),
+        birthDate.getMinutes()
+    );
+
+    const events = Calculator.getCalendarEventsAt(birthDate, randomDate);
+    assertEqual(events.length, 0, 'Should return no events');
+});
+
+test('getCalendarEventsAt returns empty for wrong HH:MM', () => {
+    const birthDate = new Date('1990-05-15T14:30:00Z');
+    // Birthday date but wrong time
+    const wrongTime = new Date(
+        2025,
+        birthDate.getMonth(),
+        birthDate.getDate(),
+        (birthDate.getHours() + 1) % 24,
+        birthDate.getMinutes()
+    );
+
+    const events = Calculator.getCalendarEventsAt(birthDate, wrongTime);
+    assertEqual(events.length, 0, 'Should return no events for wrong time');
+});
+
+test('getCalendarEventsAt matches calculate() for all calendar events', () => {
+    const birthDatetimes = [
+        '1984-05-02T20:37',
+        '1990-03-14T10:00', // Born on Pi Day
+        '2000-06-28T15:30', // Born on Tau Day
+        '1995-01-01T00:00', // Midnight birth
+    ];
+
+    let totalEvents = 0;
+    let matched = 0;
+
+    for (const birthDatetime of birthDatetimes) {
+        const birthDate = new Date(birthDatetime + ':00Z');
+        const allEvents = Calculator.calculate(birthDate, { yearsAhead: 5, includePast: true });
+        const calendarEvents = allEvents.filter(e =>
+            e.id.startsWith('earth-birthday-') || e.isSharedHoliday
+        );
+
+        for (const event of calendarEvents) {
+            totalEvents++;
+            const atEvents = Calculator.getCalendarEventsAt(birthDate, event.date);
+            const match = atEvents.find(e => e.id === event.id);
+
+            assertTrue(match !== undefined,
+                `getCalendarEventsAt should find ${event.id} for birth ${birthDatetime}`);
+            assertEqual(match.title, event.title,
+                `Title mismatch for ${event.id}: ${match.title} vs ${event.title}. `);
+            assertEqual(match.icon, event.icon,
+                `Icon mismatch for ${event.id}. `);
+            matched++;
+        }
+    }
+
+    assertTrue(totalEvents > 0, 'Should have tested some events');
+    assertEqual(matched, totalEvents, `All ${totalEvents} events should match. `);
+});
+
+test('Backtest: calendar events always fire at birth local HH:MM', () => {
+    // All calendar events fire at the birth's local hour:minute.
+    // In the worker (UTC timezone), local = UTC, so this guarantees the SQL
+    // query on SUBSTR(birth_datetime, 12, 5) matches event HH:MM.
+    const birthDatetimes = [
+        '1984-05-02T20:37',
+        '1990-03-14T10:00',
+        '2000-06-28T15:30',
+        '1995-12-31T23:59',
+    ];
+
+    let tested = 0;
+
+    for (const birthDatetime of birthDatetimes) {
+        const birthDate = new Date(birthDatetime + ':00Z');
+        const allEvents = Calculator.calculate(birthDate, { yearsAhead: 5, includePast: true });
+        const calendarEvents = allEvents.filter(e =>
+            e.id.startsWith('earth-birthday-') || e.isSharedHoliday
+        );
+
+        for (const event of calendarEvents) {
+            // Calendar events are created at birth's local HH:MM
+            assertEqual(event.date.getHours(), birthDate.getHours(),
+                `Event ${event.id} hour should match birth hour. `);
+            assertEqual(event.date.getMinutes(), birthDate.getMinutes(),
+                `Event ${event.id} minute should match birth minute. `);
+            tested++;
+        }
+    }
+
+    assertTrue(tested > 0, `Should have tested some events, tested ${tested}`);
 });
 
 // ============================================

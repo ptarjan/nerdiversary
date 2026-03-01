@@ -438,81 +438,48 @@ async function handleScheduled(env) {
  */
 async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
   let totalNotifications = 0;
-  const holidays = Milestones.nerdyHolidays;
 
   for (const notifMinutes of notificationTimes) {
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
-    const eventMonthDay = eventTime.toISOString().slice(5, 10); // "MM-DD"
-    const eventHHMM = eventTime.toISOString().slice(11, 16);    // "HH:MM"
+    const eventHHMM = eventTime.toISOString().slice(11, 16); // "HH:MM"
 
-    // Earth birthdays: find users whose birth MM-DD and HH:MM match eventTime
-    const birthdayResult = await env.DB.prepare(`
+    // Calendar events fire at birth time — query users whose birth HH:MM matches
+    const result = await env.DB.prepare(`
       SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
       JOIN subscriptions s ON fm.subscription_id = s.id
-      WHERE SUBSTR(fm.birth_datetime, 6, 5) = ? AND SUBSTR(fm.birth_datetime, 12, 5) = ?
-    `).bind(eventMonthDay, eventHHMM).all();
+      WHERE SUBSTR(fm.birth_datetime, 12, 5) = ?
+    `).bind(eventHHMM).all();
 
-    if (birthdayResult.results) {
-      for (const row of birthdayResult.results) {
-        const times = JSON.parse(row.notification_times || '[1440,60,0]');
-        if (!times.includes(notifMinutes)) continue;
+    if (!result.results) continue;
 
-        const birthYear = parseInt(row.birth_datetime.slice(0, 4));
-        const age = eventTime.getUTCFullYear() - birthYear;
-        if (age <= 0) continue;
+    for (const row of result.results) {
+      const times = JSON.parse(row.notification_times || '[1440,60,0]');
+      if (!times.includes(notifMinutes)) continue;
 
-        const ordinal = getOrdinal(age);
-        totalNotifications += await sendAndLog(env, logEntries, row, notifMinutes,
-          { label: `${age}${ordinal} Birthday`, icon: '🎂' });
-      }
-    }
+      const birthDate = new Date(row.birth_datetime + ':00Z');
+      const calendarEvents = Calculator.getCalendarEventsAt(birthDate, eventTime);
 
-    // Nerdy holidays: check if eventTime falls on a known holiday
-    const matchingHolidays = holidays.filter(h =>
-      h.month === eventTime.getUTCMonth() && h.day === eventTime.getUTCDate()
-    );
+      for (const event of calendarEvents) {
+        const { title, body } = generateNotificationContent(
+          row.name, { label: event.title, icon: event.icon }, notifMinutes
+        );
+        const subscription = {
+          endpoint: row.endpoint,
+          keys: { p256dh: row.p256dh, auth: row.auth }
+        };
 
-    if (matchingHolidays.length > 0) {
-      // Find users whose birth HH:MM matches (holidays fire at birth time)
-      const holidayResult = await env.DB.prepare(`
-        SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
-        FROM family_members fm
-        JOIN subscriptions s ON fm.subscription_id = s.id
-        WHERE SUBSTR(fm.birth_datetime, 12, 5) = ?
-      `).bind(eventHHMM).all();
-
-      if (holidayResult.results) {
-        for (const row of holidayResult.results) {
-          const times = JSON.parse(row.notification_times || '[1440,60,0]');
-          if (!times.includes(notifMinutes)) continue;
-
-          for (const holiday of matchingHolidays) {
-            totalNotifications += await sendAndLog(env, logEntries, row, notifMinutes,
-              { label: `${holiday.name} ${eventTime.getUTCFullYear()}`, icon: holiday.icon });
-          }
+        const success = await sendPushNotification(subscription, { title, body }, env);
+        if (success) {
+          totalNotifications++;
+          logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
+          console.log(`Sent: ${title} to ${row.name}`);
         }
       }
     }
   }
 
   return totalNotifications;
-}
-
-async function sendAndLog(env, logEntries, row, notifMinutes, offset) {
-  const { title, body } = generateNotificationContent(row.name, offset, notifMinutes);
-  const subscription = {
-    endpoint: row.endpoint,
-    keys: { p256dh: row.p256dh, auth: row.auth }
-  };
-
-  const success = await sendPushNotification(subscription, { title, body }, env);
-  if (success) {
-    logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
-    console.log(`Sent: ${title} to ${row.name}`);
-    return 1;
-  }
-  return 0;
 }
 
 /**

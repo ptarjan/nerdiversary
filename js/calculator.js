@@ -548,6 +548,80 @@ const Calculator = {
         }
     },
 
+    _buildEarthBirthdayEvent(year, birthdayDate) {
+        const ordinal = Milestones.getOrdinal(year);
+        const labels = [];
+
+        if (year === 42) { labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`); }
+        if (Milestones.primeAges.has(year)) { labels.push('Prime'); }
+        if (Milestones.squareAges[year]) { labels.push(`Perfect Square (${Milestones.squareAges[year]})`); }
+        if (Milestones.powerOf2Ages[year]) { labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`); }
+        if (Milestones.cubeAges[year]) { labels.push(`Perfect Cube (${Milestones.cubeAges[year]})`); }
+        if (Milestones.hexRoundAges[year]) { labels.push(`Hex Round (${Milestones.hexRoundAges[year]})`); }
+
+        const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
+
+        return {
+            id: `earth-birthday-${year}`,
+            title: `${ordinal} Birthday`,
+            description: `Happy ${ordinal} birthday on Earth!${specialLabel}`,
+            date: birthdayDate,
+            category: 'planetary',
+            icon: '🎂',
+            milestone: `${year} Earth years`
+        };
+    },
+
+    _buildNerdyHolidayEvent(holiday, holidayDate) {
+        const linkText = holiday.wikiKey ? wikiLink(holiday.wikiKey, holiday.name) : holiday.name;
+        return {
+            id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
+            title: `${holiday.name} ${holidayDate.getFullYear()}`,
+            description: `${linkText}! (${holiday.desc})`,
+            date: holidayDate,
+            category: 'pop-culture',
+            icon: holiday.icon,
+            milestone: holiday.name,
+            isSharedHoliday: true
+        };
+    },
+
+    /**
+     * Get calendar-based events at a specific time for a given birth date.
+     * Used by the worker to build events from the same source of truth as the website.
+     * @param {Date} birthDate - The person's birth date/time
+     * @param {Date} eventTime - The time to check for events
+     * @returns {Array} Matching calendar events (earth birthdays + nerdy holidays)
+     */
+    getCalendarEventsAt(birthDate, eventTime) {
+        const events = [];
+
+        // Calendar events always fire at the birth hour:minute
+        if (eventTime.getHours() !== birthDate.getHours() ||
+            eventTime.getMinutes() !== birthDate.getMinutes()) {
+            return events;
+        }
+
+        // Earth birthday: same month+day as birth, future year
+        if (eventTime.getMonth() === birthDate.getMonth() &&
+            eventTime.getDate() === birthDate.getDate()) {
+            const year = eventTime.getFullYear() - birthDate.getFullYear();
+            if (year > 0 && year <= Milestones.MAX_YEARS) {
+                events.push(this._buildEarthBirthdayEvent(year, eventTime));
+            }
+        }
+
+        // Nerdy holidays
+        for (const holiday of Milestones.nerdyHolidays) {
+            if (holiday.month === eventTime.getMonth() &&
+                holiday.day === eventTime.getDate()) {
+                events.push(this._buildNerdyHolidayEvent(holiday, eventTime));
+            }
+        }
+
+        return events;
+    },
+
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         for (const holiday of Milestones.nerdyHolidays) {
             for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
@@ -560,17 +634,7 @@ const Calculator = {
                 );
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
-                    const linkText = holiday.wikiKey ? wikiLink(holiday.wikiKey, holiday.name) : holiday.name;
-                    addEvent({
-                        id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
-                        title: `${holiday.name} ${holidayDate.getFullYear()}`,
-                        description: `${linkText}! (${holiday.desc})`,
-                        date: holidayDate,
-                        category: 'pop-culture',
-                        icon: holiday.icon,
-                        milestone: holiday.name,
-                        isSharedHoliday: true
-                    });
+                    addEvent(this._buildNerdyHolidayEvent(holiday, holidayDate));
                 }
             }
         }
@@ -587,27 +651,7 @@ const Calculator = {
             );
 
             if (birthdayDate > birthDate && birthdayDate <= maxDate) {
-                const ordinal = Milestones.getOrdinal(year);
-                const labels = [];
-
-                if (year === 42) { labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`); }
-                if (Milestones.primeAges.has(year)) { labels.push('Prime'); }
-                if (Milestones.squareAges[year]) { labels.push(`Perfect Square (${Milestones.squareAges[year]})`); }
-                if (Milestones.powerOf2Ages[year]) { labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`); }
-                if (Milestones.cubeAges[year]) { labels.push(`Perfect Cube (${Milestones.cubeAges[year]})`); }
-                if (Milestones.hexRoundAges[year]) { labels.push(`Hex Round (${Milestones.hexRoundAges[year]})`); }
-
-                const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
-
-                addEvent({
-                    id: `earth-birthday-${year}`,
-                    title: `${ordinal} Birthday`,
-                    description: `Happy ${ordinal} birthday on Earth!${specialLabel}`,
-                    date: birthdayDate,
-                    category: 'planetary',
-                    icon: '🎂',
-                    milestone: `${year} Earth years`
-                });
+                addEvent(this._buildEarthBirthdayEvent(year, birthdayDate));
             }
         }
     }
