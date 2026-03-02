@@ -47,14 +47,45 @@ function getIANATimezone() {
 /**
  * Populate a timezone select element with all IANA timezones
  */
+// Common timezones covering all major offsets and DST variations
+const COMMON_TIMEZONES = [
+    'Pacific/Honolulu',        // -10
+    'America/Anchorage',       // -9/-8
+    'America/Los_Angeles',     // -8/-7
+    'America/Phoenix',         // -7 (no DST)
+    'America/Denver',          // -7/-6
+    'America/Chicago',         // -6/-5
+    'America/New_York',        // -5/-4
+    'America/Halifax',         // -4/-3
+    'America/St_Johns',        // -3:30/-2:30
+    'America/Sao_Paulo',       // -3
+    'Atlantic/Reykjavik',      // +0 (no DST)
+    'Europe/London',           // +0/+1
+    'Europe/Paris',            // +1/+2
+    'Europe/Athens',           // +2/+3
+    'Africa/Cairo',            // +2
+    'Europe/Moscow',           // +3
+    'Asia/Dubai',              // +4
+    'Asia/Kolkata',            // +5:30
+    'Asia/Kathmandu',          // +5:45
+    'Asia/Dhaka',              // +6
+    'Asia/Bangkok',            // +7
+    'Asia/Shanghai',           // +8
+    'Asia/Singapore',          // +8
+    'Asia/Tokyo',              // +9
+    'Australia/Perth',         // +8
+    'Australia/Adelaide',      // +9:30/+10:30
+    'Australia/Sydney',        // +10/+11
+    'Pacific/Auckland',        // +12/+13
+];
+
 function populateTimezoneSelect(selectEl) {
     const deviceTz = getIANATimezone();
-    let timezones;
-    try {
-        timezones = Intl.supportedValuesOf('timeZone');
-    } catch {
-        // Fallback for older browsers
-        timezones = [deviceTz].filter(Boolean);
+
+    // Use common list, but ensure the device timezone is included
+    const timezones = [...COMMON_TIMEZONES];
+    if (deviceTz && !timezones.includes(deviceTz)) {
+        timezones.push(deviceTz);
     }
 
     // Build entries with UTC offset for sorting and display
@@ -66,7 +97,6 @@ function populateTimezoneSelect(selectEl) {
         });
         const parts = formatter.formatToParts(now);
         const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || '';
-        // Parse offset for sorting (e.g., "GMT-7" → -7, "GMT+5:30" → 5.5)
         const match = offsetStr.match(/GMT([+-]?)(\d+)?(?::(\d+))?/);
         let offsetMinutes = 0;
         if (match) {
@@ -75,15 +105,14 @@ function populateTimezoneSelect(selectEl) {
             const mins = parseInt(match[3] || '0', 10);
             offsetMinutes = sign * (hours * 60 + mins);
         }
-        // Format: "(GMT-07:00) America / Denver"
         const sign = offsetMinutes <= 0 ? '-' : '+';
         const absH = Math.floor(Math.abs(offsetMinutes) / 60);
         const absM = Math.abs(offsetMinutes) % 60;
-        const label = `(GMT${offsetMinutes === 0 ? '' : sign + String(absH).padStart(2, '0') + ':' + String(absM).padStart(2, '0')}) ${tz.replace(/_/g, ' ')}`;
+        const offsetLabel = offsetMinutes === 0 ? '' : sign + String(absH).padStart(2, '0') + ':' + String(absM).padStart(2, '0');
+        const label = `(GMT${offsetLabel}) ${tz.replace(/_/g, ' ').replace(/\//g, ' / ')}`;
         return { tz, label, offsetMinutes };
     });
 
-    // Sort by offset, then by name
     entries.sort((a, b) => a.offsetMinutes - b.offsetMinutes || a.tz.localeCompare(b.tz));
 
     selectEl.innerHTML = '';
