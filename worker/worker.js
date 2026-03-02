@@ -340,75 +340,55 @@ async function handleScheduled(env) {
   const offsets = getMilestoneOffsets();
   const notificationTimes = [0, 60, 1440]; // At event, 1 hour before, 1 day before
 
-  // Calculate all target birth datetimes
-  const targetDatetimes = new Map(); // datetime -> [{offset, notifTime}]
+  // Fetch ALL family members once (typically few rows), then match in-memory
+  // This avoids 26+ D1 queries that were causing CPU limit exceeded errors
+  const allMembers = await env.DB.prepare(`
+    SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
+    FROM family_members fm
+    JOIN subscriptions s ON fm.subscription_id = s.id
+  `).all();
 
-  for (const offset of offsets) {
-    for (const notifMinutes of notificationTimes) {
-      // Target birth datetime = now - milestone_offset + notification_lead_time
-      const targetMs = now.getTime() - offset.ms + (notifMinutes * 60 * 1000);
-      const targetDate = new Date(targetMs);
-      const targetDatetime = targetDate.toISOString().slice(0, 16);
+  const members = allMembers.results || [];
+  console.log(`Checking ${members.length} family members against ${offsets.length} offsets`);
 
-      if (!targetDatetimes.has(targetDatetime)) {
-        targetDatetimes.set(targetDatetime, []);
-      }
-      targetDatetimes.get(targetDatetime).push({
-        offset,
-        notifMinutes,
-        eventTime: new Date(now.getTime() + notifMinutes * 60 * 1000)
-      });
-    }
-  }
-
-  console.log(`Checking ${targetDatetimes.size} unique birth datetimes`);
-
-  // Query D1 with IN clause for all target datetimes
-  const datetimeList = Array.from(targetDatetimes.keys());
-
-  // D1 has a limit on query size, so batch if needed
-  const BATCH_SIZE = 100;
   let totalNotifications = 0;
   const logEntries = [];
 
-  for (let i = 0; i < datetimeList.length; i += BATCH_SIZE) {
-    const batch = datetimeList.slice(i, i + BATCH_SIZE);
-    const placeholders = batch.map(() => '?').join(',');
+  // Build a Map from offset ms -> offset info for O(1) lookup
+  const offsetMap = new Map();
+  for (const offset of offsets) {
+    offsetMap.set(offset.ms, offset);
+  }
 
-    const result = await env.DB.prepare(`
-      SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
-      FROM family_members fm
-      JOIN subscriptions s ON fm.subscription_id = s.id
-      WHERE fm.birth_datetime IN (${placeholders})
-    `).bind(...batch).all();
+  // For each member, check if their birth datetime matches any milestone offset
+  for (const row of members) {
+    const birthMs = new Date(row.birth_datetime + ':00Z').getTime();
+    const times = JSON.parse(row.notification_times || '[1440,60,0]');
 
-    if (result.results && result.results.length > 0) {
-      // Group by subscription and send
-      for (const row of result.results) {
-        const milestones = targetDatetimes.get(row.birth_datetime) || [];
+    for (const notifMinutes of notificationTimes) {
+      if (!times.includes(notifMinutes)) continue;
 
-        for (const milestone of milestones) {
-          // Check if this notification time is enabled for this subscription
-          const times = JSON.parse(row.notification_times || '[1440,60,0]');
-          if (!times.includes(milestone.notifMinutes)) continue;
+      // milestone_offset = now + notifLeadTime - birthTime
+      const elapsedMs = now.getTime() - birthMs + (notifMinutes * 60 * 1000);
+      const offset = offsetMap.get(elapsedMs);
 
-          const { title, body } = generateNotificationContent(
-            row.name,
-            milestone.offset,
-            milestone.notifMinutes
-          );
+      if (offset) {
+        const { title, body } = generateNotificationContent(
+          row.name,
+          offset,
+          notifMinutes
+        );
 
-          const subscription = {
-            endpoint: row.endpoint,
-            keys: { p256dh: row.p256dh, auth: row.auth }
-          };
+        const subscription = {
+          endpoint: row.endpoint,
+          keys: { p256dh: row.p256dh, auth: row.auth }
+        };
 
-          const success = await sendPushNotification(subscription, { title, body }, env);
-          if (success) {
-            totalNotifications++;
-            logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
-            console.log(`Sent: ${title} to ${row.name}`);
-          }
+        const success = await sendPushNotification(subscription, { title, body }, env);
+        if (success) {
+          totalNotifications++;
+          logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
+          console.log(`Sent: ${title} to ${row.name}`);
         }
       }
     }

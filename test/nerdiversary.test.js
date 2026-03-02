@@ -688,28 +688,28 @@ test('Worker formats birth datetime correctly', () => {
     assertTrue(hasIsoSlice, 'Should format as YYYY-MM-DDTHH:MM');
 });
 
-test('Worker calculates target birthdates for notifications', () => {
-    // Check the core algorithm: target = now - offset + lead_time
-    const hasCalculation = workerCode.includes('now.getTime() - offset.ms');
-    assertTrue(hasCalculation, 'Should calculate target birthdates from current time minus offset');
+test('Worker matches milestones in-memory against DB members', () => {
+    // Check the core algorithm: elapsed = now - birthMs + notifLeadTime
+    const hasCalculation = workerCode.includes('now.getTime() - birthMs');
+    assertTrue(hasCalculation, 'Should calculate elapsed time from birth');
 
     // Check notification lead times
     const hasLeadTimes = workerCode.includes('notificationTimes = [0, 60, 1440]');
     assertTrue(hasLeadTimes, 'Should check at event, 1 hour before, and 1 day before');
 });
 
-test('Worker uses D1 with indexed birthday queries', () => {
+test('Worker fetches all family members in single D1 query', () => {
     // Check D1 binding
     const usesD1 = workerCode.includes('env.DB');
     assertTrue(usesD1, 'Should use D1 database binding');
 
-    // Check indexed query on birth_datetime
-    const hasIndexedQuery = workerCode.includes('birth_datetime IN');
-    assertTrue(hasIndexedQuery, 'Should query with IN clause on birth_datetime');
+    // Check single query for all members (not batched IN queries)
+    const fetchesAll = workerCode.includes('FROM family_members fm');
+    assertTrue(fetchesAll, 'Should query all family members');
 
-    // Check batching for large queries
-    const hasBatching = workerCode.includes('BATCH_SIZE');
-    assertTrue(hasBatching, 'Should batch queries to avoid size limits');
+    // Check offset Map for O(1) lookup
+    const hasOffsetMap = workerCode.includes('offsetMap');
+    assertTrue(hasOffsetMap, 'Should use offsetMap for O(1) milestone lookup');
 });
 
 test('Worker generates correct notification content', () => {
@@ -779,14 +779,13 @@ test('Birthday datetime calculation is correct', () => {
     assertTrue(yearDiff >= 31 && yearDiff <= 32, 'Target should be ~31-32 years before now');
 });
 
-test('Milestone offset deduplication works', () => {
-    // Many different milestones might point to the same target birthdate
-    // The worker should deduplicate by using a Map
+test('Worker uses Map for offset lookup', () => {
+    // offsetMap provides O(1) lookup from ms -> offset info
     const hasMap = workerCode.includes('new Map()');
-    assertTrue(hasMap, 'Should use Map for deduplication');
+    assertTrue(hasMap, 'Should use Map for offset lookup');
 
-    const hasMapSet = workerCode.includes('targetDatetimes.set(');
-    assertTrue(hasMapSet, 'Should set entries in targetDatetimes Map');
+    const hasMapGet = workerCode.includes('offsetMap.get(');
+    assertTrue(hasMapGet, 'Should look up offsets via Map.get()');
 });
 
 // ============================================
