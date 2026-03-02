@@ -57,12 +57,41 @@ function populateTimezoneSelect(selectEl) {
         timezones = [deviceTz].filter(Boolean);
     }
 
+    // Build entries with UTC offset for sorting and display
+    const now = new Date();
+    const entries = timezones.map(tz => {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            timeZoneName: 'shortOffset'
+        });
+        const parts = formatter.formatToParts(now);
+        const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || '';
+        // Parse offset for sorting (e.g., "GMT-7" → -7, "GMT+5:30" → 5.5)
+        const match = offsetStr.match(/GMT([+-]?)(\d+)?(?::(\d+))?/);
+        let offsetMinutes = 0;
+        if (match) {
+            const sign = match[1] === '-' ? -1 : 1;
+            const hours = parseInt(match[2] || '0', 10);
+            const mins = parseInt(match[3] || '0', 10);
+            offsetMinutes = sign * (hours * 60 + mins);
+        }
+        // Format: "(GMT-07:00) America / Denver"
+        const sign = offsetMinutes <= 0 ? '-' : '+';
+        const absH = Math.floor(Math.abs(offsetMinutes) / 60);
+        const absM = Math.abs(offsetMinutes) % 60;
+        const label = `(GMT${offsetMinutes === 0 ? '' : sign + String(absH).padStart(2, '0') + ':' + String(absM).padStart(2, '0')}) ${tz.replace(/_/g, ' ')}`;
+        return { tz, label, offsetMinutes };
+    });
+
+    // Sort by offset, then by name
+    entries.sort((a, b) => a.offsetMinutes - b.offsetMinutes || a.tz.localeCompare(b.tz));
+
     selectEl.innerHTML = '';
 
-    for (const tz of timezones) {
+    for (const { tz, label } of entries) {
         const option = document.createElement('option');
         option.value = tz;
-        option.textContent = tz.replace(/_/g, ' ');
+        option.textContent = label;
         if (tz === deviceTz) {
             option.selected = true;
         }
