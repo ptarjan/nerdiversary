@@ -1,21 +1,82 @@
 /**
  * Service Worker for Nerdiversary PWA
- * Handles push notifications only — caching is left to HTTP headers.
+ * Network-first caching: always fetch from network, fall back to cache when offline.
  */
 
-/**
- * Install event - activate immediately
- */
-self.addEventListener('install', () => self.skipWaiting());
+const CACHE_NAME = 'nerdiversary-v1';
+const OFFLINE_ASSETS = [
+    './',
+    './index.html',
+    './results.html',
+    './css/style.css',
+    './js/shared.js',
+    './js/milestones.js',
+    './js/calculator.js',
+    './js/nerdiversary.js',
+    './js/results.js',
+    './js/storage.js',
+    './js/main.js',
+    './js/notifications.js',
+    './manifest.json',
+    './assets/android-chrome-192x192.png',
+    './assets/android-chrome-512x512.png',
+    './assets/apple-touch-icon.png',
+    './favicon.ico',
+    './assets/logo.svg'
+];
 
 /**
- * Activate event - clean up any old caches from previous versions and claim clients
+ * Install event - pre-cache assets for offline use, then activate immediately
+ */
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(OFFLINE_ASSETS))
+            .then(() => self.skipWaiting())
+    );
+});
+
+/**
+ * Activate event - clean up old caches and claim clients
  */
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys()
-            .then(keys => Promise.all(keys.map(key => caches.delete(key))))
+            .then(keys => Promise.all(
+                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+            ))
             .then(() => self.clients.claim())
+    );
+});
+
+/**
+ * Fetch event - network first, fall back to cache when offline
+ */
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') { return; }
+    if (!event.request.url.startsWith(self.location.origin)) { return; }
+
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                // Cache successful responses for offline use
+                if (response.ok) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
+                return response;
+            })
+            .catch(() =>
+                // Network failed — serve from cache
+                caches.match(event.request).then(cached => {
+                    if (cached) { return cached; }
+                    // Navigation requests fall back to cached index
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html');
+                    }
+                    return new Response('', { status: 503 });
+                })
+            )
     );
 });
 
