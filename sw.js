@@ -158,7 +158,8 @@ self.addEventListener('notificationclick', event => {
     }
 
     // Default action or 'view' action - open the results page
-    const urlToOpen = notificationData.url || './results.html' + (notificationData.family ? `?family=${notificationData.family}` : '');
+    // results.html will load family data from storage if no URL param is present
+    const urlToOpen = (notificationData && notificationData.url) || './results.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
