@@ -17,12 +17,39 @@ function getNextMemberIndex() {
     return index;
 }
 
+/**
+ * Get short timezone name for display (e.g., "PST", "MST", "EST")
+ */
+function getTimezoneName() {
+    try {
+        return Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+            .formatToParts(new Date())
+            .find(p => p.type === 'timeZoneName').value;
+    } catch {
+        const offset = new Date().getTimezoneOffset();
+        const sign = offset <= 0 ? '+' : '-';
+        const hours = Math.floor(Math.abs(offset) / 60);
+        return `UTC${sign}${hours}`;
+    }
+}
+
+/**
+ * Populate all timezone labels on the page
+ */
+function updateTimezoneLabels() {
+    const tz = getTimezoneName();
+    document.querySelectorAll('.timezone-label').forEach(el => {
+        el.textContent = tz;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('birthday-form');
     const addMemberBtn = document.getElementById('add-member');
 
-    // Set date constraints for first member
+    // Set date constraints and timezone labels for first member
     setupDateConstraints(0);
+    updateTimezoneLabels();
 
     // Check URL parameters first - if present, use those (shared link)
     // Otherwise load from storage (localStorage + IndexedDB fallback)
@@ -181,7 +208,7 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
-                Birth Time <span class="optional-label">(optional)</span>
+                Birth Time <span class="optional-label">(optional, <span class="timezone-label"></span>)</span>
             </label>
             <input type="time" id="birthtime-${index}" name="birthtime" step="60">
         </div>
@@ -196,6 +223,7 @@ function addFamilyMember(data = null) {
 
     familyMembers.appendChild(memberDiv);
     setupDateConstraints(index);
+    updateTimezoneLabels();
 
     // Show remove button on first member and make first name required
     updateRemoveButtons();
