@@ -97,15 +97,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                             name: m.name,
                             dateStr: m.date,
                             timeStr: m.time || '',
+                            timezone: m.timezone || '',
                             birthDate
                         };
                     }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
 
                     // Update URL for shareability (without triggering navigation)
                     if (familyMembers.length > 0) {
-                        const newFamilyParam = storedFamily.map(m =>
-                            `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
-                        ).join(',');
+                        const newFamilyParam = storedFamily.map(m => {
+                            let param = `${encodeURIComponent(m.name)}|${m.date}`;
+                            if (m.time || m.timezone) {
+                                param += `|${m.time || ''}`;
+                            }
+                            if (m.timezone) {
+                                param += `|${m.timezone}`;
+                            }
+                            return param;
+                        }).join(',');
                         const newUrl = `${window.location.pathname}?family=${newFamilyParam}`;
                         window.history.replaceState({}, '', newUrl);
                     }

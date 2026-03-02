@@ -18,8 +18,9 @@ export function parseFamilyParam(familyParam) {
             const name = decodeURIComponent(parts[0] || '');
             const dateStr = parts[1] || '';
             const timeStr = parts[2] || '00:00';
+            const timezone = parts[3] || '';
             const birthDate = new Date(`${dateStr}T${timeStr}:00`);
-            return { name, dateStr, timeStr, birthDate };
+            return { name, dateStr, timeStr, timezone, birthDate };
         }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
     } catch {
         return [];

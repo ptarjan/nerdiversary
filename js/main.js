@@ -34,12 +34,77 @@ function getTimezoneName() {
 }
 
 /**
- * Populate all timezone labels on the page
+ * Get the device's IANA timezone (e.g., "America/Denver")
+ */
+function getIANATimezone() {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+        return '';
+    }
+}
+
+/**
+ * Populate a timezone select element with all IANA timezones
+ */
+function populateTimezoneSelect(selectEl) {
+    const deviceTz = getIANATimezone();
+    let timezones;
+    try {
+        timezones = Intl.supportedValuesOf('timeZone');
+    } catch {
+        // Fallback for older browsers
+        timezones = [deviceTz].filter(Boolean);
+    }
+
+    selectEl.innerHTML = '';
+
+    for (const tz of timezones) {
+        const option = document.createElement('option');
+        option.value = tz;
+        option.textContent = tz.replace(/_/g, ' ');
+        if (tz === deviceTz) {
+            option.selected = true;
+        }
+        selectEl.appendChild(option);
+    }
+}
+
+/**
+ * Toggle visibility of the timezone select for a member
+ */
+function toggleTimezoneSelect(index) {
+    const selectEl = document.getElementById(`birthtz-${index}`);
+    if (!selectEl) { return; }
+
+    if (selectEl.style.display === 'none') {
+        if (selectEl.options.length === 0) {
+            populateTimezoneSelect(selectEl);
+        }
+        selectEl.style.display = '';
+    } else {
+        selectEl.style.display = 'none';
+    }
+}
+
+/**
+ * Populate all timezone labels on the page and set up toggle click handlers
  */
 function updateTimezoneLabels() {
     const tz = getTimezoneName();
     document.querySelectorAll('.timezone-label').forEach(el => {
         el.textContent = tz;
+    });
+
+    document.querySelectorAll('.timezone-toggle').forEach(link => {
+        // Avoid adding duplicate listeners by replacing the node
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        newLink.addEventListener('click', e => {
+            e.preventDefault();
+            const index = parseInt(newLink.dataset.index, 10);
+            toggleTimezoneSelect(index);
+        });
     });
 }
 
@@ -121,6 +186,14 @@ async function loadStoredData() {
             if (nameEl) { nameEl.value = first.name || ''; }
             if (dateEl) { dateEl.value = first.date || ''; }
             if (timeEl && first.time) { timeEl.value = first.time; }
+            if (first.timezone) {
+                const tzSelect = document.getElementById('birthtz-0');
+                if (tzSelect) {
+                    populateTimezoneSelect(tzSelect);
+                    tzSelect.value = first.timezone;
+                    tzSelect.style.display = '';
+                }
+            }
 
             // Add and load additional members
             for (let i = 1; i < family.length; i++) {
@@ -152,7 +225,8 @@ function loadFromUrlParams() {
                 return {
                     name: decodeURIComponent(parts[0] || ''),
                     date: parts[1] || '',
-                    time: parts[2] || ''
+                    time: parts[2] || '',
+                    timezone: parts[3] || ''
                 };
             });
 
@@ -167,6 +241,14 @@ function loadFromUrlParams() {
                 if (nameEl) { nameEl.value = validMembers[0].name; }
                 if (dateEl) { dateEl.value = validMembers[0].date; }
                 if (timeEl && validMembers[0].time) { timeEl.value = validMembers[0].time; }
+                if (validMembers[0].timezone) {
+                    const tzSelect = document.getElementById('birthtz-0');
+                    if (tzSelect) {
+                        populateTimezoneSelect(tzSelect);
+                        tzSelect.value = validMembers[0].timezone;
+                        tzSelect.style.display = '';
+                    }
+                }
 
                 // Add additional members
                 for (let i = 1; i < validMembers.length; i++) {
@@ -208,9 +290,10 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
-                Birth Time <span class="optional-label">(optional, <span class="timezone-label"></span>)</span>
+                Birth Time <span class="optional-label">(optional, <a href="#" class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></a>)</span>
             </label>
             <input type="time" id="birthtime-${index}" name="birthtime" step="60">
+            <select id="birthtz-${index}" name="birthtz" class="birth-timezone-select" style="display:none"></select>
         </div>
     `;
 
@@ -219,6 +302,12 @@ function addFamilyMember(data = null) {
         if (data.name) { memberDiv.querySelector(`#name-${index}`).value = data.name; }
         if (data.date) { memberDiv.querySelector(`#birthdate-${index}`).value = data.date; }
         if (data.time) { memberDiv.querySelector(`#birthtime-${index}`).value = data.time; }
+        if (data.timezone) {
+            const tzSelect = memberDiv.querySelector(`#birthtz-${index}`);
+            populateTimezoneSelect(tzSelect);
+            tzSelect.value = data.timezone;
+            tzSelect.style.display = '';
+        }
     }
 
     familyMembers.appendChild(memberDiv);
@@ -308,12 +397,15 @@ async function submitForm() {
         const nameEl = document.getElementById(`name-${index}`);
         const dateEl = document.getElementById(`birthdate-${index}`);
         const timeEl = document.getElementById(`birthtime-${index}`);
+        const tzEl = document.getElementById(`birthtz-${index}`);
 
         if (!dateEl) { return; }
 
         const name = nameEl ? nameEl.value.trim() : '';
         const birthdate = dateEl.value;
         const birthtime = timeEl ? timeEl.value : '';
+        // Only include timezone if the select is visible (user explicitly chose it)
+        const timezone = (tzEl && tzEl.style.display !== 'none') ? tzEl.value : '';
 
         if (birthdate) {
             // Use "You" as default name for single person
@@ -322,7 +414,8 @@ async function submitForm() {
                 family.push({
                     name: displayName,
                     date: birthdate,
-                    time: birthtime
+                    time: birthtime,
+                    timezone
                 });
             }
         }
@@ -349,9 +442,16 @@ async function submitForm() {
     }
 
     // Build URL params
-    const familyParam = family.map(m =>
-        `${encodeURIComponent(m.name)}|${m.date}${m.time ? `|${m.time}` : ''}`
-    ).join(',');
+    const familyParam = family.map(m => {
+        let param = `${encodeURIComponent(m.name)}|${m.date}`;
+        if (m.time || m.timezone) {
+            param += `|${m.time || ''}`;
+        }
+        if (m.timezone) {
+            param += `|${m.timezone}`;
+        }
+        return param;
+    }).join(',');
 
     // Use relative URL - works regardless of subdirectory
     window.location.href = `results.html?family=${familyParam}`;

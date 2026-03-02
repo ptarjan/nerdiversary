@@ -299,21 +299,18 @@ async function hashEndpoint(endpoint) {
 
 /**
  * Format birth date to YYYY-MM-DDTHH:MM for DB storage (in UTC)
+ * The client converts local birth times to UTC before sending (accounting for
+ * historical DST on the birth date), so timezoneOffset is typically 0.
+ * Kept for backwards compatibility with older clients that send local times.
  * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @param {string} timeStr - Time string in HH:MM format
- * @param {number} timezoneOffset - Browser's timezone offset in minutes (from getTimezoneOffset())
+ * @param {string} timeStr - Time string in HH:MM format (UTC if client converts, local if legacy)
+ * @param {number} timezoneOffset - Minutes to add to convert to UTC (0 if already UTC)
  * @returns {string} UTC datetime in YYYY-MM-DDTHH:MM format
  */
 function formatBirthDatetime(dateStr, timeStr, timezoneOffset = 0) {
-  // Parse the date/time as if it were UTC (which is what the worker does by default)
-  const localAsUtc = new Date(`${dateStr}T${timeStr}:00Z`);
-
-  // Apply timezone offset to convert from user's local time to actual UTC
-  // getTimezoneOffset() returns minutes to ADD to local time to get UTC
-  // e.g., PDT (UTC-7) returns 420, so 14:30 local + 420min = 21:30 UTC
-  const utcDate = new Date(localAsUtc.getTime() + timezoneOffset * 60 * 1000);
-
-  return utcDate.toISOString().slice(0, 16); // "1990-05-15T21:30" (UTC)
+  const asUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  const utcDate = new Date(asUtc.getTime() + timezoneOffset * 60 * 1000);
+  return utcDate.toISOString().slice(0, 16);
 }
 
 // ============================================================================

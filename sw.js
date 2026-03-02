@@ -1,97 +1,21 @@
 /**
  * Service Worker for Nerdiversary PWA
- * Handles push notifications and offline caching
+ * Handles push notifications only — caching is left to HTTP headers.
  */
 
-const CACHE_NAME = 'nerdiversary-v8';
-const OFFLINE_ASSETS = [
-    './',
-    './index.html',
-    './results.html',
-    './css/style.css',
-    './js/shared.js',
-    './js/milestones.js',
-    './js/calculator.js',
-    './js/nerdiversary.js',
-    './js/results.js',
-    './js/storage.js',
-    './js/main.js',
-    './js/notifications.js',
-    './manifest.json',
-    './assets/android-chrome-192x192.png',
-    './assets/android-chrome-512x512.png',
-    './assets/apple-touch-icon.png',
-    './favicon.ico',
-    './assets/logo.svg'
-];
-
 /**
- * Install event - cache essential assets
+ * Install event - activate immediately
  */
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(OFFLINE_ASSETS))
-            .then(() => self.skipWaiting())
-    );
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 /**
- * Activate event - clean up old caches
+ * Activate event - clean up any old caches from previous versions and claim clients
  */
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys()
-            .then(keys => Promise.all(
-                keys
-                    .filter(key => key !== CACHE_NAME)
-                    .map(key => caches.delete(key))
-            ))
+            .then(keys => Promise.all(keys.map(key => caches.delete(key))))
             .then(() => self.clients.claim())
-    );
-});
-
-/**
- * Fetch event - serve from cache, fallback to network (stale-while-revalidate)
- */
-self.addEventListener('fetch', event => {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') { return; }
-
-    // Skip cross-origin requests
-    if (!event.request.url.startsWith(self.location.origin)) { return; }
-
-    event.respondWith(
-        caches.match(event.request)
-            .then(cached => {
-                // Always initiate network fetch to update cache
-                const fetchPromise = fetch(event.request)
-                    .then(response => {
-                        // Don't cache non-successful responses
-                        if (!response || response.status !== 200) {
-                            return response;
-                        }
-
-                        // Cache successful responses
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.put(event.request, responseToCache));
-
-                        return response;
-                    })
-                    .catch(() => {
-                        // Network failed - return cached version if available
-                        if (cached) { return cached; }
-                        // No cache and network failed - return offline fallback for navigation
-                        if (event.request.mode === 'navigate') {
-                            return caches.match('./index.html');
-                        }
-                        return null;
-                    });
-
-                // Return cached immediately if available, otherwise wait for network
-                return cached || fetchPromise;
-            })
     );
 });
 

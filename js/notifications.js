@@ -327,8 +327,32 @@ async function subscribeToPush(familyParam) {
             });
         }
 
-        // Send subscription to server with notification times and timezone offset
-        // The timezone offset is needed so the worker can correctly interpret local times
+        // Convert family birth times to UTC on the client side.
+        // Using the birth date (not current date) ensures correct DST handling —
+        // e.g., a May birthday in Mountain time uses MDT (UTC-6), not MST (UTC-7).
+        const utcFamily = familyParam.split(',').map(member => {
+            const parts = member.split('|');
+            const name = parts[0];
+            const dateStr = parts[1] || '';
+            const timeStr = parts[2] || '00:00';
+            const timezone = parts[3] || '';
+
+            let utcDate;
+            if (timezone) {
+                // Use specified timezone for correct historical DST
+                utcDate = localToUtcWithTimezone(dateStr, timeStr, timezone);
+            } else {
+                // Fall back to device timezone
+                utcDate = new Date(`${dateStr}T${timeStr}:00`);
+            }
+
+            if (isNaN(utcDate.getTime())) return member; // pass through invalid
+            const utcDateStr = utcDate.toISOString().slice(0, 10);
+            const utcTimeStr = utcDate.toISOString().slice(11, 16);
+            return `${name}|${utcDateStr}|${utcTimeStr}`;
+        }).join(',');
+
+        // Send subscription with UTC-converted birth times (timezoneOffset: 0)
         const saveResponse = await fetch(`${WORKER_URL}/push/subscribe`, {
             method: 'POST',
             headers: {
@@ -336,9 +360,9 @@ async function subscribeToPush(familyParam) {
             },
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
-                family: familyParam,
+                family: utcFamily,
                 notificationTimes: getNotificationTimes(),
-                timezoneOffset: new Date().getTimezoneOffset()
+                timezoneOffset: 0
             })
         });
 
@@ -404,6 +428,22 @@ function urlBase64ToUint8Array(base64String) {
         outputArray[i] = rawData.charCodeAt(i);
     }
     return outputArray;
+}
+
+/**
+ * Convert a local date/time in a specific IANA timezone to UTC.
+ * This handles historical DST correctly — e.g., 2024-05-15 20:37
+ * in America/Denver is MDT (UTC-6), not MST (UTC-7).
+ */
+function localToUtcWithTimezone(dateStr, timeStr, timezone) {
+    // Create a UTC date as a starting guess
+    const guess = new Date(`${dateStr}T${timeStr}:00Z`);
+    // Get the offset for this date in the target timezone
+    const utcStr = guess.toLocaleString('en-US', { timeZone: 'UTC' });
+    const tzStr = guess.toLocaleString('en-US', { timeZone: timezone });
+    const offsetMs = new Date(utcStr).getTime() - new Date(tzStr).getTime();
+    // Apply offset: local + offset = UTC
+    return new Date(guess.getTime() + offsetMs);
 }
 
 /**
