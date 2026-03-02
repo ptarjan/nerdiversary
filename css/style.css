@@ -265,8 +265,9 @@ body {
 }
 
 .timezone-toggle {
-    color: var(--text-muted);
-    text-decoration: underline dotted;
+    color: var(--accent-tertiary);
+    text-decoration: underline dotted var(--accent-tertiary);
+    text-underline-offset: 2px;
     cursor: pointer;
 }
 

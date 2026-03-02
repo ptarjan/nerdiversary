@@ -88,23 +88,12 @@ function toggleTimezoneSelect(index) {
 }
 
 /**
- * Populate all timezone labels on the page and set up toggle click handlers
+ * Populate all timezone labels on the page
  */
 function updateTimezoneLabels() {
     const tz = getTimezoneName();
     document.querySelectorAll('.timezone-label').forEach(el => {
         el.textContent = tz;
-    });
-
-    document.querySelectorAll('.timezone-toggle').forEach(link => {
-        // Avoid adding duplicate listeners by replacing the node
-        const newLink = link.cloneNode(true);
-        link.parentNode.replaceChild(newLink, link);
-        newLink.addEventListener('click', e => {
-            e.preventDefault();
-            const index = parseInt(newLink.dataset.index, 10);
-            toggleTimezoneSelect(index);
-        });
     });
 }
 
@@ -131,6 +120,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hasStoredData && !isNewCalculation) {
         submitForm();
         return; // Skip rest of initialization since we're navigating away
+    }
+
+    // Timezone toggle — event delegation so it works for dynamically added members
+    if (form) {
+        form.addEventListener('click', e => {
+            const toggle = e.target.closest('.timezone-toggle');
+            if (toggle) {
+                toggleTimezoneSelect(parseInt(toggle.dataset.index, 10));
+            }
+        });
     }
 
     // Add family member button
@@ -290,7 +289,7 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
-                Birth Time <span class="optional-label">(optional, <a href="#" class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></a>)</span>
+                Birth Time <span class="optional-label">(optional, <span class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></span>)</span>
             </label>
             <input type="time" id="birthtime-${index}" name="birthtime" step="60">
             <select id="birthtz-${index}" name="birthtz" class="birth-timezone-select" style="display:none"></select>
