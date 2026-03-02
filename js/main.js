@@ -47,36 +47,54 @@ function getIANATimezone() {
 /**
  * Populate a timezone select element with all IANA timezones
  */
-// Common timezones covering all major offsets and DST variations
+// Common timezones — one per unique offset + DST variation
 const COMMON_TIMEZONES = [
+    'Pacific/Pago_Pago',       // -11
     'Pacific/Honolulu',        // -10
+    'Pacific/Marquesas',       // -9:30
     'America/Anchorage',       // -9/-8
     'America/Los_Angeles',     // -8/-7
     'America/Phoenix',         // -7 (no DST)
     'America/Denver',          // -7/-6
     'America/Chicago',         // -6/-5
     'America/New_York',        // -5/-4
+    'America/Bogota',          // -5 (no DST)
     'America/Halifax',         // -4/-3
+    'America/Caracas',         // -4 (no DST)
     'America/St_Johns',        // -3:30/-2:30
     'America/Sao_Paulo',       // -3
+    'Atlantic/South_Georgia',  // -2
+    'Atlantic/Azores',         // -1/+0
+    'Atlantic/Cape_Verde',     // -1 (no DST)
     'Atlantic/Reykjavik',      // +0 (no DST)
     'Europe/London',           // +0/+1
+    'Africa/Lagos',            // +1 (no DST)
     'Europe/Paris',            // +1/+2
+    'Africa/Cairo',            // +2 (no DST)
     'Europe/Athens',           // +2/+3
-    'Africa/Cairo',            // +2
-    'Europe/Moscow',           // +3
+    'Africa/Nairobi',          // +3 (no DST)
+    'Europe/Moscow',           // +3 (no DST)
+    'Asia/Tehran',             // +3:30/+4:30
     'Asia/Dubai',              // +4
+    'Asia/Kabul',              // +4:30
+    'Asia/Karachi',            // +5
     'Asia/Kolkata',            // +5:30
     'Asia/Kathmandu',          // +5:45
     'Asia/Dhaka',              // +6
+    'Asia/Yangon',             // +6:30
     'Asia/Bangkok',            // +7
     'Asia/Shanghai',           // +8
     'Asia/Singapore',          // +8
-    'Asia/Tokyo',              // +9
     'Australia/Perth',         // +8
+    'Asia/Tokyo',              // +9
+    'Australia/Darwin',        // +9:30 (no DST)
     'Australia/Adelaide',      // +9:30/+10:30
+    'Australia/Brisbane',      // +10 (no DST)
     'Australia/Sydney',        // +10/+11
+    'Pacific/Noumea',          // +11
     'Pacific/Auckland',        // +12/+13
+    'Pacific/Chatham',         // +12:45/+13:45
+    'Pacific/Tongatapu',       // +13
 ];
 
 function populateTimezoneSelect(selectEl) {
