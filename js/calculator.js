@@ -289,7 +289,7 @@ const Calculator = {
                 const idx = indexMap.get(num);
                 addEvent({
                     id: `${idPrefix}-${unit}-${num}`,
-                    title: `${name} ${label} ${num.toLocaleString()}`,
+                    title: `${num.toLocaleString()} ${name} ${unit}`,
                     description: `${label} ${num.toLocaleString()} is a ${wikiLink(wikiKey, `${name} number`)}!`,
                     date: new Date(birthDate.getTime() + num * ms),
                     category: 'fibonacci',
@@ -329,7 +329,7 @@ const Calculator = {
         for (const perfect of Milestones.PERFECT_NUMBERS) {
             addEvent({
                 id: `perfect-days-${perfect}`,
-                title: `Perfect Day ${perfect}`,
+                title: `${perfect} Perfect Days`,
                 description: `Day ${perfect} is a ${wikiLink('perfect', 'perfect number')}! (${perfect} = sum of its divisors)`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_DAY),
                 category: 'mathematical',
@@ -342,7 +342,7 @@ const Calculator = {
         for (const perfect of Milestones.PERFECT_HOUR_NUMBERS) {
             addEvent({
                 id: `perfect-hours-${perfect}`,
-                title: `Perfect Hour ${perfect.toLocaleString()}`,
+                title: `${perfect.toLocaleString()} Perfect Hours`,
                 description: `Hour ${perfect.toLocaleString()} is a ${wikiLink('perfect', 'perfect number')}!`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
@@ -364,7 +364,7 @@ const Calculator = {
                 const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
                 addEvent({
                     id: `triangular-days-${tri}`,
-                    title: `Triangular Day ${tri.toLocaleString()}`,
+                    title: `${tri.toLocaleString()} Triangular Days`,
                     description: `Day ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+3+...+${n} = ${tri})`,
                     date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_DAY),
                     category: 'mathematical',
@@ -382,7 +382,7 @@ const Calculator = {
             const n = Math.round((-1 + Math.sqrt(1 + 8 * tri)) / 2);
             addEvent({
                 id: `triangular-hours-${tri}`,
-                title: `Triangular Hour ${tri.toLocaleString()}`,
+                title: `${tri.toLocaleString()} Triangular Hours`,
                 description: `Hour ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+...+${n})`,
                 date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
@@ -406,7 +406,7 @@ const Calculator = {
         for (const pal of interestingPals) {
             addEvent({
                 id: `palindrome-days-${pal}`,
-                title: `Palindrome Day ${pal.toLocaleString()}`,
+                title: `${pal.toLocaleString()} Palindrome Days`,
                 description: `Day ${pal} is a ${wikiLink('palindrome', 'palindrome')} - reads the same forwards and backwards!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_DAY),
                 category: 'mathematical',
@@ -419,7 +419,7 @@ const Calculator = {
         for (const pal of Milestones.PALINDROME_HOURS) {
             addEvent({
                 id: `palindrome-hours-${pal}`,
-                title: `Palindrome Hour ${pal.toLocaleString()}`,
+                title: `${pal.toLocaleString()} Palindrome Hours`,
                 description: `Hour ${pal.toLocaleString()} is a ${wikiLink('palindrome', 'palindrome')}!`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
@@ -441,7 +441,7 @@ const Calculator = {
             for (const rep of Milestones.REPUNITS.filter(filter)) {
                 addEvent({
                     id: `repunit-${unit}-${rep}`,
-                    title: `Repunit ${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()}`,
+                    title: `${rep.toLocaleString()} Repunit ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
                     description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is a ${wikiLink('repunit', 'repunit')} (all 1s)!`,
                     date: new Date(birthDate.getTime() + rep * ms),
                     category: 'binary',
