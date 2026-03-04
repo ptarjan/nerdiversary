@@ -497,6 +497,96 @@ test('Multiple categories are represented', () => {
     assertTrue(categories.has('pop-culture'), 'Should have pop-culture events');
 });
 
+test('Lunation milestones are generated', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 100);
+
+    const lunations = events.filter(e => e.id.startsWith('lunation-'));
+    assertTrue(lunations.length > 0, 'Should have lunation milestones');
+
+    const l500 = events.find(e => e.id === 'lunation-500');
+    assertTrue(l500 !== undefined, 'Should have 500 lunation milestone');
+    assertEqual(l500.category, 'scientific');
+    assertEqual(l500.icon, '🌑');
+
+    // 500 synodic months ≈ 500 * 29.53 ≈ 14765 days ≈ 40.4 years
+    const expectedMs = 500 * 29.530589 * Milestones.MS_PER_DAY;
+    const actualMs = l500.date.getTime() - birthDate.getTime();
+    assertTrue(Math.abs(actualMs - expectedMs) < 1000, 'Lunation date should be correct');
+});
+
+test('Fractional age milestones (quarter birthdays) are generated', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 50);
+
+    const quarters = events.filter(e => e.id.startsWith('frac-birthday-'));
+    assertTrue(quarters.length > 100, `Should have many quarter birthdays, got ${quarters.length}`);
+
+    const half42 = events.find(e => e.id === 'frac-birthday-43-0.5');
+    assertTrue(half42 !== undefined, 'Should have 42½ milestone');
+    assertTrue(half42.title.includes('42½'), 'Title should show 42½');
+    assertEqual(half42.category, 'planetary');
+    assertEqual(half42.icon, '🎂');
+
+    const quarter42 = events.find(e => e.id === 'frac-birthday-43-0.25');
+    assertTrue(quarter42 !== undefined, 'Should have 42¼ milestone');
+    assertTrue(quarter42.title.includes('42¼'), 'Title should show 42¼');
+});
+
+test('New nerdy holidays exist: e Day, Mole Day, Fibonacci Day', () => {
+    const birthDate = new Date('1990-01-15T12:00:00');
+    const events = Nerdiversary.calculate(birthDate, 5);
+
+    const eDay = events.find(e => e.id.startsWith('e-day-'));
+    assertTrue(eDay !== undefined, 'Should have e Day');
+    assertEqual(eDay.isSharedHoliday, true);
+
+    const moleDay = events.find(e => e.id.startsWith('mole-day-'));
+    assertTrue(moleDay !== undefined, 'Should have Mole Day');
+    assertEqual(moleDay.isSharedHoliday, true);
+
+    const fibDay = events.find(e => e.id.startsWith('fibonacci-day-'));
+    assertTrue(fibDay !== undefined, 'Should have Fibonacci Day');
+    assertEqual(fibDay.isSharedHoliday, true);
+});
+
+test('getCalendarEventsAt finds new nerdy holidays', () => {
+    const birthDate = new Date('1990-05-15T14:30:00Z');
+
+    // Mole Day (Oct 23) at birth time
+    const moleDay = new Date(2025, 9, 23, birthDate.getHours(), birthDate.getMinutes());
+    const moleEvents = Calculator.getCalendarEventsAt(birthDate, moleDay);
+    const moleEvent = moleEvents.find(e => e.isSharedHoliday && e.title.includes('Mole Day'));
+    assertTrue(moleEvent !== undefined, 'Should find Mole Day');
+
+    // Fibonacci Day (Nov 23) at birth time
+    const fibDay = new Date(2025, 10, 23, birthDate.getHours(), birthDate.getMinutes());
+    const fibEvents = Calculator.getCalendarEventsAt(birthDate, fibDay);
+    const fibEvent = fibEvents.find(e => e.isSharedHoliday && e.title.includes('Fibonacci Day'));
+    assertTrue(fibEvent !== undefined, 'Should find Fibonacci Day');
+
+    // e Day (Feb 7) at birth time
+    const eDay = new Date(2025, 1, 7, birthDate.getHours(), birthDate.getMinutes());
+    const eEvents = Calculator.getCalendarEventsAt(birthDate, eDay);
+    const eEvent = eEvents.find(e => e.isSharedHoliday && e.title.includes('e Day'));
+    assertTrue(eEvent !== undefined, 'Should find e Day');
+});
+
+test('Lunation and fractional milestones are in worker offset map', () => {
+    // Verify these offset-based milestones are NOT filtered out by the worker logic
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
+
+    const lunation = events.find(e => e.id === 'lunation-500');
+    assertTrue(lunation !== undefined, 'Should generate lunation-500');
+    assertTrue(!lunation.isSharedHoliday, 'Lunation should not be a shared holiday');
+    assertTrue(!lunation.id.startsWith('earth-birthday-'), 'Lunation should not look like earth birthday');
+
+    const frac = events.find(e => e.id === 'frac-birthday-43-0.5');
+    assertTrue(frac !== undefined, 'Should generate frac-birthday-43-0.5');
+    assertTrue(!frac.isSharedHoliday, 'Fractional birthday should not be a shared holiday');
+});
+
 test('1 billion seconds milestone exists and is correct', () => {
     const birthDate = new Date('1990-01-15T12:00:00');
     const events = Nerdiversary.calculate(birthDate, 50);
