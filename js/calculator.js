@@ -62,6 +62,8 @@ const Calculator = {
         this._addScientificMilestones(birthDate, addEvent);
         this._addPopCultureMilestones(birthDate, addEvent);
         this._addSpeedOfLightMilestones(birthDate, addEvent);
+        this._addLunationMilestones(birthDate, addEvent);
+        this._addFractionalAgeMilestones(birthDate, maxDate, addEvent);
         this._addNerdyHolidays(birthDate, maxDate, addEvent);
         this._addEarthBirthdays(birthDate, maxDate, addEvent);
 
@@ -545,6 +547,46 @@ const Calculator = {
                 icon: '💡',
                 milestone: unit.name
             });
+        }
+    },
+
+    _addLunationMilestones(birthDate, addEvent) {
+        const periodMs = Milestones.SYNODIC_MONTH_DAYS * Milestones.MS_PER_DAY;
+        for (const n of Milestones.lunationMilestones) {
+            const eventDate = new Date(birthDate.getTime() + n * periodMs);
+            addEvent({
+                id: `lunation-${n}`,
+                title: `${n.toLocaleString()} New Moons`,
+                description: `${n.toLocaleString()} ${wikiLink('lunation', 'lunar months')} have passed since your birth!`,
+                date: eventDate,
+                category: 'scientific',
+                icon: '🌑',
+                milestone: `${n.toLocaleString()} lunations`
+            });
+        }
+    },
+
+    _addFractionalAgeMilestones(birthDate, maxDate, addEvent) {
+        const fractions = [
+            { frac: 0.25, label: '¼', decimal: '.25' },
+            { frac: 0.5, label: '½', decimal: '.5' },
+            { frac: 0.75, label: '¾', decimal: '.75' }
+        ];
+        for (let age = 1; age <= Milestones.MAX_YEARS; age++) {
+            for (const { frac, label, decimal } of fractions) {
+                const exactAge = age - 1 + frac;
+                const eventDate = new Date(birthDate.getTime() + exactAge * Milestones.MS_PER_YEAR);
+                if (eventDate > maxDate) return;
+                addEvent({
+                    id: `frac-birthday-${age}-${frac}`,
+                    title: `${age - 1}${label} Years Old`,
+                    description: `You're exactly ${age - 1}${label} years old!`,
+                    date: eventDate,
+                    category: 'planetary',
+                    icon: '🎂',
+                    milestone: `${age - 1}${decimal} Earth years`
+                });
+            }
         }
     },
 

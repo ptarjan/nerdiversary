@@ -18,6 +18,14 @@ const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 // Maximum years to calculate milestones for
 const MAX_YEARS = 120;
 
+// Synodic month (new moon to new moon) in days
+const SYNODIC_MONTH_DAYS = 29.530589;
+
+// Lunation milestones (round-number lunar months since birth)
+const lunationMilestones = [
+    100, 200, 250, 300, 400, 500, 600, 700, 750, 800, 900, 1000
+];
+
 // ============================================================================
 // PHYSICAL CONSTANTS
 // ============================================================================
@@ -171,6 +179,10 @@ const WIKI_URLS = {
     piDay: 'https://en.wikipedia.org/wiki/Pi_Day',
     starWarsDay: 'https://en.wikipedia.org/wiki/Star_Wars_Day',
     tauDay: 'https://en.wikipedia.org/wiki/Tau_Day',
+    eDay: 'https://en.wikipedia.org/wiki/E_Day',
+    moleDay: 'https://en.wikipedia.org/wiki/Mole_Day',
+    fibonacciDay: 'https://en.wikipedia.org/wiki/Fibonacci_Day',
+    lunation: 'https://en.wikipedia.org/wiki/Lunar_month#Synodic_month',
     mercury: 'https://en.wikipedia.org/wiki/Mercury_(planet)#Orbit,_rotation,_and_longitude',
     venus: 'https://en.wikipedia.org/wiki/Venus#Orbit_and_rotation',
     mars: 'https://en.wikipedia.org/wiki/Mars#Orbit_and_rotation',
@@ -382,9 +394,12 @@ const popCultureMilestones = [
 
 // Nerdy holidays
 const nerdyHolidays = [
+    { month: 1, day: 7, name: 'e Day', icon: '🔢', desc: 'February 7 (2.71828…)', wikiKey: 'eDay' },
     { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)', wikiKey: 'piDay' },
     { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day', wikiKey: 'starWarsDay' },
-    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)', wikiKey: 'tauDay' }
+    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)', wikiKey: 'tauDay' },
+    { month: 9, day: 23, name: 'Mole Day', icon: '⚗️', desc: 'October 23 (6.02×10²³)', wikiKey: 'moleDay' },
+    { month: 10, day: 23, name: 'Fibonacci Day', icon: '🌀', desc: 'November 23 (1-1-2-3)', wikiKey: 'fibonacciDay' }
 ];
 
 // Earth birthday special labels
@@ -460,6 +475,10 @@ const MilestonesExports = {
     DISTANCE_THRESHOLD_TRILLION_KM,
     DISTANCE_THRESHOLD_BILLION_KM,
     DISTANCE_THRESHOLD_MILLION_KM,
+
+    // Lunar
+    SYNODIC_MONTH_DAYS,
+    lunationMilestones,
 
     // Limits
     MAX_YEARS,
