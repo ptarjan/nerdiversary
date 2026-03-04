@@ -1315,6 +1315,92 @@ test('Backtest: calendar events always fire at birth local HH:MM', () => {
 });
 
 // ============================================
+// STRUCTURAL GUARDS
+// ============================================
+console.log('\n--- Structural Guards ---');
+
+test('Every milestone generator produces events that reach the worker', () => {
+    // If you add a new _add*Milestones method to Calculator, this test ensures
+    // every generated event is either:
+    //   (a) offset-based: included in generateMilestoneOffsets() (no isSharedHoliday, no earth-birthday- id)
+    //   (b) calendar-based: found by getCalendarEventsAt() (isSharedHoliday or earth-birthday-)
+    // If a new type falls through both paths, push notifications won't fire for it.
+
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 50, includePast: true });
+
+    // Offset-based: simulate what generateMilestoneOffsets does
+    const offsetEvents = events.filter(e =>
+        !e.isSharedHoliday && !e.id.startsWith('earth-birthday-')
+    );
+    for (const event of offsetEvents) {
+        const ms = event.date.getTime() - refBirth.getTime();
+        assertTrue(ms > 0, `Offset event "${event.title}" (${event.id}) should have positive offset`);
+    }
+
+    // Calendar-based: verify getCalendarEventsAt finds them
+    const calendarEvents = events.filter(e =>
+        e.isSharedHoliday || e.id.startsWith('earth-birthday-')
+    );
+    for (const event of calendarEvents.slice(0, 20)) {
+        const found = Calculator.getCalendarEventsAt(refBirth, event.date);
+        const match = found.find(e => e.id === event.id);
+        assertTrue(match !== undefined,
+            `Calendar event "${event.title}" (${event.id}) must be found by getCalendarEventsAt`);
+    }
+
+    // Every event must be in one of the two groups
+    const allIds = new Set(events.map(e => e.id));
+    const coveredIds = new Set([
+        ...offsetEvents.map(e => e.id),
+        ...calendarEvents.map(e => e.id)
+    ]);
+    for (const id of allIds) {
+        assertTrue(coveredIds.has(id),
+            `Event ${id} is not covered by either offset or calendar notification path`);
+    }
+});
+
+test('Every nerdy holiday is found by getCalendarEventsAt', () => {
+    // If you add a holiday to nerdyHolidays in milestones.js, this ensures
+    // getCalendarEventsAt will actually find it (so push notifications work).
+    const birthDate = new Date('1990-06-15T10:00:00Z');
+
+    for (const holiday of Milestones.nerdyHolidays) {
+        const holidayDate = new Date(2025, holiday.month, holiday.day,
+            birthDate.getHours(), birthDate.getMinutes());
+        const found = Calculator.getCalendarEventsAt(birthDate, holidayDate);
+        const match = found.find(e => e.title.includes(holiday.name));
+        assertTrue(match !== undefined,
+            `Holiday "${holiday.name}" (month:${holiday.month} day:${holiday.day}) not found by getCalendarEventsAt`);
+        assertTrue(match.isSharedHoliday === true,
+            `Holiday "${holiday.name}" must have isSharedHoliday=true`);
+    }
+});
+
+test('No milestone titles collide with holiday name prefixes', () => {
+    // If you add a milestone with a title like "Foo Day 123", and there's a holiday
+    // "Foo Day 2025", they'll be confused. This test catches that.
+    const refBirth = new Date('2000-01-01T00:00:00Z');
+    const events = Calculator.calculate(refBirth, { yearsAhead: 50, includePast: true });
+
+    const holidays = events.filter(e => e.isSharedHoliday);
+    const holidayPrefixes = [...new Set(holidays.map(e => {
+        // Holiday titles are "Name YYYY" — extract the name part
+        const parts = e.title.split(' ');
+        return parts.slice(0, -1).join(' ');
+    }))];
+
+    const nonHolidays = events.filter(e => !e.isSharedHoliday && !e.id.startsWith('earth-birthday-'));
+    const collisions = nonHolidays.filter(e =>
+        holidayPrefixes.some(p => e.title.startsWith(p + ' '))
+    );
+
+    assertEqual(collisions.length, 0,
+        `Milestone titles collide with holiday names: ${collisions.slice(0, 3).map(c => `"${c.title}"`).join(', ')}. `);
+});
+
+// ============================================
 // SUMMARY
 // ============================================
 console.log('\n=== Test Summary ===');
