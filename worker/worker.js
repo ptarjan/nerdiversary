@@ -175,7 +175,7 @@ async function handlePushSubscribe(request, env) {
     const subscriptionId = await hashEndpoint(subscription.endpoint);
     const times = JSON.stringify(notificationTimes || [1440, 60, 0]);
 
-    // Upsert subscription
+    // Upsert subscription (clear deleted_at on re-subscribe)
     await env.DB.prepare(`
       INSERT INTO subscriptions (id, endpoint, p256dh, auth, notification_times, updated_at)
       VALUES (?, ?, ?, ?, ?, datetime('now'))
@@ -184,7 +184,8 @@ async function handlePushSubscribe(request, env) {
         p256dh = excluded.p256dh,
         auth = excluded.auth,
         notification_times = excluded.notification_times,
-        updated_at = datetime('now')
+        updated_at = datetime('now'),
+        deleted_at = NULL
     `).bind(
       subscriptionId,
       subscription.endpoint,
@@ -343,6 +344,7 @@ async function handleScheduled(env) {
     SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
     FROM family_members fm
     JOIN subscriptions s ON fm.subscription_id = s.id
+    WHERE s.deleted_at IS NULL
   `).all();
 
   const members = allMembers.results || [];
@@ -381,7 +383,7 @@ async function handleScheduled(env) {
           keys: { p256dh: row.p256dh, auth: row.auth }
         };
 
-        const success = await sendPushNotification(subscription, { title, body }, env);
+        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id);
         if (success) {
           totalNotifications++;
           logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
@@ -425,7 +427,7 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
       SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
       JOIN subscriptions s ON fm.subscription_id = s.id
-      WHERE SUBSTR(fm.birth_datetime, 12, 5) = ?
+      WHERE s.deleted_at IS NULL AND SUBSTR(fm.birth_datetime, 12, 5) = ?
     `).bind(eventHHMM).all();
 
     if (!result.results) continue;
@@ -446,7 +448,7 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
           keys: { p256dh: row.p256dh, auth: row.auth }
         };
 
-        const success = await sendPushNotification(subscription, { title, body }, env);
+        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id);
         if (success) {
           totalNotifications++;
           logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
@@ -472,7 +474,7 @@ function generateNotificationContent(personName, offset, minutesBefore) {
 // WEB PUSH IMPLEMENTATION
 // ============================================================================
 
-async function sendPushNotification(subscription, payload, env) {
+async function sendPushNotification(subscription, payload, env, subscriptionId = null) {
   try {
     const vapidHeaders = await createVapidHeaders(subscription.endpoint, env);
     const encryptedPayload = await encryptPayload(
@@ -498,8 +500,12 @@ async function sendPushNotification(subscription, payload, env) {
     }
 
     if (response.status === 404 || response.status === 410) {
-      console.log('Subscription expired, removing from DB');
-      // Could delete from DB here
+      console.log(`Subscription expired (${response.status}), soft-deleting`);
+      if (subscriptionId && env.DB) {
+        await env.DB.prepare(
+          "UPDATE subscriptions SET deleted_at = datetime('now') WHERE id = ?"
+        ).bind(subscriptionId).run();
+      }
       return false;
     }
 

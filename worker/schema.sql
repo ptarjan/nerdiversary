@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS family_members (
   FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE
 );
 
+-- Soft-delete column for expired push subscriptions
+-- (ALTER TABLE is idempotent-safe with IF NOT EXISTS in newer D1 but we use the migration below)
+
 -- Index for fast birthday lookups (the key optimization!)
 CREATE INDEX IF NOT EXISTS idx_birth_datetime ON family_members(birth_datetime);
 
