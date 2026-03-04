@@ -964,10 +964,15 @@ function generateShareText(event) {
 
     // Category-specific viral hooks
     const hooks = {
-        planetary: [
-            `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} a birthday on another planet! ${event.icon}`,
-            `Forget Earth birthdays. ${personPrefix}${isPast ? 'turned' : 'will turn'} ${event.title.match(/\d+/)?.[0] || 'another year'} in ${event.title.split(' ').pop()} years!`,
-        ],
+        planetary: event.planet
+            ? [
+                `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} a birthday on ${event.planet}! ${event.icon}`,
+                `Forget Earth birthdays. ${personPrefix}${isPast ? 'turned' : 'will turn'} ${event.title.match(/\d+/)?.[0] || 'another year'} in ${event.planet} years! ${event.icon}`,
+            ]
+            : [
+                `${event.icon} ${personPrefix}${isPast ? 'just turned' : 'will turn'} ${event.title}!`,
+                `${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title}! ${event.icon}`,
+            ],
         decimal: [
             `${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title}! ${event.icon}`,
             `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title} on ${dateStr}!`,
