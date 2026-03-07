@@ -383,7 +383,7 @@ async function handleScheduled(env) {
           keys: { p256dh: row.p256dh, auth: row.auth }
         };
 
-        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id);
+        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id, notifMinutes);
         if (success) {
           totalNotifications++;
           logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
@@ -448,7 +448,7 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
           keys: { p256dh: row.p256dh, auth: row.auth }
         };
 
-        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id);
+        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id, notifMinutes);
         if (success) {
           totalNotifications++;
           logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
@@ -474,7 +474,7 @@ function generateNotificationContent(personName, offset, minutesBefore) {
 // WEB PUSH IMPLEMENTATION
 // ============================================================================
 
-async function sendPushNotification(subscription, payload, env, subscriptionId = null) {
+async function sendPushNotification(subscription, payload, env, subscriptionId = null, minutesBefore = 0) {
   try {
     const vapidHeaders = await createVapidHeaders(subscription.endpoint, env);
     const encryptedPayload = await encryptPayload(
@@ -483,12 +483,16 @@ async function sendPushNotification(subscription, payload, env, subscriptionId =
       subscription.keys.auth
     );
 
+    // TTL = time until the notification becomes stale
+    // 1-day alert: useful for up to 23 hours; 1-hour: up to 59 min; at-time: 10 min
+    const ttl = minutesBefore > 0 ? (minutesBefore - 1) * 60 : 600;
+
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
         'Content-Encoding': 'aes128gcm',
-        'TTL': '86400',
+        'TTL': String(ttl),
         'Urgency': 'normal',
         ...vapidHeaders
       },
