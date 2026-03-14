@@ -362,7 +362,8 @@ async function subscribeToPush(familyParam) {
                 subscription: subscription.toJSON(),
                 family: utcFamily,
                 notificationTimes: getNotificationTimes(),
-                timezoneOffset: 0
+                timezoneOffset: 0,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             })
         });
 

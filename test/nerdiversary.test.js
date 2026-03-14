@@ -553,20 +553,20 @@ test('New nerdy holidays exist: e Day, Mole Day, Fibonacci Day', () => {
 test('getCalendarEventsAt finds new nerdy holidays', () => {
     const birthDate = new Date('1990-05-15T14:30:00Z');
 
-    // Mole Day (Oct 23) at birth time
-    const moleDay = new Date(2025, 9, 23, birthDate.getHours(), birthDate.getMinutes());
+    // Mole Day (Oct 23) at birth time (UTC)
+    const moleDay = new Date(Date.UTC(2025, 9, 23, 14, 30));
     const moleEvents = Calculator.getCalendarEventsAt(birthDate, moleDay);
     const moleEvent = moleEvents.find(e => e.isSharedHoliday && e.title.includes('Mole Day'));
     assertTrue(moleEvent !== undefined, 'Should find Mole Day');
 
-    // Fibonacci Day (Nov 23) at birth time
-    const fibDay = new Date(2025, 10, 23, birthDate.getHours(), birthDate.getMinutes());
+    // Fibonacci Day (Nov 23) at birth time (UTC)
+    const fibDay = new Date(Date.UTC(2025, 10, 23, 14, 30));
     const fibEvents = Calculator.getCalendarEventsAt(birthDate, fibDay);
     const fibEvent = fibEvents.find(e => e.isSharedHoliday && e.title.includes('Fibonacci Day'));
     assertTrue(fibEvent !== undefined, 'Should find Fibonacci Day');
 
-    // e Day (Feb 7) at birth time
-    const eDay = new Date(2025, 1, 7, birthDate.getHours(), birthDate.getMinutes());
+    // e Day (Feb 7) at birth time (UTC)
+    const eDay = new Date(Date.UTC(2025, 1, 7, 14, 30));
     const eEvents = Calculator.getCalendarEventsAt(birthDate, eDay);
     const eEvent = eEvents.find(e => e.isSharedHoliday && e.title.includes('e Day'));
     assertTrue(eEvent !== undefined, 'Should find e Day');
@@ -645,9 +645,11 @@ test('Worker imports from shared modules', () => {
     const usesCalculator = workerCode.includes('Calculator.calculate');
     assertTrue(usesCalculator, 'Worker should use Calculator.calculate()');
 
-    // Calendar events use Calculator.getCalendarEventsAt for single source of truth
-    const usesGetCalendarEventsAt = workerCode.includes('Calculator.getCalendarEventsAt');
-    assertTrue(usesGetCalendarEventsAt, 'Worker should use Calculator.getCalendarEventsAt()');
+    // Calendar events use Calculator methods for single source of truth
+    const usesGetEarthBirthday = workerCode.includes('Calculator.getEarthBirthdayAt');
+    assertTrue(usesGetEarthBirthday, 'Worker should use Calculator.getEarthBirthdayAt()');
+    const usesGetHolidays = workerCode.includes('Calculator.getHolidaysAt');
+    assertTrue(usesGetHolidays, 'Worker should use Calculator.getHolidaysAt()');
 
     // Check shared.js imports
     const hasSharedImport = workerCode.includes("from '../js/shared.js'");
@@ -1181,14 +1183,8 @@ console.log('\n--- Calendar Event Contract Tests ---');
 
 test('getCalendarEventsAt finds earth birthdays', () => {
     const birthDate = new Date('1990-05-15T14:30:00Z');
-    // 35th birthday at birth time
-    const birthdayTime = new Date(
-        birthDate.getFullYear() + 35,
-        birthDate.getMonth(),
-        birthDate.getDate(),
-        birthDate.getHours(),
-        birthDate.getMinutes()
-    );
+    // 35th birthday at birth time (UTC)
+    const birthdayTime = new Date(Date.UTC(2025, 4, 15, 14, 30));
 
     const events = Calculator.getCalendarEventsAt(birthDate, birthdayTime);
     assertTrue(events.length === 1, `Should find 1 event, got ${events.length}`);
@@ -1199,14 +1195,8 @@ test('getCalendarEventsAt finds earth birthdays', () => {
 
 test('getCalendarEventsAt finds nerdy holidays', () => {
     const birthDate = new Date('1990-05-15T14:30:00Z');
-    // Pi Day (March 14) at birth time
-    const piDay = new Date(
-        2025,
-        2, // March (0-indexed)
-        14,
-        birthDate.getHours(),
-        birthDate.getMinutes()
-    );
+    // Pi Day (March 14) at birth time (UTC)
+    const piDay = new Date(Date.UTC(2025, 2, 14, 14, 30));
 
     const events = Calculator.getCalendarEventsAt(birthDate, piDay);
     const piEvent = events.find(e => e.isSharedHoliday && e.title.includes('Pi Day'));
@@ -1216,14 +1206,8 @@ test('getCalendarEventsAt finds nerdy holidays', () => {
 
 test('getCalendarEventsAt returns empty for non-events', () => {
     const birthDate = new Date('1990-05-15T14:30:00Z');
-    // Random date that's not a birthday or holiday, but at birth time
-    const randomDate = new Date(
-        2025,
-        6, // July
-        20,
-        birthDate.getHours(),
-        birthDate.getMinutes()
-    );
+    // Random date that's not a birthday or holiday, but at birth time (UTC)
+    const randomDate = new Date(Date.UTC(2025, 6, 20, 14, 30));
 
     const events = Calculator.getCalendarEventsAt(birthDate, randomDate);
     assertEqual(events.length, 0, 'Should return no events');
@@ -1231,14 +1215,8 @@ test('getCalendarEventsAt returns empty for non-events', () => {
 
 test('getCalendarEventsAt returns empty for wrong HH:MM', () => {
     const birthDate = new Date('1990-05-15T14:30:00Z');
-    // Birthday date but wrong time
-    const wrongTime = new Date(
-        2025,
-        birthDate.getMonth(),
-        birthDate.getDate(),
-        (birthDate.getHours() + 1) % 24,
-        birthDate.getMinutes()
-    );
+    // Birthday date but wrong time (UTC)
+    const wrongTime = new Date(Date.UTC(2025, 4, 15, 15, 30));
 
     const events = Calculator.getCalendarEventsAt(birthDate, wrongTime);
     assertEqual(events.length, 0, 'Should return no events for wrong time');
@@ -1281,10 +1259,11 @@ test('getCalendarEventsAt matches calculate() for all calendar events', () => {
     assertEqual(matched, totalEvents, `All ${totalEvents} events should match. `);
 });
 
-test('Backtest: calendar events always fire at birth local HH:MM', () => {
-    // All calendar events fire at the birth's local hour:minute.
+test('Backtest: earth birthdays fire at birth local HH:MM', () => {
+    // Earth birthdays fire at the birth's local hour:minute.
     // In the worker (UTC timezone), local = UTC, so this guarantees the SQL
     // query on SUBSTR(birth_datetime, 12, 5) matches event HH:MM.
+    // (Shared holidays now fire at midnight local, handled separately.)
     const birthDatetimes = [
         '1984-05-02T20:37',
         '1990-03-14T10:00',
@@ -1297,12 +1276,9 @@ test('Backtest: calendar events always fire at birth local HH:MM', () => {
     for (const birthDatetime of birthDatetimes) {
         const birthDate = new Date(birthDatetime + ':00Z');
         const allEvents = Calculator.calculate(birthDate, { yearsAhead: 5, includePast: true });
-        const calendarEvents = allEvents.filter(e =>
-            e.id.startsWith('earth-birthday-') || e.isSharedHoliday
-        );
+        const earthBirthdays = allEvents.filter(e => e.id.startsWith('earth-birthday-'));
 
-        for (const event of calendarEvents) {
-            // Calendar events are created at birth's local HH:MM
+        for (const event of earthBirthdays) {
             assertEqual(event.date.getHours(), birthDate.getHours(),
                 `Event ${event.id} hour should match birth hour. `);
             assertEqual(event.date.getMinutes(), birthDate.getMinutes(),
@@ -1338,15 +1314,22 @@ test('Every milestone generator produces events that reach the worker', () => {
         assertTrue(ms > 0, `Offset event "${event.title}" (${event.id}) should have positive offset`);
     }
 
-    // Calendar-based: verify getCalendarEventsAt finds them
+    // Calendar-based: verify the split methods find them
     const calendarEvents = events.filter(e =>
         e.isSharedHoliday || e.id.startsWith('earth-birthday-')
     );
     for (const event of calendarEvents.slice(0, 20)) {
-        const found = Calculator.getCalendarEventsAt(refBirth, event.date);
-        const match = found.find(e => e.id === event.id);
-        assertTrue(match !== undefined,
-            `Calendar event "${event.title}" (${event.id}) must be found by getCalendarEventsAt`);
+        if (event.id.startsWith('earth-birthday-')) {
+            const found = Calculator.getEarthBirthdayAt(refBirth, event.date);
+            const match = found.find(e => e.id === event.id);
+            assertTrue(match !== undefined,
+                `Earth birthday "${event.title}" (${event.id}) must be found by getEarthBirthdayAt`);
+        } else {
+            const found = Calculator.getHolidaysAt(event.date);
+            const match = found.find(e => e.id === event.id);
+            assertTrue(match !== undefined,
+                `Holiday "${event.title}" (${event.id}) must be found by getHolidaysAt`);
+        }
     }
 
     // Every event must be in one of the two groups
@@ -1361,18 +1344,15 @@ test('Every milestone generator produces events that reach the worker', () => {
     }
 });
 
-test('Every nerdy holiday is found by getCalendarEventsAt', () => {
+test('Every nerdy holiday is found by getHolidaysAt', () => {
     // If you add a holiday to nerdyHolidays in milestones.js, this ensures
-    // getCalendarEventsAt will actually find it (so push notifications work).
-    const birthDate = new Date('1990-06-15T10:00:00Z');
-
+    // getHolidaysAt will find it (so push notifications work at midnight local).
     for (const holiday of Milestones.nerdyHolidays) {
-        const holidayDate = new Date(2025, holiday.month, holiday.day,
-            birthDate.getHours(), birthDate.getMinutes());
-        const found = Calculator.getCalendarEventsAt(birthDate, holidayDate);
+        const holidayDate = new Date(Date.UTC(2025, holiday.month, holiday.day));
+        const found = Calculator.getHolidaysAt(holidayDate);
         const match = found.find(e => e.title.includes(holiday.name));
         assertTrue(match !== undefined,
-            `Holiday "${holiday.name}" (month:${holiday.month} day:${holiday.day}) not found by getCalendarEventsAt`);
+            `Holiday "${holiday.name}" (month:${holiday.month} day:${holiday.day}) not found by getHolidaysAt`);
         assertTrue(match.isSharedHoliday === true,
             `Holiday "${holiday.name}" must have isSharedHoliday=true`);
     }

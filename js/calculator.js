@@ -616,9 +616,10 @@ const Calculator = {
 
     _buildNerdyHolidayEvent(holiday, holidayDate) {
         const linkText = holiday.wikiKey ? wikiLink(holiday.wikiKey, holiday.name) : holiday.name;
+        const year = holidayDate.getUTCFullYear();
         return {
-            id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${holidayDate.getFullYear()}`,
-            title: `${holiday.name} ${holidayDate.getFullYear()}`,
+            id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${year}`,
+            title: `${holiday.name} ${year}`,
             description: `${linkText}! (${holiday.desc})`,
             date: holidayDate,
             category: 'pop-culture',
@@ -639,24 +640,24 @@ const Calculator = {
         const events = [];
 
         // Calendar events always fire at the birth hour:minute
-        if (eventTime.getHours() !== birthDate.getHours() ||
-            eventTime.getMinutes() !== birthDate.getMinutes()) {
+        if (eventTime.getUTCHours() !== birthDate.getUTCHours() ||
+            eventTime.getUTCMinutes() !== birthDate.getUTCMinutes()) {
             return events;
         }
 
         // Earth birthday: same month+day as birth, future year
-        if (eventTime.getMonth() === birthDate.getMonth() &&
-            eventTime.getDate() === birthDate.getDate()) {
-            const year = eventTime.getFullYear() - birthDate.getFullYear();
+        if (eventTime.getUTCMonth() === birthDate.getUTCMonth() &&
+            eventTime.getUTCDate() === birthDate.getUTCDate()) {
+            const year = eventTime.getUTCFullYear() - birthDate.getUTCFullYear();
             if (year > 0 && year <= Milestones.MAX_YEARS) {
                 events.push(this._buildEarthBirthdayEvent(year, eventTime));
             }
         }
 
-        // Nerdy holidays
+        // Nerdy holidays (when called without separate holiday handling)
         for (const holiday of Milestones.nerdyHolidays) {
-            if (holiday.month === eventTime.getMonth() &&
-                holiday.day === eventTime.getDate()) {
+            if (holiday.month === eventTime.getUTCMonth() &&
+                holiday.day === eventTime.getUTCDate()) {
                 events.push(this._buildNerdyHolidayEvent(holiday, eventTime));
             }
         }
@@ -664,16 +665,52 @@ const Calculator = {
         return events;
     },
 
+    /**
+     * Get nerdy holidays at a specific date (month+day match).
+     * Used by the worker to fire holiday notifications at midnight local time.
+     */
+    getHolidaysAt(date) {
+        const events = [];
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        for (const holiday of Milestones.nerdyHolidays) {
+            if (holiday.month === month && holiday.day === day) {
+                events.push(this._buildNerdyHolidayEvent(holiday, date));
+            }
+        }
+        return events;
+    },
+
+    /**
+     * Get earth birthday events at a specific time (birth time match + month/day match).
+     * Used by the worker to fire birthday notifications at birth time.
+     */
+    getEarthBirthdayAt(birthDate, eventTime) {
+        const events = [];
+        if (eventTime.getUTCHours() !== birthDate.getUTCHours() ||
+            eventTime.getUTCMinutes() !== birthDate.getUTCMinutes()) {
+            return events;
+        }
+        if (eventTime.getUTCMonth() === birthDate.getUTCMonth() &&
+            eventTime.getUTCDate() === birthDate.getUTCDate()) {
+            const year = eventTime.getUTCFullYear() - birthDate.getUTCFullYear();
+            if (year > 0 && year <= Milestones.MAX_YEARS) {
+                events.push(this._buildEarthBirthdayEvent(year, eventTime));
+            }
+        }
+        return events;
+    },
+
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         for (const holiday of Milestones.nerdyHolidays) {
             for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
-                const holidayDate = new Date(
-                    birthDate.getFullYear() + year,
+                const holidayDate = new Date(Date.UTC(
+                    birthDate.getUTCFullYear() + year,
                     holiday.month,
                     holiday.day,
-                    birthDate.getHours(),
-                    birthDate.getMinutes()
-                );
+                    birthDate.getUTCHours(),
+                    birthDate.getUTCMinutes()
+                ));
 
                 if (holidayDate > birthDate && holidayDate <= maxDate) {
                     addEvent(this._buildNerdyHolidayEvent(holiday, holidayDate));
@@ -684,13 +721,13 @@ const Calculator = {
 
     _addEarthBirthdays(birthDate, maxDate, addEvent) {
         for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
-            const birthdayDate = new Date(
-                birthDate.getFullYear() + year,
-                birthDate.getMonth(),
-                birthDate.getDate(),
-                birthDate.getHours(),
-                birthDate.getMinutes()
-            );
+            const birthdayDate = new Date(Date.UTC(
+                birthDate.getUTCFullYear() + year,
+                birthDate.getUTCMonth(),
+                birthDate.getUTCDate(),
+                birthDate.getUTCHours(),
+                birthDate.getUTCMinutes()
+            ));
 
             if (birthdayDate > birthDate && birthdayDate <= maxDate) {
                 addEvent(this._buildEarthBirthdayEvent(year, birthdayDate));

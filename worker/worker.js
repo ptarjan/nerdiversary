@@ -159,7 +159,7 @@ async function handlePushSubscribe(request, env) {
   }
 
   try {
-    const { subscription, family, notificationTimes, timezoneOffset } = await request.json();
+    const { subscription, family, notificationTimes, timezoneOffset, timezone } = await request.json();
 
     if (!subscription || !subscription.endpoint) {
       return new Response(JSON.stringify({
@@ -176,14 +176,16 @@ async function handlePushSubscribe(request, env) {
     const times = JSON.stringify(notificationTimes || [1440, 60, 0]);
 
     // Upsert subscription (clear deleted_at on re-subscribe)
+    const tz = timezone || 'UTC';
     await env.DB.prepare(`
-      INSERT INTO subscriptions (id, endpoint, p256dh, auth, notification_times, updated_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO subscriptions (id, endpoint, p256dh, auth, notification_times, timezone, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(id) DO UPDATE SET
         endpoint = excluded.endpoint,
         p256dh = excluded.p256dh,
         auth = excluded.auth,
         notification_times = excluded.notification_times,
+        timezone = excluded.timezone,
         updated_at = datetime('now'),
         deleted_at = NULL
     `).bind(
@@ -191,7 +193,8 @@ async function handlePushSubscribe(request, env) {
       subscription.endpoint,
       subscription.keys.p256dh,
       subscription.keys.auth,
-      times
+      times,
+      tz
     ).run();
 
     // Delete existing family members for this subscription
@@ -410,19 +413,19 @@ async function handleScheduled(env) {
 }
 
 /**
- * Handle calendar-based events (earth birthdays + nerdy holidays) using shared Calculator.
- * These can't be expressed as fixed offsets because they fall on specific calendar dates.
- * Queries users by birth HH:MM (since all calendar events fire at the user's birth time),
- * then uses Calculator.calculate() to find matching events for the current minute.
+ * Handle calendar-based events using shared Calculator.
+ * Two sub-paths:
+ *   1. Earth birthdays — fire at the user's birth time (UTC)
+ *   2. Shared holidays — fire at midnight in the user's local timezone
  */
 async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
   let totalNotifications = 0;
 
+  // --- Earth birthdays: match on birth HH:MM ---
   for (const notifMinutes of notificationTimes) {
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
-    const eventHHMM = eventTime.toISOString().slice(11, 16); // "HH:MM"
+    const eventHHMM = eventTime.toISOString().slice(11, 16);
 
-    // Calendar events fire at birth time — query users whose birth HH:MM matches
     const result = await env.DB.prepare(`
       SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
       FROM family_members fm
@@ -437,28 +440,74 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
       if (!times.includes(notifMinutes)) continue;
 
       const birthDate = new Date(row.birth_datetime + ':00Z');
-      const calendarEvents = Calculator.getCalendarEventsAt(birthDate, eventTime);
+      const events = Calculator.getEarthBirthdayAt(birthDate, eventTime);
 
-      for (const event of calendarEvents) {
-        const { title, body } = generateNotificationContent(
-          row.name, { label: event.title, icon: event.icon }, notifMinutes
+      for (const event of events) {
+        totalNotifications += await sendCalendarNotification(
+          row, event, notifMinutes, env, logEntries
         );
-        const subscription = {
-          endpoint: row.endpoint,
-          keys: { p256dh: row.p256dh, auth: row.auth }
-        };
+      }
+    }
+  }
 
-        const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id, notifMinutes);
-        if (success) {
-          totalNotifications++;
-          logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
-          console.log(`Sent: ${title} to ${row.name}`);
-        }
+  // --- Shared holidays: match on midnight in user's local timezone ---
+  for (const notifMinutes of notificationTimes) {
+    const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
+
+    // Get all active subscriptions (deduplicated — one notification per subscription, not per family member)
+    const result = await env.DB.prepare(`
+      SELECT DISTINCT s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times, s.timezone,
+        (SELECT fm.name FROM family_members fm WHERE fm.subscription_id = s.id LIMIT 1) as name
+      FROM subscriptions s
+      WHERE s.deleted_at IS NULL
+    `).all();
+
+    if (!result.results) continue;
+
+    for (const row of result.results) {
+      const times = JSON.parse(row.notification_times || '[1440,60,0]');
+      if (!times.includes(notifMinutes)) continue;
+
+      // Check if eventTime is midnight (00:00) in the user's timezone
+      const tz = row.timezone || 'UTC';
+      const localHHMM = eventTime.toLocaleString('en-GB', {
+        timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false
+      });
+      if (localHHMM !== '00:00') continue;
+
+      // Build a UTC date for the local date (for month/day matching)
+      const localDateStr = eventTime.toLocaleString('en-CA', {
+        timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      const localDate = new Date(localDateStr + 'T00:00:00Z');
+
+      const holidays = Calculator.getHolidaysAt(localDate);
+      for (const event of holidays) {
+        totalNotifications += await sendCalendarNotification(
+          row, event, notifMinutes, env, logEntries
+        );
       }
     }
   }
 
   return totalNotifications;
+}
+
+async function sendCalendarNotification(row, event, notifMinutes, env, logEntries) {
+  const { title, body } = generateNotificationContent(
+    row.name, { label: event.title, icon: event.icon }, notifMinutes
+  );
+  const subscription = {
+    endpoint: row.endpoint,
+    keys: { p256dh: row.p256dh, auth: row.auth }
+  };
+  const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id, notifMinutes);
+  if (success) {
+    logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
+    console.log(`Sent: ${title} to ${row.name}`);
+    return 1;
+  }
+  return 0;
 }
 
 /**

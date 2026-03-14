@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   p256dh TEXT NOT NULL,                   -- Push encryption key
   auth TEXT NOT NULL,                     -- Push auth secret
   notification_times TEXT DEFAULT '[1440,60,0]',  -- JSON array of minutes before
+  timezone TEXT DEFAULT 'UTC',                   -- IANA timezone (e.g. America/Denver)
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
