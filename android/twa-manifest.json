@@ -1,0 +1,42 @@
+{
+  "packageId": "com.paultarjan.nerdiversary",
+  "host": "paultarjan.com",
+  "name": "Nerdiversary",
+  "launcherName": "Nerdiversary",
+  "display": "standalone",
+  "themeColor": "#7C3AED",
+  "themeColorDark": "#0A0A1A",
+  "navigationColor": "#0A0A1A",
+  "navigationColorDark": "#0A0A1A",
+  "navigationDividerColor": "#0A0A1A",
+  "navigationDividerColorDark": "#0A0A1A",
+  "backgroundColor": "#0A0A1A",
+  "enableNotifications": true,
+  "startUrl": "/nerdiversary/",
+  "iconUrl": "https://paultarjan.com/nerdiversary/assets/android-chrome-512x512.png",
+  "maskableIconUrl": "https://paultarjan.com/nerdiversary/assets/maskable-icon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "nerdiversary.keystore",
+    "alias": "nerdiversary"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

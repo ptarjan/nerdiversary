@@ -1,0 +1,17 @@
+*.apk
+*.aab
+*.keystore
+*.jks
+.gradle/
+build/
+app/
+gradle/
+gradlew
+gradlew.bat
+build.exp
+settings.gradle
+build.gradle
+*.properties
+*.idsig
+manifest-checksum.txt
+store_icon.png
