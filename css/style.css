@@ -978,6 +978,8 @@ body {
     justify-content: center;
     z-index: 1001;
     padding: 1rem;
+    /* Scroll when the modal is taller than a small phone screen */
+    overflow-y: auto;
 }
 
 .import-modal-content {
@@ -988,6 +990,8 @@ body {
     max-width: 500px;
     width: 100%;
     text-align: center;
+    /* auto margins keep it centered when short but scrollable (not top-clipped) when tall */
+    margin: auto;
 }
 
 .import-modal-content h3 {
@@ -1041,6 +1045,8 @@ body {
 }
 
 .import-close {
+    /* Space above so it never touches the copy button / share options */
+    margin-top: 1.25rem;
     padding: 0.75rem 2rem;
     background: var(--gradient-primary);
     border: none;
