@@ -11,8 +11,7 @@
 
 // Import shared modules
 import Calculator from '../js/calculator.js';
-import Milestones from '../js/milestones.js';
-import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, generateICal } from '../js/shared.js';
+import { parseFamilyParam, formatNotificationTitle, generateICal, SITE_URL } from '../js/shared.js';
 
 // ============================================================================
 // CORS Headers
@@ -34,28 +33,39 @@ const CORS_HEADERS = {
  * except for Earth birthdays (approximated with MS_PER_YEAR) and nerdy holidays
  * (calendar-based, not offset-based — skipped for now).
  */
-function generateMilestoneOffsets() {
+// Exported for tests
+export function generateMilestoneOffsets() {
   const refBirth = new Date('2000-01-01T00:00:00Z');
   const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
 
-  const offsets = [];
+  // Distinct milestones can land on the same minute (e.g. "1 AU" and
+  // "Light Speed to the Sun", or 0xFFFFFF vs 2^24 seconds after rounding).
+  // Merge them into one notification instead of silently dropping all but one.
+  const byMs = new Map();
   for (const event of events) {
     // Skip calendar-based events that can't be expressed as fixed offsets
     if (event.isSharedHoliday) continue;
     if (event.id.startsWith('earth-birthday-')) continue;
 
     const ms = event.date.getTime() - refBirth.getTime();
-    if (ms > 0) {
-      // Round to nearest minute for consistent matching with minute-precision birth_datetime in DB
-      const msRounded = Math.round(ms / 60000) * 60000;
-      offsets.push({ ms: msRounded, label: event.title, icon: event.icon });
+    if (ms <= 0) continue;
+
+    // Round to nearest minute for consistent matching with minute-precision birth_datetime in DB
+    const msRounded = Math.round(ms / 60000) * 60000;
+    const existing = byMs.get(msRounded);
+    if (existing) {
+      if (!existing.labels.includes(event.title)) {
+        existing.labels.push(event.title);
+      }
+    } else {
+      byMs.set(msRounded, { labels: [event.title], icon: event.icon });
     }
   }
 
   // Earth birthdays and nerdy holidays are calendar-based (same month/day each year),
   // not fixed offsets. They are handled separately via handleCalendarEvents().
 
-  return offsets;
+  return [...byMs.entries()].map(([ms, o]) => ({ ms, label: o.labels.join(' + '), icon: o.icon }));
 }
 
 // Cache milestone offsets (generated once per worker instance)
@@ -94,7 +104,12 @@ const workerHandler = {
     }
 
     if (url.pathname === '/push/notification-log' && request.method === 'GET') {
-      return handleNotificationLog(url, env);
+      return handleNotificationLog(request, url, env);
+    }
+
+    // Milestone share pages: social scrapers get real OG tags, humans get redirected
+    if (url.pathname === '/share') {
+      return handleShareRedirect(url);
     }
 
     // Calendar feed - require family format
@@ -117,6 +132,87 @@ const workerHandler = {
     });
   },
 };
+
+// ============================================================================
+// MILESTONE SHARE PAGES
+// ============================================================================
+
+/** Escape text for safe interpolation into HTML (params are user-controlled) */
+function escapeHtmlText(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Categories that have a pre-rendered OG card in assets/og/
+const OG_CARD_CATEGORIES = new Set([
+  'planetary', 'decimal', 'binary', 'mathematical', 'fibonacci', 'scientific', 'pop-culture'
+]);
+
+/**
+ * Build the share-page HTML for one milestone. GitHub Pages can't emit per-URL
+ * meta tags and scrapers don't run JS, so shared links route through the
+ * worker: bots read the OG tags, humans get redirected to the results page.
+ * Query params: t=title, d=ISO date, i=icon emoji, c=category, n=person name,
+ * f=family param (redirect target on the site — never an arbitrary URL).
+ * Exported for tests.
+ */
+export function buildSharePage(url) {
+  const title = (url.searchParams.get('t') || 'A nerdy milestone').slice(0, 120);
+  const icon = (url.searchParams.get('i') || '🎉').slice(0, 8);
+  const name = (url.searchParams.get('n') || '').slice(0, 60);
+  const category = url.searchParams.get('c') || '';
+  const familyParam = url.searchParams.get('f') || '';
+
+  const date = new Date(url.searchParams.get('d') || '');
+  const dateStr = isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+  // Redirect target is always our results page — f is data, not a URL
+  const target = familyParam
+    ? `${SITE_URL}results.html?family=${encodeURIComponent(familyParam)}`
+    : SITE_URL;
+
+  const ogTitle = `${icon} ${name ? `${name} reaches` : 'Countdown to'} ${title}${dateStr ? ` on ${dateStr}` : ''}!`;
+  const ogImage = `${SITE_URL}assets/og/${OG_CARD_CATEGORIES.has(category) ? category : 'default'}.jpg`;
+  const ogDescription = 'Nerdiversary finds your billion-second birthday, planetary years, and other gloriously nerdy milestones.';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtmlText(ogTitle)}</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="${escapeHtmlText(ogTitle)}">
+<meta property="og:description" content="${escapeHtmlText(ogDescription)}">
+<meta property="og:image" content="${escapeHtmlText(ogImage)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="${escapeHtmlText(ogDescription)}">
+<meta http-equiv="refresh" content="0;url=${escapeHtmlText(target)}">
+</head>
+<body>
+<p>Redirecting to <a href="${escapeHtmlText(target)}">Nerdiversary</a>…</p>
+<script>location.replace(${JSON.stringify(target)});</script>
+</body>
+</html>`;
+
+  return html;
+}
+
+function handleShareRedirect(url) {
+  return new Response(buildSharePage(url), {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+}
 
 // ============================================================================
 // PUSH NOTIFICATION HANDLERS (D1-based)
@@ -204,15 +300,17 @@ async function handlePushSubscribe(request, env) {
 
     // Parse and insert family members
     // Use timezone offset to convert local times to UTC for consistent event calculation
+    // Cap member count and name length — the cron scans every row each minute,
+    // so unbounded input from this public endpoint could degrade it for everyone
     if (family) {
-      const members = parseFamilyParam(family);
+      const members = parseFamilyParam(family).slice(0, 20);
       const offset = typeof timezoneOffset === 'number' ? timezoneOffset : 0;
       for (const member of members) {
         const birthDatetime = formatBirthDatetime(member.dateStr, member.timeStr, offset);
         await env.DB.prepare(`
           INSERT INTO family_members (subscription_id, name, birth_datetime)
           VALUES (?, ?, ?)
-        `).bind(subscriptionId, member.name, birthDatetime).run();
+        `).bind(subscriptionId, member.name.slice(0, 100), birthDatetime).run();
       }
     }
 
@@ -263,9 +361,23 @@ async function handlePushUnsubscribe(request, env) {
 }
 
 /**
- * Return recent notification log entries
+ * Return recent notification log entries.
+ * Debug endpoint — contains every user's name and notification history, so it
+ * requires an admin token: set with `wrangler secret put ADMIN_TOKEN` and call
+ * with `Authorization: Bearer <token>`.
  */
-async function handleNotificationLog(url, env) {
+async function handleNotificationLog(request, url, env) {
+  const auth = request.headers.get('Authorization') || '';
+  if (!env.ADMIN_TOKEN || auth !== `Bearer ${env.ADMIN_TOKEN}`) {
+    return new Response(JSON.stringify({
+      error: 'Unauthorized',
+      message: 'Requires Authorization: Bearer <ADMIN_TOKEN>'
+    }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
   if (!env.DB) {
     return new Response(JSON.stringify({ error: 'D1 not configured' }), {
       status: 503,
@@ -322,6 +434,19 @@ function formatBirthDatetime(dateStr, timeStr, timezoneOffset = 0) {
 // ============================================================================
 
 /**
+ * Parse a subscription row's notification_times JSON.
+ * Defensive: one corrupt row must not crash the whole cron run.
+ */
+function parseNotificationTimes(row) {
+  try {
+    const times = parseNotificationTimes(row);
+    return Array.isArray(times) ? times : [1440, 60, 0];
+  } catch {
+    return [1440, 60, 0];
+  }
+}
+
+/**
  * Scheduled handler - runs every minute
  * Queries D1 for birthdates matching any milestone offset
  */
@@ -365,7 +490,7 @@ async function handleScheduled(env) {
   // For each member, check if their birth datetime matches any milestone offset
   for (const row of members) {
     const birthMs = new Date(row.birth_datetime + ':00Z').getTime();
-    const times = JSON.parse(row.notification_times || '[1440,60,0]');
+    const times = parseNotificationTimes(row);
 
     for (const notifMinutes of notificationTimes) {
       if (!times.includes(notifMinutes)) continue;
@@ -409,6 +534,13 @@ async function handleScheduled(env) {
     await env.DB.batch(stmts);
   }
 
+  // Prune old log entries once a day so the table doesn't grow unbounded
+  if (now.getUTCHours() === 0 && now.getUTCMinutes() === 0) {
+    await env.DB.prepare(
+      "DELETE FROM notification_log WHERE sent_at < datetime('now', '-90 days')"
+    ).run();
+  }
+
   console.log(`Sent ${totalNotifications} notifications`);
 }
 
@@ -436,7 +568,7 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
     if (!result.results) continue;
 
     for (const row of result.results) {
-      const times = JSON.parse(row.notification_times || '[1440,60,0]');
+      const times = parseNotificationTimes(row);
       if (!times.includes(notifMinutes)) continue;
 
       const birthDate = new Date(row.birth_datetime + ':00Z');
@@ -451,21 +583,20 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
   }
 
   // --- Shared holidays: match on midnight in user's local timezone ---
+  // Get all active subscriptions once (deduplicated — one notification per subscription, not per family member)
+  const subsResult = await env.DB.prepare(`
+    SELECT DISTINCT s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times, s.timezone,
+      (SELECT fm.name FROM family_members fm WHERE fm.subscription_id = s.id LIMIT 1) as name
+    FROM subscriptions s
+    WHERE s.deleted_at IS NULL
+  `).all();
+  const subscribers = subsResult.results || [];
+
   for (const notifMinutes of notificationTimes) {
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
 
-    // Get all active subscriptions (deduplicated — one notification per subscription, not per family member)
-    const result = await env.DB.prepare(`
-      SELECT DISTINCT s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times, s.timezone,
-        (SELECT fm.name FROM family_members fm WHERE fm.subscription_id = s.id LIMIT 1) as name
-      FROM subscriptions s
-      WHERE s.deleted_at IS NULL
-    `).all();
-
-    if (!result.results) continue;
-
-    for (const row of result.results) {
-      const times = JSON.parse(row.notification_times || '[1440,60,0]');
+    for (const row of subscribers) {
+      const times = parseNotificationTimes(row);
       if (!times.includes(notifMinutes)) continue;
 
       // Check if eventTime is midnight (00:00) in the user's timezone
@@ -719,6 +850,49 @@ function base64urlDecode(input) {
 // ICAL GENERATION
 // ============================================================================
 
+/**
+ * Build the calendar-feed event list for a family.
+ * Includes events from 30 days in the past to 2 years ahead of `now`
+ * (yearsAhead in Calculator.calculate is measured from BIRTH, so the
+ * window filter is what keeps the feed relevant for adults).
+ * Shared holidays are deduplicated across members, and every other event
+ * gets a per-person unique id so iCal UIDs don't collide in family feeds.
+ * Exported for tests.
+ */
+export function buildFamilyEvents(members, now = new Date()) {
+  const windowStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const windowEnd = new Date(now.getTime() + 2 * 365.2425 * 24 * 60 * 60 * 1000);
+
+  let allEvents = [];
+  const seenHolidays = new Set();
+
+  for (const member of members) {
+    const events = Calculator.calculate(member.birthDate, {
+      yearsAhead: 120,
+      includePast: true,
+      transformEvent: event => {
+        if (event.date < windowStart || event.date > windowEnd) { return null; }
+        if (event.isSharedHoliday) {
+          // Shared holidays are the same for everyone — include once, unprefixed
+          if (seenHolidays.has(event.id)) { return null; }
+          seenHolidays.add(event.id);
+          return event;
+        }
+        // Person prefix on the title is added by generateICal for family feeds
+        return {
+          ...event,
+          id: `${encodeURIComponent(member.name)}-${event.id}`,
+          personName: member.name,
+        };
+      }
+    });
+    allEvents = allEvents.concat(events);
+  }
+
+  allEvents.sort((a, b) => a.date - b.date);
+  return allEvents;
+}
+
 function handleFamilyRequest(url, familyParam) {
   const members = parseFamilyParam(familyParam);
 
@@ -732,21 +906,7 @@ function handleFamilyRequest(url, familyParam) {
     });
   }
 
-  let allEvents = [];
-  for (const member of members) {
-    const events = Calculator.calculate(member.birthDate, {
-      yearsAhead: 2,
-      includePast: true,
-      transformEvent: (event) => ({
-        ...event,
-        personName: member.name,
-        title: `${member.name}: ${event.title}`
-      })
-    });
-    allEvents = allEvents.concat(events);
-  }
-
-  allEvents.sort((a, b) => a.date - b.date);
+  const allEvents = buildFamilyEvents(members);
 
   const format = url.searchParams.get('format');
   if (format === 'json') {

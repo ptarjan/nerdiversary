@@ -88,22 +88,26 @@ const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1
 // Lucas numbers (like Fibonacci but starts 2, 1)
 const LUCAS = [2, 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, 199, 322, 521, 843, 1364, 2207, 3571, 5778, 9349, 15127, 24476, 39603, 64079, 103682, 167761, 271443, 439204, 710647, 1149851, 1860498, 3010349, 4870847, 7881196, 12752043, 20633239, 33385282, 54018521, 87403803];
 
-// Lookup maps for O(1) index access (avoids O(n) indexOf calls)
-const FIBONACCI_INDEX = new Map(FIBONACCI.map((v, i) => [v, i + 1]));
-const LUCAS_INDEX = new Map(LUCAS.map((v, i) => [v, i + 1]));
+// Lookup maps for O(1) index access (avoids O(n) indexOf calls).
+// FIBONACCI omits the leading duplicate 1, so array[i] is conventionally F(i+2)
+// (F(1)=F(2)=1, F(3)=2, ...). LUCAS starts at L(0)=2, so array[i] is L(i).
+const FIBONACCI_INDEX = new Map(FIBONACCI.map((v, i) => [v, i + 2]));
+const LUCAS_INDEX = new Map(LUCAS.map((v, i) => [v, i]));
 
 // Perfect numbers (sum of proper divisors = number)
 const PERFECT_NUMBERS = [6, 28, 496, 8128];
 
 // Triangular numbers T(n) = n*(n+1)/2
+// Goes to n=150 so INTERESTING_TRIANGULAR entries like 5778 (T(107)) and
+// 8128 (T(127)) are reachable by the day-milestone filter
 const TRIANGULAR = [];
-for (let n = 1; n <= 100; n++) {
+for (let n = 1; n <= 150; n++) {
     TRIANGULAR.push(n * (n + 1) / 2);
 }
 const TRIANGULAR_INDEX = new Map(TRIANGULAR.map((v, i) => [v, i]));
 
 // Palindrome numbers (interesting ones for days)
-const PALINDROMES = [101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 202, 212, 303, 313, 404, 414, 505, 515, 606, 616, 707, 717, 808, 818, 909, 919, 1001, 1111, 1221, 1331, 1441, 1551, 1661, 1771, 1881, 1991, 2002, 2112, 2222, 2332, 2442, 2552, 2662, 2772, 2882, 2992, 3003, 3113, 3223, 3333, 4004, 4114, 4224, 4334, 4444, 5005, 5115, 5225, 5335, 5445, 5555, 6006, 6116, 6226, 6336, 6446, 6556, 6666, 7007, 7117, 7227, 7337, 7447, 7557, 7667, 7777, 8008, 8118, 8228, 8338, 8448, 8558, 8668, 8778, 8888, 9009, 9119, 9229, 9339, 9449, 9559, 9669, 9779, 9889, 9999, 10001, 10101, 10201, 11011, 11111, 11211, 11311, 11411, 11511, 11611, 11711, 11811, 11911, 12021, 12121, 12221, 12321];
+const PALINDROMES = [101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 202, 212, 303, 313, 404, 414, 505, 515, 606, 616, 707, 717, 808, 818, 909, 919, 1001, 1111, 1221, 1331, 1441, 1551, 1661, 1771, 1881, 1991, 2002, 2112, 2222, 2332, 2442, 2552, 2662, 2772, 2882, 2992, 3003, 3113, 3223, 3333, 4004, 4114, 4224, 4334, 4444, 5005, 5115, 5225, 5335, 5445, 5555, 5775, 6006, 6116, 6226, 6336, 6446, 6556, 6666, 7007, 7117, 7227, 7337, 7447, 7557, 7667, 7777, 8008, 8118, 8228, 8338, 8448, 8558, 8668, 8778, 8888, 9009, 9119, 9229, 9339, 9449, 9559, 9669, 9779, 9889, 9999, 10001, 10101, 10201, 11011, 11111, 11211, 11311, 11411, 11511, 11611, 11711, 11811, 11911, 12021, 12121, 12221, 12321, 12921];
 
 // Repunit numbers (all 1s)
 const REPUNITS = [11, 111, 1111, 11111, 111111, 1111111, 11111111];
@@ -145,7 +149,10 @@ const DISTANCE_THRESHOLD_BILLION_KM = 1e9;
 const DISTANCE_THRESHOLD_MILLION_KM = 1e6;
 
 // Milestone calculation limits
-const MAX_PLANETARY_YEARS = 200;
+// High enough that fast planets aren't cut off within a lifetime:
+// Mercury completes ~500 orbits in 120 Earth years (the maxDate check
+// stops the loop early for slower planets)
+const MAX_PLANETARY_YEARS = 500;
 const SPEED_OF_LIGHT_MAX_MULTIPLE = 10;
 
 // ============================================================================
@@ -516,8 +523,3 @@ const MilestonesExports = {
 
 // ESM export
 export default MilestonesExports;
-
-// Global export for browsers (when loaded via script tag)
-if (typeof window !== 'undefined') {
-    window.Milestones = MilestonesExports;
-}

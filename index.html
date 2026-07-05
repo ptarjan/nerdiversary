@@ -7,18 +7,20 @@
     <meta name="description" content="Calculate and celebrate your nerdy anniversaries! Discover when you've lived a billion seconds, completed a Mars year, or reached other geeky milestones.">
     <link rel="canonical" href="https://paultarjan.com/nerdiversary/">
 
-    <!-- Open Graph / Social Media -->
+    <!-- Open Graph / Social Media (image must be an absolute PNG URL for scrapers) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://paultarjan.com/nerdiversary/">
     <meta property="og:site_name" content="Nerdiversary">
     <meta property="og:title" content="Nerdiversary - Celebrate Your Nerdy Anniversaries">
     <meta property="og:description" content="Calculate and celebrate your nerdy anniversaries! Discover planetary years, billion-second milestones, and more.">
-    <meta property="og:image" content="https://paultarjan.com/nerdiversary/assets/logo.svg">
-    <meta property="og:image:alt" content="Nerdiversary logo">
+    <meta property="og:image" content="https://paultarjan.com/nerdiversary/assets/og/default.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Nerdiversary — celebrate your nerdy anniversaries">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nerdiversary - Celebrate Your Nerdy Anniversaries">
     <meta name="twitter:description" content="Calculate and celebrate your nerdy anniversaries! Discover planetary years, billion-second milestones, and more.">
-    <meta name="twitter:image" content="https://paultarjan.com/nerdiversary/assets/logo.svg">
+    <meta name="twitter:image" content="https://paultarjan.com/nerdiversary/assets/og/default.jpg">
     <meta name="theme-color" content="#7c3aed">
 
     <!-- Structured Data -->
@@ -172,17 +174,20 @@
 
         <footer class="footer">
             <p class="footer-note">Because celebrating every 365.2425 days is so mainstream</p>
+            <p class="footer-calculators">
+                Milestone calculators:
+                <a href="billion-seconds.html">Billion Seconds</a> ·
+                <a href="10000-days.html">10,000 Days</a> ·
+                <a href="half-birthday.html">Half Birthday</a> ·
+                <a href="mars-year.html">Mars Years</a> ·
+                <a href="1000-weeks.html">1,000 Weeks</a> ·
+                <a href="million-minutes.html">Million Minutes</a>
+            </p>
             <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Feedback</a></p>
         </footer>
     </main>
 
-    <script type="module" src="js/shared.js"></script>
-    <script type="module" src="js/milestones.js"></script>
-    <script type="module" src="js/calculator.js"></script>
-    <script type="module" src="js/nerdiversary.js"></script>
-    <script type="module" src="js/notifications.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
     <script type="module">
         // Register service worker for PWA and push notifications
         import Notifications from './js/notifications.js';

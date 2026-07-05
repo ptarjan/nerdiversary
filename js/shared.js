@@ -6,20 +6,61 @@
 // Cloudflare Worker URL
 export const WORKER_URL = 'https://nerdiversary-calendar.curly-unit-b9e0.workers.dev';
 
+// Canonical site URL (used for share redirects and OG images)
+export const SITE_URL = 'https://paultarjan.com/nerdiversary/';
+
+/**
+ * Convert a local date/time in a specific IANA timezone to UTC.
+ * This handles historical DST correctly — e.g., 2024-05-15 20:37
+ * in America/Denver is MDT (UTC-6), not MST (UTC-7).
+ * @param {string} dateStr - Date string in YYYY-MM-DD format
+ * @param {string} timeStr - Time string in HH:MM format
+ * @param {string} timezone - IANA timezone name (e.g. "America/Denver")
+ * @returns {Date}
+ */
+export function localToUtcWithTimezone(dateStr, timeStr, timezone) {
+    // Create a UTC date as a starting guess
+    const guess = new Date(`${dateStr}T${timeStr}:00Z`);
+    // Get the offset for this date in the target timezone
+    const utcStr = guess.toLocaleString('en-US', { timeZone: 'UTC' });
+    const tzStr = guess.toLocaleString('en-US', { timeZone: timezone });
+    const offsetMs = new Date(utcStr).getTime() - new Date(tzStr).getTime();
+    // Apply offset: local + offset = UTC
+    return new Date(guess.getTime() + offsetMs);
+}
+
 /**
  * Parse family parameter string into array of members
- * @param {string} familyParam - Comma-separated "Name|Date|Time" entries
- * @returns {Array<{name: string, dateStr: string, timeStr: string, birthDate: Date}>}
+ * @param {string} familyParam - Comma-separated "Name|Date|Time|Timezone" entries
+ * @returns {Array<{name: string, dateStr: string, timeStr: string, timezone: string, birthDate: Date}>}
  */
 export function parseFamilyParam(familyParam) {
     try {
         return familyParam.split(',').map(m => {
             const parts = m.split('|');
-            const name = decodeURIComponent(parts[0] || '');
+            let name;
+            try {
+                name = decodeURIComponent(parts[0] || '');
+            } catch {
+                // Legacy/hand-typed URLs may contain a raw % — keep the name as-is
+                // rather than dropping the whole family
+                name = parts[0] || '';
+            }
             const dateStr = parts[1] || '';
             const timeStr = parts[2] || '00:00';
             const timezone = parts[3] || '';
-            const birthDate = new Date(`${dateStr}T${timeStr}:00`);
+            let birthDate;
+            if (timezone) {
+                try {
+                    // Explicit birth timezone: convert to the true UTC instant
+                    birthDate = localToUtcWithTimezone(dateStr, timeStr, timezone);
+                } catch {
+                    // Invalid timezone string — fall back to environment-local parsing
+                    birthDate = new Date(`${dateStr}T${timeStr}:00`);
+                }
+            } else {
+                birthDate = new Date(`${dateStr}T${timeStr}:00`);
+            }
             return { name, dateStr, timeStr, timezone, birthDate };
         }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
     } catch {
@@ -41,10 +82,9 @@ export function formatNotificationTitle(icon, minutesBefore) {
     } else if (minutesBefore < 1440) {
         const hours = Math.round(minutesBefore / 60);
         return `${icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
-    } else {
-        const days = Math.round(minutesBefore / 1440);
-        return `${icon} ${days} day${days > 1 ? 's' : ''} away!`;
     }
+    const days = Math.round(minutesBefore / 1440);
+    return `${icon} ${days} day${days > 1 ? 's' : ''} away!`;
 }
 
 /**
@@ -69,6 +109,34 @@ export function escapeICalText(text) {
         .replace(/;/g, '\\;')
         .replace(/,/g, '\\,')
         .replace(/\n/g, '\\n');
+}
+
+/**
+ * Fold an iCal content line to 75 octets per RFC 5545 §3.1.
+ * Continuation lines start with a single space. Splits on code point
+ * boundaries so multi-byte characters (emoji) are never cut in half.
+ * @param {string} line
+ * @returns {string} The folded line (may contain CRLF + space)
+ */
+export function foldICalLine(line) {
+    const encoder = new TextEncoder();
+    if (encoder.encode(line).length <= 75) { return line; }
+
+    const folded = [];
+    let current = '';
+    let currentOctets = 0;
+    for (const ch of line) {
+        const chOctets = encoder.encode(ch).length;
+        if (currentOctets + chOctets > 75) {
+            folded.push(current);
+            current = ' ';
+            currentOctets = 1;
+        }
+        current += ch;
+        currentOctets += chOctets;
+    }
+    folded.push(current);
+    return folded.join('\r\n');
 }
 
 /**
@@ -143,5 +211,5 @@ export function generateICal(events, isFamily = false) {
     }
 
     lines.push('END:VCALENDAR');
-    return lines.join('\r\n');
+    return lines.map(foldICalLine).join('\r\n');
 }

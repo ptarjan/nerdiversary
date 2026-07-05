@@ -1,16 +1,9 @@
 /**
  * Shared Nerdiversary Calculator
  * Core logic for calculating milestone events, used by both website and worker
- *
- * In browser: Requires js/milestones.js to be loaded first
- * In ESM: Milestones is imported below
  */
 
-// ESM import
-import MilestonesModule from './milestones.js';
-
-// Use global version if available (browser), otherwise use imported module
-const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
+import Milestones from './milestones.js';
 
 // Helper to create Wikipedia link HTML
 function wikiLink(key, text) {
@@ -18,14 +11,63 @@ function wikiLink(key, text) {
     return url ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
 }
 
+// =============================================================================
+// RARITY TIERS
+// Legendary = once-or-twice-a-lifetime showstoppers (the ones worth sharing),
+// rare = notable, common = everything else. Tune freely — display-only.
+// =============================================================================
+
+const LEGENDARY_IDS = new Set([
+    'seconds-1000000000', 'seconds-2000000000', 'seconds-3000000000',
+    'days-10000', 'days-20000', 'days-30000',
+    'weeks-1000', 'weeks-2000', 'weeks-3000',
+    'hours-1000000',
+    'binary-seconds-30', 'binary-seconds-31', 'binary-seconds-32',
+    'pop-42-Million-Seconds',
+    'lightspeed-proximaCentauri',
+    'jupiter-1', 'saturn-1', 'uranus-1', 'neptune-1',
+    'earth-birthday-42', 'earth-birthday-64', 'earth-birthday-100',
+    'pi-1000000000', 'e-1000000000', 'phi-1000000000',
+]);
+
+const RARE_IDS = new Set([
+    'seconds-100000000', 'seconds-500000000', 'seconds-1234567890',
+    'days-1000', 'days-5000', 'days-15000', 'days-25000',
+    'hours-10000', 'hours-100000',
+    'minutes-1000000',
+    'weeks-500', 'weeks-1500', 'weeks-2500',
+    'months-1000',
+    'hex-0xDEADBEEF',
+    'pop-1-337-Days',
+    'mercury-1', 'venus-1', 'mars-1',
+    'lunation-1000',
+]);
+
+function classifyRarity(event) {
+    if (LEGENDARY_IDS.has(event.id)) { return 'legendary'; }
+    if (RARE_IDS.has(event.id)) { return 'rare'; }
+
+    // Earth birthdays with a special mathematical property are rare
+    const bday = event.id.match(/^earth-birthday-(\d+)$/);
+    if (bday) {
+        const year = parseInt(bday[1], 10);
+        if (Milestones.primeAges.has(year) || Milestones.squareAges[year] ||
+            Milestones.powerOf2Ages[year] || Milestones.cubeAges[year] ||
+            Milestones.hexRoundAges[year]) {
+            return 'rare';
+        }
+    }
+    return 'common';
+}
+
 const Calculator = {
     /**
      * Calculate all nerdiversary milestones
      * @param {Date} birthDate - The birth date/time
-     * @param {Object} options - Configuration options
-     * @param {number} options.yearsAhead - How many years ahead (default 100)
-     * @param {boolean} options.includePast - Include past events (default true)
-     * @param {function} options.transformEvent - Optional hook to transform events
+     * @param {Object} [options] - Configuration options
+     * @param {number} [options.yearsAhead] - How many years ahead (default 100)
+     * @param {boolean} [options.includePast] - Include past events (default true)
+     * @param {?Function} [options.transformEvent] - Optional hook to transform events
      * @returns {Array} Array of milestone events
      */
     calculate(birthDate, options = {}) {
@@ -44,6 +86,7 @@ const Calculator = {
             if (event.date > maxDate) { return; }
             if (!includePast && event.date < now) { return; }
 
+            event.rarity = classifyRarity(event);
             const finalEvent = transformEvent ? transformEvent(event) : event;
             if (finalEvent) { events.push(finalEvent); }
         };
@@ -472,8 +515,12 @@ const Calculator = {
 
         // e^π milestones
         const ePi = Math.pow(Math.E, Math.PI);
-        const multipliers = [[1e6, 'Million'], [1e7, '10 Million'], [1e8, '100 Million']];
-        for (const [mult, label] of multipliers) {
+        const multipliers = [
+            { mult: 1e6, label: 'Million' },
+            { mult: 1e7, label: '10 Million' },
+            { mult: 1e8, label: '100 Million' }
+        ];
+        for (const { mult, label } of multipliers) {
             addEvent({
                 id: `e-pi-${mult}`,
                 title: `e^π × ${label} Seconds`,
@@ -576,7 +623,7 @@ const Calculator = {
             for (const { frac, label, decimal } of fractions) {
                 const exactAge = age - 1 + frac;
                 const eventDate = new Date(birthDate.getTime() + exactAge * Milestones.MS_PER_YEAR);
-                if (eventDate > maxDate) return;
+                if (eventDate > maxDate) { return; }
                 addEvent({
                     id: `frac-birthday-${age}-${frac}`,
                     title: `${age - 1}${label} Years Old`,
@@ -703,7 +750,9 @@ const Calculator = {
 
     _addNerdyHolidays(birthDate, maxDate, addEvent) {
         for (const holiday of Milestones.nerdyHolidays) {
-            for (let year = 1; year <= Milestones.MAX_YEARS; year++) {
+            // Start at year 0 so holidays later in the birth year are included
+            // (the holidayDate > birthDate check below excludes ones already past)
+            for (let year = 0; year <= Milestones.MAX_YEARS; year++) {
                 const holidayDate = new Date(Date.UTC(
                     birthDate.getUTCFullYear() + year,
                     holiday.month,

@@ -32,6 +32,10 @@ compatibility_date = "2024-01-01"
 #    wrangler secret put VAPID_PRIVATE_KEY
 #    wrangler secret put VAPID_SUBJECT   # e.g., "mailto:you@example.com"
 #
+# 4b. (Optional) To use the /push/notification-log debug endpoint:
+#    wrangler secret put ADMIN_TOKEN
+#    then: curl -H "Authorization: Bearer <token>" .../push/notification-log
+#
 # 5. Uncomment the D1 binding below and add your database ID
 # ============================================================================
 

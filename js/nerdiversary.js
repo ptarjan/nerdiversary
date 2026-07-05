@@ -1,17 +1,10 @@
 /**
  * Nerdiversary Calculator
  * Wrapper around shared Calculator for website use
- *
- * In browser: Requires js/milestones.js and js/calculator.js to be loaded first
- * In ESM: Dependencies are imported below
  */
 
-// ESM imports for Node.js and bundlers
-import MilestonesModule from './milestones.js';
-import CalculatorModule from './calculator.js';
-// Use global versions if available (browser), otherwise use imported modules
-const MilestonesRef = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
-const CalculatorRef = typeof window !== 'undefined' && window.Calculator ? window.Calculator : CalculatorModule;
+import MilestonesRef from './milestones.js';
+import CalculatorRef from './calculator.js';
 
 const Nerdiversary = {
 
@@ -34,7 +27,7 @@ const Nerdiversary = {
         return events.map(event => ({
             ...event,
             isPast: event.date < now,
-            daysFromNow: Math.floor((event.date - now) / MilestonesRef.MS_PER_DAY)
+            daysFromNow: Math.floor((event.date.getTime() - now.getTime()) / MilestonesRef.MS_PER_DAY)
         }));
     },
 
@@ -85,14 +78,6 @@ const Nerdiversary = {
             if (absDays < 30) { return `${Math.floor(absDays / 7)} weeks ago`; }
             if (absDays < 365) { return `${Math.floor(absDays / 30)} months ago`; }
             return `${(absDays / 365).toFixed(1)} years ago`;
-    },
-
-    /**
-     * Get the next upcoming event
-     */
-    getNextEvent(events) {
-        const now = new Date();
-        return events.find(e => e.date > now);
     }
 };
 

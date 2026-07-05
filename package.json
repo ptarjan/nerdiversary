@@ -9,8 +9,11 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm test && npm run test:e2e",
-    "lint": "eslint js/ worker/ test/",
-    "lint:fix": "eslint js/ worker/ test/ --fix",
+    "lint": "eslint js/ worker/ test/ scripts/",
+    "lint:fix": "eslint js/ worker/ test/ scripts/ --fix",
+    "typecheck": "tsc -p jsconfig.json",
+    "generate:og": "node scripts/generate-og-cards.js",
+    "generate:landing": "node scripts/generate-landing-pages.js",
     "serve": "npx serve -l 8080"
   },
   "repository": {
@@ -30,6 +33,7 @@
     "@playwright/test": "^1.57.0",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
-    "serve": "^14.2.5"
+    "serve": "^14.2.5",
+    "typescript": "^6.0.3"
   }
 }

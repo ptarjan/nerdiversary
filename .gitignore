@@ -8,3 +8,9 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local dev TLS certs (private keys must never be committed)
+*.pem
+
+# Wrangler local state
+.wrangler/

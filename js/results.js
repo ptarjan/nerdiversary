@@ -2,16 +2,11 @@
  * Results page script - displays nerdiversary events for individuals or families
  */
 
-// ESM imports to ensure module dependency ordering
-import NerdiversaryModule from './nerdiversary.js';
-import MilestonesModule from './milestones.js';
-import NotificationsModule from './notifications.js';
+import Nerdiversary from './nerdiversary.js';
+import Milestones from './milestones.js';
+import Notifications from './notifications.js';
+import * as Storage from './storage.js';
 import { parseFamilyParam, formatICalDate, getCategoryInfo, generateICal, WORKER_URL } from './shared.js';
-
-// Use window globals if available (backwards compat), otherwise imported modules
-const Nerdiversary = typeof window !== 'undefined' && window.Nerdiversary ? window.Nerdiversary : NerdiversaryModule;
-const Milestones = typeof window !== 'undefined' && window.Milestones ? window.Milestones : MilestonesModule;
-const Notifications = typeof window !== 'undefined' && window.Notifications ? window.Notifications : NotificationsModule;
 
 let allEvents = [];
 let familyMembers = [];
@@ -79,10 +74,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // If no URL params or parsing failed, try loading from storage (PWA persistence)
-        if (familyMembers.length === 0 && window.NerdiversaryStorage) {
+        if (familyMembers.length === 0) {
             try {
                 // Timeout storage loading in case IndexedDB hangs (common on iOS PWA)
-                const storagePromise = window.NerdiversaryStorage.loadFamily();
+                const storagePromise = Storage.loadFamily();
                 const storedFamily = await Promise.race([
                     storagePromise,
                     new Promise((_, reject) =>
@@ -90,31 +85,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     )
                 ]);
                 if (storedFamily && storedFamily.length > 0) {
-                    familyMembers = storedFamily.map(m => {
-                        const timeStr = m.time || '00:00';
-                        const birthDate = new Date(`${m.date}T${timeStr}:00`);
-                        return {
-                            name: m.name,
-                            dateStr: m.date,
-                            timeStr: m.time || '',
-                            timezone: m.timezone || '',
-                            birthDate
-                        };
-                    }).filter(m => m.name && !isNaN(m.birthDate.getTime()));
+                    // Build the same param format as shared links, then parse it with
+                    // the shared parser so timezone handling matches the URL path
+                    const newFamilyParam = storedFamily.map(m => {
+                        let param = `${encodeURIComponent(m.name)}|${m.date}`;
+                        if (m.time || m.timezone) {
+                            param += `|${m.time || ''}`;
+                        }
+                        if (m.timezone) {
+                            param += `|${m.timezone}`;
+                        }
+                        return param;
+                    }).join(',');
+                    familyMembers = parseFamilyParam(newFamilyParam);
 
-                    // Update URL for shareability (without triggering navigation)
+                    // Update URL for shareability (without triggering navigation).
+                    // Encode the whole value so URLSearchParams.get() round-trips names
+                    // containing , | % (it decodes once on read)
                     if (familyMembers.length > 0) {
-                        const newFamilyParam = storedFamily.map(m => {
-                            let param = `${encodeURIComponent(m.name)}|${m.date}`;
-                            if (m.time || m.timezone) {
-                                param += `|${m.time || ''}`;
-                            }
-                            if (m.timezone) {
-                                param += `|${m.timezone}`;
-                            }
-                            return param;
-                        }).join(',');
-                        const newUrl = `${window.location.pathname}?family=${newFamilyParam}`;
+                        const newUrl = `${window.location.pathname}?family=${encodeURIComponent(newFamilyParam)}`;
                         window.history.replaceState({}, '', newUrl);
                     }
                 }
@@ -322,6 +311,12 @@ function displayNextEvent() {
     const categoryInfo = getCategoryInfo(nextEvent.category);
     const showPerson = familyMembers.length > 1;
 
+    // Tease the next once-in-a-lifetime milestone if it isn't already the next event
+    const nextLegendary = upcomingEvents.find(e => e.rarity === 'legendary');
+    const legendaryLine = nextLegendary && nextLegendary !== nextEvent
+        ? `<div class="next-legendary">💎 Next legendary: ${nextLegendary.icon} ${nextLegendary.title}${showPerson ? ` (${escapeHtml(nextLegendary.personName)})` : ''} · ${Nerdiversary.formatDate(nextLegendary.date)}</div>`
+        : '';
+
     container.innerHTML = `
         <div class="countdown-title">${nextEvent.icon} ${nextEvent.title}</div>
         ${showPerson ? `<div class="countdown-person" style="background: ${nextEvent.personColor}">${escapeHtml(nextEvent.personName)}</div>` : ''}
@@ -345,6 +340,7 @@ function displayNextEvent() {
             </div>
         </div>
         <span class="countdown-category">${categoryInfo.icon} ${categoryInfo.name}</span>
+        ${legendaryLine}
     `;
 }
 
@@ -439,12 +435,17 @@ function displayTimeline() {
         const categoryInfo = getCategoryInfo(event.category);
         const isNext = event.id === nextEventId;
         const isPast = event.date < now;
+        const rarityBadges = {
+            legendary: '<span class="rarity-badge legendary">💎 Legendary</span>',
+            rare: '<span class="rarity-badge rare">⭐ Rare</span>'
+        };
+        const rarityBadge = rarityBadges[event.rarity] || '';
 
         return `
-            <div class="event-card ${isPast ? 'past' : ''} ${isNext ? 'next' : ''}" data-category="${event.category}">
+            <div class="event-card ${isPast ? 'past' : ''} ${isNext ? 'next' : ''} rarity-${event.rarity || 'common'}" data-category="${event.category}">
                 <div class="event-icon">${event.icon}</div>
                 <div class="event-content">
-                    <h3 class="event-title">${event.title}</h3>
+                    <h3 class="event-title">${event.title} ${rarityBadge}</h3>
                     ${showPerson ? `<span class="event-person" style="background: ${event.personColor}">${escapeHtml(event.personName)}</span>` : ''}
                     <p class="event-description">${event.description}</p>
                     <div class="event-meta">
@@ -909,9 +910,6 @@ function createGoogleCalendarUrl(event) {
 function downloadICalendar() {
     // Get all upcoming events
     const upcomingEvents = allEvents.filter(e => !e.isPast);
-
-    // Use first person's birthdate as reference
-    const { birthDate } = familyMembers[0];
     const icalContent = generateICal(upcomingEvents, familyMembers.length > 1);
 
     // Create download
@@ -944,8 +942,11 @@ function shareResults() {
             title: familyMembers.length > 1 ? 'Our Family Nerdiversaries' : 'My Nerdiversaries',
             text: shareText,
             url: shareUrl
-        }).catch(() => {
-            copyToClipboard(shareUrl);
+        }).catch(err => {
+            // User cancelling the share sheet is not a failure — don't copy
+            if (err.name !== 'AbortError') {
+                copyToClipboard(shareUrl);
+            }
         });
     } else {
         copyToClipboard(shareUrl);
@@ -1002,20 +1003,29 @@ function generateShareText(event) {
     const categoryHooks = hooks[event.category] || hooks.decimal;
     const baseText = categoryHooks[Math.floor(Math.random() * categoryHooks.length)];
 
-    return baseText;
+    return event.rarity === 'legendary'
+        ? `💎 Once-in-a-lifetime milestone! ${baseText}`
+        : baseText;
 }
 
 /**
  * Show share modal for a specific event
  */
 function showShareModal(event) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shareUrl = `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
+    // Milestone shares go through the worker /share route so link previews get
+    // milestone-specific OG tags and a card image (scrapers don't run JS)
+    const familyParam = new URLSearchParams(window.location.search).get('family') || '';
+    const shareParams = new URLSearchParams({
+        t: event.title,
+        d: event.date.toISOString(),
+        i: event.icon,
+        c: event.category
+    });
+    if (event.personName && event.personName !== 'Everyone') { shareParams.set('n', event.personName); }
+    if (familyParam) { shareParams.set('f', familyParam); }
+    const shareUrl = `${WORKER_URL}/share?${shareParams.toString()}`;
     const shareText = generateShareText(event);
     const fullShareText = `${shareText}\n\nFind your nerdy milestones:`;
-
-    // Escape text for use in inline onclick attributes
-    const escapeForOnclick = str => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
 
     // Social share URLs
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
@@ -1048,7 +1058,7 @@ function showShareModal(event) {
                 <a href="${linkedinUrl}" target="_blank" class="share-option linkedin" title="Share on LinkedIn">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 </a>
-                <button class="share-option copy" title="Copy to clipboard" onclick="copyMilestoneShare('${escapeForOnclick(fullShareText)}', '${escapeForOnclick(shareUrl)}')">
+                <button class="share-option copy" title="Copy to clipboard">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
             </div>
@@ -1056,6 +1066,11 @@ function showShareModal(event) {
         </div>
     `;
     document.body.appendChild(modal);
+
+    // Attach via listener (not inline onclick) so user-provided names can't inject markup
+    modal.querySelector('.share-option.copy').addEventListener('click', () => {
+        copyMilestoneShare(fullShareText, shareUrl);
+    });
 
     modal.addEventListener('click', e => {
         if (e.target === modal) { modal.remove(); }
@@ -1079,9 +1094,6 @@ function copyMilestoneShare(text, url) {
         showToast('Copied to clipboard!');
     });
 }
-
-// Expose to window for onclick handlers
-window.copyMilestoneShare = copyMilestoneShare;
 
 /**
  * Copy text to clipboard

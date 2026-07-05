@@ -18,7 +18,7 @@ Calculate and celebrate your nerdy anniversaries! Discover when you've lived a b
 - **Number Theory** - Perfect numbers, triangular numbers, palindromes, and repunits
 - **Speed of Light** - Light-seconds, light-minutes, and cosmic distance milestones (Moon, Mars, Voyager 1, Proxima Centauri)
 - **Pop Culture** - Hitchhiker's Guide (42), 1337 (leet)
-- **Nerdy Holidays** - Pi Day (Mar 14), May the 4th, Tau Day (Jun 28) milestones
+- **Nerdy Holidays** - Pi Day, e Day, Tau Day, Mole Day, Fibonacci Day, and May the 4th
 
 ## Calendar Integration
 
@@ -58,6 +58,15 @@ npm run test:e2e
 
 # Lint code
 npm run lint
+
+# Typecheck shared logic (JSDoc-based, no build step)
+npm run typecheck
+
+# Regenerate OG share cards (assets/og/) after design changes
+npm run generate:og
+
+# Regenerate SEO landing pages + sitemap after copy changes
+npm run generate:landing
 
 # Start local server
 npm run serve

@@ -170,26 +170,4 @@ self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-
-    // Handle scheduled notification request
-    if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
-        const { title, body, icon, tag, timestamp, data } = event.data;
-        const delay = timestamp - Date.now();
-
-        if (delay > 0) {
-            // Store in IndexedDB for persistence (simplified - using setTimeout for demo)
-            // In production, use IndexedDB and periodic sync
-            setTimeout(() => {
-                self.registration.showNotification(title, {
-                    body,
-                    icon: icon || './assets/icon-192x192.png',
-                    badge: './assets/favicon-96x96.png',
-                    tag: tag || 'nerdiversary-scheduled',
-                    data: data || {},
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true
-                });
-            }, Math.min(delay, 2147483647)); // Max setTimeout delay
-        }
-    }
 });

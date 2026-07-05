@@ -176,8 +176,8 @@ export default [
     }
   },
   {
-    // Playwright config
-    files: ['playwright.config.js'],
+    // Playwright config and dev-time generator scripts run in Node
+    files: ['playwright.config.js', 'scripts/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,

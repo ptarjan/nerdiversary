@@ -3,7 +3,7 @@
  * Handles service worker registration, permissions, and notification scheduling
  */
 
-import { formatNotificationTitle, WORKER_URL } from './shared.js';
+import { formatNotificationTitle, localToUtcWithTimezone, WORKER_URL } from './shared.js';
 
 // Storage keys
 const STORAGE_KEY_NOTIFICATIONS_ENABLED = 'nerdiversary-notifications-enabled';
@@ -185,7 +185,7 @@ async function showNotification(title, options = {}) {
         const registration = await navigator.serviceWorker.ready;
 
         const defaultOptions = {
-            icon: './assets/icon-192.png',
+            icon: './assets/icon-192x192.png',
             badge: './assets/favicon-96x96.png',
             vibrate: [200, 100, 200],
             requireInteraction: true,
@@ -229,6 +229,12 @@ function scheduleNotification(event, minutesBefore = 0) {
 
     const delay = notificationTime.getTime() - now.getTime();
 
+    // setTimeout clamps delays above 2^31-1 ms (~24.8 days), which would make
+    // the notification fire EARLY. Skip it — a later page load will reschedule.
+    if (delay > 2147483647) {
+        return null;
+    }
+
     // Generate notification content
     const title = formatNotificationTitle(event.icon, minutesBefore);
     const body = event.title;
@@ -242,7 +248,7 @@ function scheduleNotification(event, minutesBefore = 0) {
         if (isEnabled() && Notification.permission === 'granted') {
             await showNotification(title, {
                 body,
-                icon: './assets/icon-192.png',
+                icon: './assets/icon-192x192.png',
                 tag: notificationId,
                 data: {
                     eventId: event.id,
@@ -250,7 +256,7 @@ function scheduleNotification(event, minutesBefore = 0) {
                 }
             });
         }
-    }, Math.min(delay, 2147483647)); // Max safe setTimeout value
+    }, delay);
 
     return {
         id: notificationId,
@@ -346,7 +352,7 @@ async function subscribeToPush(familyParam) {
                 utcDate = new Date(`${dateStr}T${timeStr}:00`);
             }
 
-            if (isNaN(utcDate.getTime())) return member; // pass through invalid
+            if (isNaN(utcDate.getTime())) { return member; } // pass through invalid
             const utcDateStr = utcDate.toISOString().slice(0, 10);
             const utcTimeStr = utcDate.toISOString().slice(11, 16);
             return `${name}|${utcDateStr}|${utcTimeStr}`;
@@ -363,7 +369,7 @@ async function subscribeToPush(familyParam) {
                 family: utcFamily,
                 notificationTimes: getNotificationTimes(),
                 timezoneOffset: 0,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone
             })
         });
 
@@ -432,22 +438,6 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 /**
- * Convert a local date/time in a specific IANA timezone to UTC.
- * This handles historical DST correctly — e.g., 2024-05-15 20:37
- * in America/Denver is MDT (UTC-6), not MST (UTC-7).
- */
-function localToUtcWithTimezone(dateStr, timeStr, timezone) {
-    // Create a UTC date as a starting guess
-    const guess = new Date(`${dateStr}T${timeStr}:00Z`);
-    // Get the offset for this date in the target timezone
-    const utcStr = guess.toLocaleString('en-US', { timeZone: 'UTC' });
-    const tzStr = guess.toLocaleString('en-US', { timeZone: timezone });
-    const offsetMs = new Date(utcStr).getTime() - new Date(tzStr).getTime();
-    // Apply offset: local + offset = UTC
-    return new Date(guess.getTime() + offsetMs);
-}
-
-/**
  * Initialize notifications system
  */
 async function initialize() {
@@ -496,8 +486,3 @@ const Notifications = {
 };
 
 export default Notifications;
-
-// Also expose on window for backwards compatibility
-if (typeof window !== 'undefined') {
-    window.Notifications = Notifications;
-}

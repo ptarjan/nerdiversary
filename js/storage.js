@@ -60,24 +60,20 @@ function initDB() {
 }
 
 /**
- * Save to IndexedDB
+ * Save to IndexedDB. Throws on failure so callers can report accurately.
  * @param {Array} family - Family data to save
  * @returns {Promise<void>}
  */
 async function saveToIndexedDB(family) {
-    try {
-        const database = await withTimeout(initDB(), 3000, 'IndexedDB init');
-        return await withTimeout(new Promise((resolve, reject) => {
-            const transaction = database.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.put(family, STORAGE_KEY);
+    const database = await withTimeout(initDB(), 3000, 'IndexedDB init');
+    return await withTimeout(new Promise((resolve, reject) => {
+        const transaction = database.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.put(family, STORAGE_KEY);
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve();
-        }), 3000, 'IndexedDB save');
-    } catch (e) {
-        console.warn('IndexedDB save failed:', e);
-    }
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+    }), 3000, 'IndexedDB save');
 }
 
 /**
@@ -112,7 +108,7 @@ function isLocalStorageAvailable() {
         const result = localStorage.getItem(testKey);
         localStorage.removeItem(testKey);
         return result === testKey;
-    } catch (e) {
+    } catch {
         return false;
     }
 }
@@ -182,7 +178,7 @@ async function loadFamily() {
                 if (isLocalStorageAvailable()) {
                     try {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(validFamily));
-                    } catch (e) {
+                    } catch {
                         // Ignore - at least we have IndexedDB
                     }
                 }
@@ -196,9 +192,4 @@ async function loadFamily() {
     return null;
 }
 
-// Export for use in main.js
-window.NerdiversaryStorage = {
-    saveFamily,
-    loadFamily,
-    isLocalStorageAvailable
-};
+export { saveFamily, loadFamily, isLocalStorageAvailable };

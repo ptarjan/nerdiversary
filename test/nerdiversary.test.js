@@ -7,7 +7,8 @@
 import Milestones from '../js/milestones.js';
 import Nerdiversary from '../js/nerdiversary.js';
 import Calculator from '../js/calculator.js';
-import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo } from '../js/shared.js';
+import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo, generateICal, localToUtcWithTimezone } from '../js/shared.js';
+import { buildFamilyEvents, generateMilestoneOffsets, buildSharePage } from '../worker/worker.js';
 
 // Node.js built-ins for worker.js verification tests
 import fs from 'fs';
@@ -145,6 +146,18 @@ test('LUCAS array is actually Lucas sequence (starts 2, 1)', () => {
     }
 });
 
+test('Sequence index maps match mathematical convention', () => {
+    // F(1)=F(2)=1, F(3)=2, ... so F(31) = 1,346,269
+    assertEqual(Milestones.FIBONACCI_INDEX.get(2), 3, 'F(3) = 2: ');
+    assertEqual(Milestones.FIBONACCI_INDEX.get(832040), 30, 'F(30) = 832,040: ');
+    assertEqual(Milestones.FIBONACCI_INDEX.get(1346269), 31, 'F(31) = 1,346,269: ');
+
+    // L(0)=2, L(1)=1, L(2)=3, ... so L(5) = 11
+    assertEqual(Milestones.LUCAS_INDEX.get(2), 0, 'L(0) = 2: ');
+    assertEqual(Milestones.LUCAS_INDEX.get(11), 5, 'L(5) = 11: ');
+    assertEqual(Milestones.LUCAS_INDEX.get(123), 10, 'L(10) = 123: ');
+});
+
 test('Perfect numbers are correct', () => {
     const perfectNumbers = Milestones.PERFECT_NUMBERS;
     // 6 = 1 + 2 + 3
@@ -174,6 +187,31 @@ test('Palindromes read the same forwards and backwards', () => {
         const reversed = str.split('').reverse().join('');
         assertEqual(str, reversed, `${pal} should be a palindrome: `);
     }
+});
+
+test('All INTERESTING_PALINDROME_DAYS are reachable (present in PALINDROMES)', () => {
+    for (const p of Milestones.INTERESTING_PALINDROME_DAYS) {
+        assertTrue(Milestones.PALINDROMES.includes(p),
+            `${p} is in INTERESTING_PALINDROME_DAYS but not in PALINDROMES, so it can never be generated`);
+        const str = String(p);
+        assertEqual(str, str.split('').reverse().join(''), `${p} should be a palindrome: `);
+    }
+});
+
+test('All INTERESTING_TRIANGULAR are reachable (present in TRIANGULAR)', () => {
+    for (const t of Milestones.INTERESTING_TRIANGULAR) {
+        assertTrue(Milestones.TRIANGULAR.includes(t),
+            `${t} is in INTERESTING_TRIANGULAR but not in TRIANGULAR, so it can never be generated`);
+    }
+});
+
+test('Triangular day milestones include 5778 and 8128', () => {
+    const birthDate = new Date('1990-01-15T12:00:00Z');
+    const events = Nerdiversary.calculate(birthDate, 50);
+    assertTrue(events.some(e => e.id === 'triangular-days-5778'),
+        'Should generate T(107) = 5778 days milestone');
+    assertTrue(events.some(e => e.id === 'triangular-days-8128'),
+        'Should generate T(127) = 8128 days milestone');
 });
 
 test('Repunits are all 1s', () => {
@@ -210,6 +248,16 @@ for (const [key, expected] of Object.entries(expectedPlanets)) {
 
 test('All 7 planets are defined', () => {
     assertEqual(Object.keys(Milestones.PLANETS).length, 7);
+});
+
+test('Mercury years continue past age 48 (MAX_PLANETARY_YEARS regression)', () => {
+    // 200 orbits × 88 days ≈ 48 Earth years — the old cap silently ended
+    // Mercury milestones for anyone older than that
+    const birthDate = new Date('1970-01-15T12:00:00Z');
+    const events = Nerdiversary.calculate(birthDate, 100);
+    const mercury300 = events.find(e => e.id === 'mercury-300');
+    assertTrue(mercury300 !== undefined,
+        'A 100-year window should include Mercury Year 300 (~72 Earth years)');
 });
 
 // ============================================
@@ -533,6 +581,24 @@ test('Fractional age milestones (quarter birthdays) are generated', () => {
     assertTrue(quarter42.title.includes('42¼'), 'Title should show 42¼');
 });
 
+test('Holidays in the birth year are included (after birth only)', () => {
+    // Born Jan 15, 2020: Pi Day 2020 (Mar 14) is after birth and must appear;
+    // e Day 2020 (Feb 7) is also after birth; nothing before Jan 15 should appear
+    const birthDate = new Date('2020-01-15T12:00:00Z');
+    const events = Nerdiversary.calculate(birthDate, 3);
+
+    const piDay2020 = events.find(e => e.id === 'pi-day-2020');
+    assertTrue(piDay2020 !== undefined, 'Pi Day of the birth year should be included');
+
+    // Born Jun 15: May the 4th of the birth year is before birth and must NOT appear
+    const birthDate2 = new Date('2020-06-15T12:00:00Z');
+    const events2 = Nerdiversary.calculate(birthDate2, 3);
+    const starWars2020 = events2.find(e => e.id === 'may-the-4th-2020');
+    assertTrue(starWars2020 === undefined, 'Holidays before birth should not be included');
+    const tauDay2020 = events2.find(e => e.id === 'tau-day-2020');
+    assertTrue(tauDay2020 !== undefined, 'Tau Day (Jun 28) of the birth year should be included');
+});
+
 test('New nerdy holidays exist: e Day, Mole Day, Fibonacci Day', () => {
     const birthDate = new Date('1990-01-15T12:00:00');
     const events = Nerdiversary.calculate(birthDate, 5);
@@ -585,6 +651,43 @@ test('Lunation and fractional milestones are in worker offset map', () => {
     const frac = events.find(e => e.id === 'frac-birthday-43-0.5');
     assertTrue(frac !== undefined, 'Should generate frac-birthday-43-0.5');
     assertTrue(!frac.isSharedHoliday, 'Fractional birthday should not be a shared holiday');
+});
+
+test('Every event has a rarity tier', () => {
+    const birthDate = new Date('1990-01-15T12:00:00Z');
+    const events = Nerdiversary.calculate(birthDate, 50);
+    for (const event of events) {
+        assertTrue(['common', 'rare', 'legendary'].includes(event.rarity),
+            `Event ${event.id} has invalid rarity: ${event.rarity}`);
+    }
+});
+
+test('Rarity classification: showstoppers are legendary, notables are rare', () => {
+    const birthDate = new Date('1990-01-15T12:00:00Z');
+    const events = Nerdiversary.calculate(birthDate, 60);
+    const byId = id => events.find(e => e.id === id);
+
+    assertEqual(byId('seconds-1000000000').rarity, 'legendary', '1B seconds: ');
+    assertEqual(byId('days-10000').rarity, 'legendary', '10,000 days: ');
+    assertEqual(byId('earth-birthday-42').rarity, 'legendary', '42nd birthday: ');
+    assertEqual(byId('pop-42-Million-Seconds').rarity, 'legendary', '42M seconds: ');
+    assertEqual(byId('jupiter-1').rarity, 'legendary', 'Jupiter Year 1: ');
+
+    assertEqual(byId('mars-1').rarity, 'rare', 'Mars Year 1: ');
+    assertEqual(byId('earth-birthday-17').rarity, 'rare', 'prime birthday: ');
+
+    // 0xDEADBEEF seconds lands ~118 years after birth — needs the full window
+    const events120 = Nerdiversary.calculate(birthDate, 120);
+    const deadbeef = events120.find(e => e.id === 'hex-0xDEADBEEF');
+    assertEqual(deadbeef.rarity, 'rare', '0xDEADBEEF: ');
+    assertEqual(byId('pop-1-337-Days').rarity, 'rare', '1337 days: ');
+
+    assertEqual(byId('earth-birthday-18').rarity, 'common', 'ordinary birthday: ');
+
+    const legendary = events.filter(e => e.rarity === 'legendary');
+    const total = events.length;
+    assertTrue(legendary.length / total < 0.05,
+        `Legendary should be <5% of events to stay special (${legendary.length}/${total})`);
 });
 
 test('1 billion seconds milestone exists and is correct', () => {
@@ -922,6 +1025,28 @@ test('parseFamilyParam returns empty array for empty input', () => {
     assertEqual(result.length, 0);
 });
 
+test('Family URL round-trips names containing commas and pipes', () => {
+    // Simulate the full flow: main.js encodes each name, then encodes the whole
+    // param value into the URL; URLSearchParams.get() decodes once on read
+    const names = ['Bob, Jr.', 'A|B', '100% Nerd'];
+    const familyParam = names.map(n => `${encodeURIComponent(n)}|1990-05-15`).join(',');
+    const url = new URL(`https://example.com/results.html?family=${encodeURIComponent(familyParam)}`);
+    const result = parseFamilyParam(url.searchParams.get('family'));
+    assertEqual(result.length, 3, 'All members should survive');
+    assertEqual(result[0].name, 'Bob, Jr.');
+    assertEqual(result[1].name, 'A|B');
+    assertEqual(result[2].name, '100% Nerd');
+});
+
+test('parseFamilyParam tolerates raw % in names (legacy URLs)', () => {
+    // Old-style URLs lose the name encoding after one URLSearchParams decode;
+    // a raw % must not throw and wipe out the whole family
+    const result = parseFamilyParam('100% Nerd|1990-05-15,Alice|1985-03-22');
+    assertEqual(result.length, 2, 'Both members should survive');
+    assertEqual(result[0].name, '100% Nerd');
+    assertEqual(result[1].name, 'Alice');
+});
+
 test('formatNotificationTitle returns NOW message for 0 minutes', () => {
     const title = formatNotificationTitle('\u{1F389}', 0);
     assertTrue(title.includes("It's happening NOW!"), 'Should contain NOW message');
@@ -969,6 +1094,163 @@ test('getCategoryInfo returns known categories', () => {
 test('getCategoryInfo returns fallback for unknown category', () => {
     const unknown = getCategoryInfo('unknown-category');
     assertEqual(unknown.name, 'unknown-category');
+});
+
+test('localToUtcWithTimezone handles DST correctly', () => {
+    // May 15 in Denver is MDT (UTC-6): 14:30 local = 20:30 UTC
+    const summer = localToUtcWithTimezone('1990-05-15', '14:30', 'America/Denver');
+    assertEqual(summer.toISOString().slice(0, 16), '1990-05-15T20:30');
+
+    // Jan 15 in Denver is MST (UTC-7): 14:30 local = 21:30 UTC
+    const winter = localToUtcWithTimezone('1990-01-15', '14:30', 'America/Denver');
+    assertEqual(winter.toISOString().slice(0, 16), '1990-01-15T21:30');
+});
+
+test('parseFamilyParam honors explicit birth timezone', () => {
+    const result = parseFamilyParam('Alice|1990-05-15|14:30|America/Denver');
+    assertEqual(result.length, 1);
+    assertEqual(result[0].timezone, 'America/Denver');
+    // 14:30 MDT = 20:30 UTC
+    assertEqual(result[0].birthDate.toISOString().slice(0, 16), '1990-05-15T20:30');
+});
+
+test('parseFamilyParam falls back gracefully on invalid timezone', () => {
+    const result = parseFamilyParam('Alice|1990-05-15|14:30|Not/A_Zone');
+    assertEqual(result.length, 1, 'Member should survive an invalid timezone');
+    assertTrue(!isNaN(result[0].birthDate.getTime()), 'birthDate should still be valid');
+});
+
+test('generateICal folds lines to 75 octets (RFC 5545)', () => {
+    const events = [{
+        id: 'test-1',
+        title: 'A very long milestone title for testing line folding behavior',
+        description: 'This description is intentionally long so the DESCRIPTION property exceeds the 75-octet line limit and must be folded across continuation lines. 🎉🎂🚀',
+        date: new Date('2024-01-15T10:30:00Z'),
+        category: 'decimal',
+        icon: '🔢'
+    }];
+    const ical = generateICal(events);
+    const encoder = new TextEncoder();
+    for (const line of ical.split('\r\n')) {
+        assertTrue(encoder.encode(line).length <= 75,
+            `Line exceeds 75 octets: "${line}"`);
+    }
+    // Unfolding (removing CRLF + space) must reproduce the original content
+    const unfolded = ical.replace(/\r\n /g, '');
+    assertTrue(unfolded.includes('SUMMARY:🔢 A very long milestone title for testing line folding behavior'),
+        'Unfolded output should contain the full summary');
+});
+
+// ============================================
+// CALENDAR FEED (buildFamilyEvents)
+// ============================================
+console.log('\n--- Calendar Feed ---');
+
+test('Calendar feed contains upcoming events for adults', () => {
+    // yearsAhead is measured from birth — the feed must still be useful
+    // for someone born decades ago
+    const now = new Date('2026-07-04T12:00:00Z');
+    const members = [{ name: 'Paul', birthDate: new Date('1984-05-02T20:37:00Z') }];
+    const events = buildFamilyEvents(members, now);
+
+    assertTrue(events.length > 0, 'Feed should have events');
+    const future = events.filter(e => e.date > now);
+    assertTrue(future.length > 0, `Feed should have upcoming events, got ${future.length}`);
+
+    // All events within the feed window: 30 days back to 2 years ahead
+    const windowStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + 2 * 365.2425 * 24 * 60 * 60 * 1000);
+    for (const e of events) {
+        assertTrue(e.date >= windowStart && e.date <= windowEnd,
+            `Event ${e.id} at ${e.date.toISOString()} outside feed window`);
+    }
+});
+
+test('Family calendar feed has unique iCal UIDs and single shared holidays', () => {
+    const now = new Date('2026-07-04T12:00:00Z');
+    const members = [
+        { name: 'Alice', birthDate: new Date('1990-01-15T10:00:00Z') },
+        { name: 'Bob', birthDate: new Date('1985-06-20T10:00:00Z') },
+    ];
+    const events = buildFamilyEvents(members, now);
+
+    // Every event id (and therefore iCal UID) must be unique
+    const ids = events.map(e => e.id);
+    assertEqual(new Set(ids).size, ids.length, 'Event ids must be unique across members. ');
+
+    // Shared holidays appear once, not once per member
+    const piDays = events.filter(e => e.isSharedHoliday && e.title.startsWith('Pi Day'));
+    const piYears = piDays.map(e => e.title);
+    assertEqual(new Set(piYears).size, piYears.length, 'Each shared holiday should appear once. ');
+
+    // Titles must not be double-prefixed — generateICal adds the person prefix
+    const prefixed = events.filter(e => !e.isSharedHoliday && e.title.startsWith(`${e.personName}:`));
+    assertEqual(prefixed.length, 0, 'transformEvent must not prefix titles (generateICal does). ');
+
+    // And the generated iCal has unique UIDs
+    const ical = generateICal(events, true);
+    const uids = ical.split('\r\n').filter(l => l.startsWith('UID:'));
+    assertEqual(new Set(uids).size, uids.length, 'iCal UIDs must be unique. ');
+});
+
+// ============================================
+// SHARE REDIRECT PAGES
+// ============================================
+console.log('\n--- Share Redirect Pages ---');
+
+test('Share page emits milestone-specific OG tags and category card', () => {
+    const url = new URL('https://worker.test/share?t=1%20Billion%20Seconds&d=2027-03-03T12:00:00Z&i=%F0%9F%94%A2&c=decimal&n=Paul&f=Paul%7C1995-06-27');
+    const html = buildSharePage(url);
+
+    assertTrue(html.includes('Paul reaches 1 Billion Seconds on March 3, 2027!'),
+        'OG title should name the person, milestone, and date');
+    assertTrue(html.includes('assets/og/decimal.jpg'), 'Should use the category card image');
+    assertTrue(html.includes('results.html?family=Paul%257C1995-06-27') || html.includes('results.html?family=Paul%7C1995-06-27'),
+        'Should redirect to the results page with the family param');
+});
+
+test('Share page escapes user-controlled params (no HTML injection)', () => {
+    const url = new URL('https://worker.test/share?t=' + encodeURIComponent('<script>alert(1)</script>') + '&n=' + encodeURIComponent('"><img src=x>'));
+    const html = buildSharePage(url);
+
+    assertTrue(!html.includes('<script>alert'), 'Script tags must be escaped');
+    assertTrue(!html.includes('"><img'), 'Attribute breakouts must be escaped');
+});
+
+test('Share page never redirects off-site', () => {
+    // f is treated as data (a family param), not a URL — even if it looks like one
+    const url = new URL('https://worker.test/share?f=' + encodeURIComponent('https://evil.example/phish'));
+    const html = buildSharePage(url);
+
+    assertTrue(html.includes('https://paultarjan.com/nerdiversary/results.html?family='),
+        'Redirect target must stay on the site');
+    assertTrue(!html.includes('url=https://evil.example'), 'Must not redirect to attacker URL');
+});
+
+test('Share page tolerates missing/invalid params', () => {
+    const html = buildSharePage(new URL('https://worker.test/share'));
+    assertTrue(html.includes('assets/og/default.jpg'), 'Falls back to default card');
+    assertTrue(html.includes('https://paultarjan.com/nerdiversary/'), 'Falls back to site root');
+
+    const badHtml = buildSharePage(new URL('https://worker.test/share?t=X&d=not-a-date'));
+    assertTrue(!badHtml.includes('Invalid Date'), 'Invalid dates must not leak into the title');
+});
+
+// ============================================
+// WORKER OFFSET GENERATION
+// ============================================
+console.log('\n--- Worker Offset Generation ---');
+
+test('Milestone offsets are unique per minute (collisions merged, not dropped)', () => {
+    const offsets = generateMilestoneOffsets();
+    const msValues = offsets.map(o => o.ms);
+    assertEqual(new Set(msValues).size, msValues.length, 'Offsets must be unique by ms. ');
+
+    // The 1 AU / Light Speed to the Sun collision must be merged into one label
+    const au = offsets.find(o => o.label.includes('1 AU (Sun Distance)'));
+    assertTrue(au !== undefined, 'Should have the 1 AU milestone');
+    assertTrue(au.label.includes('Light Speed to the Sun'),
+        `Colliding milestones should merge labels, got: "${au.label}"`);
 });
 
 // ============================================

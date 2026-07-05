@@ -2,6 +2,8 @@
  * Main page script - handles birthday form submission
  */
 
+import * as Storage from './storage.js';
+
 /**
  * Find the next available member index
  */
@@ -22,7 +24,7 @@ function getNextMemberIndex() {
  */
 function getTimezoneName() {
     try {
-        return Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+        return new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
             .formatToParts(new Date())
             .find(p => p.type === 'timeZoneName').value;
     } catch {
@@ -38,7 +40,7 @@ function getTimezoneName() {
  */
 function getIANATimezone() {
     try {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return new Intl.DateTimeFormat().resolvedOptions().timeZone;
     } catch {
         return '';
     }
@@ -49,52 +51,52 @@ function getIANATimezone() {
  */
 // Common timezones — one per unique offset + DST variation
 const COMMON_TIMEZONES = [
-    'Pacific/Pago_Pago',       // -11
-    'Pacific/Honolulu',        // -10
-    'Pacific/Marquesas',       // -9:30
-    'America/Anchorage',       // -9/-8
-    'America/Los_Angeles',     // -8/-7
-    'America/Phoenix',         // -7 (no DST)
-    'America/Denver',          // -7/-6
-    'America/Chicago',         // -6/-5
-    'America/New_York',        // -5/-4
-    'America/Bogota',          // -5 (no DST)
-    'America/Halifax',         // -4/-3
-    'America/Caracas',         // -4 (no DST)
-    'America/St_Johns',        // -3:30/-2:30
-    'America/Sao_Paulo',       // -3
-    'Atlantic/South_Georgia',  // -2
-    'Atlantic/Azores',         // -1/+0
-    'Atlantic/Cape_Verde',     // -1 (no DST)
-    'Atlantic/Reykjavik',      // +0 (no DST)
-    'Europe/London',           // +0/+1
-    'Africa/Lagos',            // +1 (no DST)
-    'Europe/Paris',            // +1/+2
-    'Africa/Cairo',            // +2 (no DST)
-    'Europe/Athens',           // +2/+3
-    'Africa/Nairobi',          // +3 (no DST)
-    'Europe/Moscow',           // +3 (no DST)
-    'Asia/Tehran',             // +3:30/+4:30
-    'Asia/Dubai',              // +4
-    'Asia/Kabul',              // +4:30
-    'Asia/Karachi',            // +5
-    'Asia/Kolkata',            // +5:30
-    'Asia/Kathmandu',          // +5:45
-    'Asia/Dhaka',              // +6
-    'Asia/Yangon',             // +6:30
-    'Asia/Bangkok',            // +7
-    'Asia/Shanghai',           // +8
-    'Asia/Singapore',          // +8
-    'Australia/Perth',         // +8
-    'Asia/Tokyo',              // +9
-    'Australia/Darwin',        // +9:30 (no DST)
-    'Australia/Adelaide',      // +9:30/+10:30
-    'Australia/Brisbane',      // +10 (no DST)
-    'Australia/Sydney',        // +10/+11
-    'Pacific/Noumea',          // +11
-    'Pacific/Auckland',        // +12/+13
-    'Pacific/Chatham',         // +12:45/+13:45
-    'Pacific/Tongatapu',       // +13
+    'Pacific/Pago_Pago', // -11
+    'Pacific/Honolulu', // -10
+    'Pacific/Marquesas', // -9:30
+    'America/Anchorage', // -9/-8
+    'America/Los_Angeles', // -8/-7
+    'America/Phoenix', // -7 (no DST)
+    'America/Denver', // -7/-6
+    'America/Chicago', // -6/-5
+    'America/New_York', // -5/-4
+    'America/Bogota', // -5 (no DST)
+    'America/Halifax', // -4/-3
+    'America/Caracas', // -4 (no DST)
+    'America/St_Johns', // -3:30/-2:30
+    'America/Sao_Paulo', // -3
+    'Atlantic/South_Georgia', // -2
+    'Atlantic/Azores', // -1/+0
+    'Atlantic/Cape_Verde', // -1 (no DST)
+    'Atlantic/Reykjavik', // +0 (no DST)
+    'Europe/London', // +0/+1
+    'Africa/Lagos', // +1 (no DST)
+    'Europe/Paris', // +1/+2
+    'Africa/Cairo', // +2 (no DST)
+    'Europe/Athens', // +2/+3
+    'Africa/Nairobi', // +3 (no DST)
+    'Europe/Moscow', // +3 (no DST)
+    'Asia/Tehran', // +3:30/+4:30
+    'Asia/Dubai', // +4
+    'Asia/Kabul', // +4:30
+    'Asia/Karachi', // +5
+    'Asia/Kolkata', // +5:30
+    'Asia/Kathmandu', // +5:45
+    'Asia/Dhaka', // +6
+    'Asia/Yangon', // +6:30
+    'Asia/Bangkok', // +7
+    'Asia/Shanghai', // +8
+    'Asia/Singapore', // +8
+    'Australia/Perth', // +8
+    'Asia/Tokyo', // +9
+    'Australia/Darwin', // +9:30 (no DST)
+    'Australia/Adelaide', // +9:30/+10:30
+    'Australia/Brisbane', // +10 (no DST)
+    'Australia/Sydney', // +10/+11
+    'Pacific/Noumea', // +11
+    'Pacific/Auckland', // +12/+13
+    'Pacific/Chatham', // +12:45/+13:45
+    'Pacific/Tongatapu', // +13
 ];
 
 function populateTimezoneSelect(selectEl) {
@@ -126,7 +128,7 @@ function populateTimezoneSelect(selectEl) {
         const sign = offsetMinutes <= 0 ? '-' : '+';
         const absH = Math.floor(Math.abs(offsetMinutes) / 60);
         const absM = Math.abs(offsetMinutes) % 60;
-        const offsetLabel = offsetMinutes === 0 ? '' : sign + String(absH).padStart(2, '0') + ':' + String(absM).padStart(2, '0');
+        const offsetLabel = offsetMinutes === 0 ? '' : `${sign + String(absH).padStart(2, '0')}:${String(absM).padStart(2, '0')}`;
         const label = `(GMT${offsetLabel}) ${tz.replace(/_/g, ' ').replace(/\//g, ' / ')}`;
         return { tz, label, offsetMinutes };
     });
@@ -250,7 +252,7 @@ function setupDateConstraints(index) {
  */
 async function loadStoredData() {
     try {
-        const family = await window.NerdiversaryStorage.loadFamily();
+        const family = await Storage.loadFamily();
         if (family && family.length > 0) {
             // Load first member
             const first = family[0];
@@ -297,8 +299,15 @@ function loadFromUrlParams() {
         try {
             const members = familyParam.split(',').map(m => {
                 const parts = m.split('|');
+                let name;
+                try {
+                    name = decodeURIComponent(parts[0] || '');
+                } catch {
+                    // Raw % in legacy URLs — keep as-is rather than dropping everyone
+                    name = parts[0] || '';
+                }
                 return {
-                    name: decodeURIComponent(parts[0] || ''),
+                    name,
                     date: parts[1] || '',
                     time: parts[2] || '',
                     timezone: parts[3] || ''
@@ -502,7 +511,7 @@ async function submitForm() {
     }
 
     // Store in localStorage + IndexedDB for iOS PWA persistence
-    const saveSucceeded = await window.NerdiversaryStorage.saveFamily(family);
+    const saveSucceeded = await Storage.saveFamily(family);
 
     // Warn user if save failed (they can still view results via URL)
     if (!saveSucceeded) {
@@ -528,8 +537,10 @@ async function submitForm() {
         return param;
     }).join(',');
 
-    // Use relative URL - works regardless of subdirectory
-    window.location.href = `results.html?family=${familyParam}`;
+    // Use relative URL - works regardless of subdirectory.
+    // Encode the whole param value: URLSearchParams.get() decodes it once on read,
+    // which restores the per-name encoding so names containing , | % survive parsing.
+    window.location.href = `results.html?family=${encodeURIComponent(familyParam)}`;
 }
 
 // Make removeFamilyMember available globally for onclick

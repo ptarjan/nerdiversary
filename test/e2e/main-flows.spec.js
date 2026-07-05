@@ -206,6 +206,50 @@ test.describe('Nerdiversary Main Flows', () => {
     await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
   });
 
+  test('names with commas and percent signs survive form submission', async ({ page }) => {
+    await page.goto('/index.html');
+
+    // Two members so names are required and both parsing paths are exercised
+    await page.fill('#name-0', 'Bob, Jr.');
+    await page.fill('#birthdate-0', '1985-03-22');
+    await page.click('#add-member');
+    await page.fill('#name-1', '100% Nerd');
+    await page.fill('#birthdate-1', '1990-05-15');
+
+    await page.click('button[type="submit"]');
+
+    // Should land on results (not bounce back to index) with both members intact
+    await expect(page).toHaveURL(/results\.html\?family=/);
+    await expect(page.locator('#person-filter-section')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#person-filter-buttons')).toContainText('Bob, Jr.');
+    await expect(page.locator('#person-filter-buttons')).toContainText('100% Nerd');
+  });
+
+  test('SEO landing page loads and its form reaches results', async ({ page }) => {
+    await page.goto('/billion-seconds.html');
+
+    await expect(page).toHaveTitle(/Billion Second Birthday Calculator/);
+    await expect(page.locator('h1')).toContainText('1 billion seconds');
+
+    await page.fill('#lp-date', '1990-05-15');
+    await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL(/results\.html\?family=/);
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+  });
+
+  test('legendary milestones show rarity badge and next-legendary teaser', async ({ page }) => {
+    await page.goto('/results.html?family=Test|1990-05-15');
+    await expect(page.locator('.event-card').first()).toBeVisible({ timeout: 15000 });
+
+    // The countdown card teases the next legendary milestone
+    await expect(page.locator('.next-legendary')).toBeVisible();
+
+    // At least one legendary badge appears in the full timeline
+    await page.click('[data-view="all"]');
+    await expect(page.locator('.rarity-badge.legendary').first()).toBeVisible();
+  });
+
   test('share button exists and is clickable', async ({ page }) => {
     await page.goto('/results.html?family=Test|1990-05-15');
 

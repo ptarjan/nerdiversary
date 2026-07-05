@@ -807,6 +807,52 @@ body {
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
+/* Rarity tiers */
+.event-card.rarity-legendary {
+    border: 1px solid rgba(244, 213, 141, 0.6);
+    box-shadow: 0 0 18px rgba(244, 213, 141, 0.15);
+}
+
+.event-card.rarity-legendary:hover {
+    border-color: #f4d58d;
+    box-shadow: 0 0 24px rgba(244, 213, 141, 0.3);
+}
+
+.event-card.rarity-rare {
+    border: 1px solid rgba(168, 85, 247, 0.45);
+}
+
+.rarity-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+}
+
+.rarity-badge.legendary {
+    background: rgba(244, 213, 141, 0.15);
+    color: #f4d58d;
+    border: 1px solid rgba(244, 213, 141, 0.5);
+}
+
+.rarity-badge.rare {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.5);
+}
+
+.next-legendary {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #f4d58d;
+    opacity: 0.9;
+}
+
 .event-icon {
     font-size: 2rem;
     min-width: 50px;
@@ -1621,4 +1667,79 @@ body {
         font-size: 0.95rem;
         padding: 0 1rem;
     }
+}
+
+/* Respect users who prefer reduced motion (vestibular disorders, etc.) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* SEO landing pages */
+.landing-container {
+    max-width: 720px;
+}
+
+.landing-emoji {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.landing-title {
+    font-size: 2rem;
+}
+
+.landing-content {
+    margin: 3rem 0;
+    line-height: 1.7;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.85));
+}
+
+.landing-content h2 {
+    margin: 2rem 0 0.75rem;
+    font-size: 1.3rem;
+    color: #c084fc;
+}
+
+.landing-content p {
+    margin-bottom: 1rem;
+}
+
+.landing-content ul {
+    margin: 0 0 1rem 1.5rem;
+}
+
+.landing-content li {
+    margin-bottom: 0.5rem;
+}
+
+.landing-content a {
+    color: #a78bfa;
+}
+
+.landing-links {
+    list-style: none;
+    margin-left: 0 !important;
+}
+
+.footer-calculators {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+.footer-calculators a {
+    color: #a78bfa;
+    text-decoration: none;
+}
+
+.footer-calculators a:hover {
+    text-decoration: underline;
 }

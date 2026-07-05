@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable", "webworker"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "js/shared.js",
+    "js/milestones.js",
+    "js/calculator.js",
+    "js/nerdiversary.js",
+    "worker/worker.js"
+  ]
+}
