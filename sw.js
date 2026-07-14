@@ -3,7 +3,7 @@
  * Network-first caching: always fetch from network, fall back to cache when offline.
  */
 
-const CACHE_NAME = 'nerdiversary-v1';
+const CACHE_NAME = 'nerdiversary-v2';
 const OFFLINE_ASSETS = [
     './',
     './index.html',
