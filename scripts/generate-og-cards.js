@@ -1,9 +1,10 @@
 /**
  * Generate Open Graph share-card PNGs (1200×630) — one per milestone category
- * plus a default. Rendered with Playwright so emoji and gradients look right.
+ * plus a default, plus one per SEO landing page (lp-<slug>.jpg). Rendered
+ * with Playwright so emoji and gradients look right.
  *
  * Run: node scripts/generate-og-cards.js
- * Output: assets/og/<category>.jpg (committed — the worker /share route and
+ * Output: assets/og/<name>.jpg (committed — the worker /share route and
  * the static pages reference them by URL)
  */
 
@@ -11,6 +12,7 @@ import { chromium } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PAGES } from './landing-pages-data.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, '..', 'assets', 'og');
@@ -24,6 +26,7 @@ const CARDS = [
     { name: 'fibonacci', emoji: '🌀', label: 'A Fibonacci moment approaches' },
     { name: 'scientific', emoji: '🔬', label: 'A cosmic milestone approaches' },
     { name: 'pop-culture', emoji: '🎬', label: 'A legendary moment approaches' },
+    ...PAGES.map(p => ({ name: `lp-${p.slug}`, emoji: p.emoji, label: p.heading })),
 ];
 
 function cardHtml({ emoji, label }) {

@@ -1735,6 +1735,73 @@ body {
     margin-left: 0 !important;
 }
 
+.landing-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 0.75rem;
+}
+
+.landing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.landing-table th,
+.landing-table td {
+    padding: 0.4rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.landing-table th {
+    color: #c084fc;
+    font-weight: 700;
+}
+
+.landing-table tbody tr:hover {
+    background: rgba(124, 58, 237, 0.12);
+}
+
+.landing-table-note {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.landing-answer {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(124, 58, 237, 0.5);
+    border-radius: 12px;
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.landing-answer .answer-big {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #c084fc, #f4d58d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 0.75rem;
+}
+
+.landing-answer .answer-lines {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 1rem;
+}
+
+.landing-answer .answer-link {
+    color: #a78bfa;
+    font-weight: 700;
+}
+
 .footer-calculators {
     font-size: 0.85rem;
     opacity: 0.8;

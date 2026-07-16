@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://paultarjan.com/nerdiversary/</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/billion-seconds.html</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/10000-days.html</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/half-birthday.html</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/mars-year.html</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/1000-weeks.html</loc></url>
-  <url><loc>https://paultarjan.com/nerdiversary/million-minutes.html</loc></url>
+  <url><loc>https://paultarjan.com/nerdiversary/</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/billion-seconds.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/2-billion-seconds.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/10000-days.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/20000-days.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/1000-days.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/half-birthday.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/mars-year.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/saturn-return.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/1000-weeks.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/million-minutes.html</loc><lastmod>2026-07-16</lastmod></url>
+  <url><loc>https://paultarjan.com/nerdiversary/how-many-days-old.html</loc><lastmod>2026-07-16</lastmod></url>
 </urlset>
