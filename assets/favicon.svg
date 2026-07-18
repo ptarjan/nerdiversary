@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="28 28 144 144">
   <defs>
     <!-- Gradient for the main planet -->
     <linearGradient id="planetGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -31,14 +31,7 @@
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <clipPath id="roundedTile">
-      <rect width="200" height="200" rx="40"/>
-    </clipPath>
   </defs>
-
-  <g clip-path="url(#roundedTile)">
-  <!-- Background -->
-  <rect width="200" height="200" fill="#0a0a1a"/>
 
   <!-- Background stars -->
   <circle cx="25" cy="30" r="1.5" fill="#fff" filter="url(#starGlow)" opacity="0.8"/>
@@ -86,5 +79,4 @@
   <!-- Celebration sparkles -->
   <path d="M 85 45 L 87 50 L 92 50 L 88 53 L 90 58 L 85 55 L 80 58 L 82 53 L 78 50 L 83 50 Z" fill="#fbbf24" opacity="0.9"/>
   <path d="M 120 150 L 121 153 L 124 153 L 122 155 L 123 158 L 120 156 L 117 158 L 118 155 L 116 153 L 119 153 Z" fill="#fbbf24" opacity="0.8"/>
-  </g>
 </svg>
