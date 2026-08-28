@@ -490,6 +490,23 @@ test('Fibonacci 10,946 days = ~29.96 years', () => {
     assertClose(years, 29.96, 0.01);
 });
 
+test('Fibonacci and Lucas events state which term of the sequence they are', () => {
+    const events = Calculator.calculate(new Date('1990-01-15T12:00:00'), { yearsAhead: 120, includePast: true });
+    const seq = events.filter(e => e.category === 'fibonacci');
+    assertTrue(seq.length > 0, 'Should produce sequence events');
+
+    const fib = seq.find(e => e.id === 'fib-days-10946');
+    assertTrue(!!fib, 'Should have the 10,946-day Fibonacci event');
+    assertTrue(fib.title.includes('F₂₁'), `Title should name the term, got: ${fib.title}`);
+    assertTrue(fib.description.includes('21st'), `Description should count the term, got: ${fib.description}`);
+
+    // LUCAS is 0-indexed (L(0) = 2), so the count runs one past the index.
+    const lucas = seq.find(e => e.id === 'lucas-days-123');
+    assertTrue(!!lucas, 'Should have the 123-day Lucas event');
+    assertTrue(lucas.title.includes('L₁₀'), `Title should name the term, got: ${lucas.title}`);
+    assertTrue(lucas.description.includes('11th'), `Description should count the term, got: ${lucas.description}`);
+});
+
 // ============================================
 // INTEGRATION TESTS
 // ============================================

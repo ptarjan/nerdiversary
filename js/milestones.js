@@ -431,6 +431,11 @@ function toSuperscript(num) {
     return String(num).split('').map(d => superscripts[parseInt(d, 10)]).join('');
 }
 
+function toSubscript(num) {
+    const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+    return String(num).split('').map(d => subscripts[parseInt(d, 10)]).join('');
+}
+
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -518,7 +523,8 @@ const MilestonesExports = {
 
     // Helper functions
     getOrdinal,
-    toSuperscript
+    toSuperscript,
+    toSubscript
 };
 
 // ESM export

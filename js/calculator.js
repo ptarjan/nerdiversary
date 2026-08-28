@@ -319,7 +319,7 @@ const Calculator = {
     },
 
     _addSequenceMilestones(birthDate, addEvent, config) {
-        const { sequence, indexMap, idPrefix, name, wikiKey, icon, indexLabel } = config;
+        const { sequence, indexMap, idPrefix, name, wikiKey, icon, indexLabel, ordinalOffset } = config;
         const units = [
             { filter: n => n >= 1e6 && n <= 3e9, ms: Milestones.MS_PER_SECOND, unit: 'seconds', label: 'Second' },
             { filter: n => n >= 1e5 && n <= 5e7, ms: Milestones.MS_PER_MINUTE, unit: 'minutes', label: 'Minute' },
@@ -330,10 +330,12 @@ const Calculator = {
         for (const { filter, ms, unit, label } of units) {
             for (const num of sequence.filter(filter)) {
                 const idx = indexMap.get(num);
+                const term = `${indexLabel}${Milestones.toSubscript(idx)}`;
+                const ordinal = Milestones.getOrdinal(idx + ordinalOffset);
                 addEvent({
                     id: `${idPrefix}-${unit}-${num}`,
-                    title: `${num.toLocaleString()} ${name} ${unit}`,
-                    description: `${label} ${num.toLocaleString()} is a ${wikiLink(wikiKey, `${name} number`)}!`,
+                    title: `${num.toLocaleString()} ${name} ${unit} (${term})`,
+                    description: `${label} ${num.toLocaleString()} is ${term}, the ${ordinal} ${wikiLink(wikiKey, `${name} number`)}!`,
                     date: new Date(birthDate.getTime() + num * ms),
                     category: 'fibonacci',
                     icon,
@@ -351,7 +353,9 @@ const Calculator = {
             name: 'Fibonacci',
             wikiKey: 'fibonacci',
             icon: '🌀',
-            indexLabel: 'F'
+            indexLabel: 'F',
+            // F(1) = 1 is the 1st Fibonacci number, so the index is the count.
+            ordinalOffset: 0
         });
     },
 
@@ -363,7 +367,9 @@ const Calculator = {
             name: 'Lucas',
             wikiKey: 'lucas',
             icon: '🔷',
-            indexLabel: 'L'
+            indexLabel: 'L',
+            // L(0) = 2 is the 1st Lucas number, so the count is one past the index.
+            ordinalOffset: 1
         });
     },
 
