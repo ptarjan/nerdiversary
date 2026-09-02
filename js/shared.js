@@ -68,6 +68,20 @@ export function parseFamilyParam(familyParam) {
     }
 }
 
+// The moment-of-arrival line, shared by the push notification and the
+// celebration overlay so the two cannot drift apart. Tests assert this
+// binding rather than a copy of the words.
+export const HAPPENING_NOW = "It's happening NOW!";
+
+// Every label the notification button can carry, keyed by state. Enumerating
+// them here is what lets a test assert the button is in one of its states
+// without copying the wording.
+export const NOTIFY_LABELS = {
+    blocked: 'Notifications blocked',
+    on: 'Notifications on',
+    off: 'Enable notifications'
+};
+
 /**
  * Format a notification title based on how far away the event is
  * @param {string} icon - Emoji icon for the event
@@ -76,15 +90,15 @@ export function parseFamilyParam(familyParam) {
  */
 export function formatNotificationTitle(icon, minutesBefore) {
     if (minutesBefore === 0) {
-        return `${icon} It's happening NOW!`;
+        return `${icon} ${HAPPENING_NOW}`;
     } else if (minutesBefore < 60) {
-        return `${icon} ${minutesBefore} minutes away!`;
+        return `${icon} ${minutesBefore} minutes away`;
     } else if (minutesBefore < 1440) {
         const hours = Math.round(minutesBefore / 60);
-        return `${icon} ${hours} hour${hours > 1 ? 's' : ''} away!`;
+        return `${icon} ${hours} hour${hours > 1 ? 's' : ''} away`;
     }
     const days = Math.round(minutesBefore / 1440);
-    return `${icon} ${days} day${days > 1 ? 's' : ''} away!`;
+    return `${icon} ${days} day${days > 1 ? 's' : ''} away`;
 }
 
 /**
@@ -165,7 +179,7 @@ export function getCategoryInfo(category) {
  * @returns {string} iCalendar formatted string
  */
 export function generateICal(events, isFamily = false) {
-    const calName = isFamily ? 'Family Nerdiversaries' : 'My Nerdiversaries';
+    const calName = isFamily ? 'Family nerdiversaries' : 'My nerdiversaries';
     const lines = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',

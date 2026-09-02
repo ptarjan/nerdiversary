@@ -36,11 +36,11 @@ const METERS_PER_LIGHT_YEAR = 9.461e15;
 
 // Light-time units for milestones
 const LIGHT_TIME_UNITS = [
-    { seconds: 1, name: '1 Light-Second', wikiKey: 'lightSecond', desc: 'enough to circle Earth 7.5 times' },
-    { seconds: 60, name: '1 Light-Minute', wikiKey: 'lightMinute', desc: 'the distance light travels in a minute' },
-    { seconds: 499, name: '1 AU (Sun Distance)', wikiKey: 'au', desc: 'the distance from Earth to the Sun' },
-    { seconds: 3600, name: '1 Light-Hour', wikiKey: 'lightHour', desc: 'past the orbit of Jupiter' },
-    { seconds: 86400, name: '1 Light-Day', wikiKey: 'lightDay', desc: 'well beyond the Kuiper Belt' }
+    { seconds: 1, name: '1 Light-Second', wikiKey: 'lightSecond', desc: '299,792 km, enough to circle Earth\'s equator 7.5 times' },
+    { seconds: 60, name: '1 Light-Minute', wikiKey: 'lightMinute', desc: 'about 18 million km, an eighth of the way to the Sun' },
+    { seconds: 499, name: '1 Astronomical Unit', wikiKey: 'au', desc: 'the Earth-Sun distance, so the sunlight hitting you now is 8 minutes 19 seconds old' },
+    { seconds: 3600, name: '1 Light-Hour', wikiKey: 'lightHour', desc: 'about 1.08 billion km, out past Jupiter but short of Saturn' },
+    { seconds: 86400, name: '1 Light-Day', wikiKey: 'lightDay', desc: 'about 173 AU, more than four times as far out as Pluto' }
 ];
 
 // Cosmic distances in meters
@@ -215,124 +215,124 @@ const WIKI_URLS = {
 // ============================================================================
 
 const secondMilestones = [
-    { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds' },
-    { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds' },
-    { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds' },
-    { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds' },
-    { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds' },
-    { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds' },
-    { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds' },
-    { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds' },
-    { value: 1111111111, label: '1,111,111,111 Seconds', short: '1.1B repunit seconds' },
-    { value: 1234567890, label: '1,234,567,890 Seconds', short: 'sequential digits!' },
-    { value: 1.3e9, label: '1.3 Billion Seconds', short: '1.3×10⁹ seconds' },
-    { value: 1.4e9, label: '1.4 Billion Seconds', short: '1.4×10⁹ seconds' },
-    { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds' },
-    { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds' },
-    { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds' },
-    { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds' }
+    { value: 1e6, label: '1 Million Seconds', short: '10⁶ seconds (≈11.6 days)' },
+    { value: 1e7, label: '10 Million Seconds', short: '10⁷ seconds (≈116 days)' },
+    { value: 5e7, label: '50 Million Seconds', short: '5×10⁷ seconds (≈1.6 years)' },
+    { value: 1e8, label: '100 Million Seconds', short: '10⁸ seconds (≈3.2 years)' },
+    { value: 2.5e8, label: '250 Million Seconds', short: '2.5×10⁸ seconds (≈7.9 years)' },
+    { value: 5e8, label: '500 Million Seconds', short: '5×10⁸ seconds (≈15.8 years)' },
+    { value: 7.5e8, label: '750 Million Seconds', short: '7.5×10⁸ seconds (≈23.8 years)' },
+    { value: 1e9, label: '1 Billion Seconds', short: '10⁹ seconds (≈31.7 years)' },
+    { value: 1111111111, label: '1,111,111,111 Seconds', short: '1,111,111,111 seconds, all ones (≈35.2 years)' },
+    { value: 1234567890, label: '1,234,567,890 Seconds', short: '1,234,567,890 seconds, the digits in order (≈39.1 years)' },
+    { value: 1.3e9, label: '1.3 Billion Seconds', short: '1.3×10⁹ seconds (≈41.2 years)' },
+    { value: 1.4e9, label: '1.4 Billion Seconds', short: '1.4×10⁹ seconds (≈44.4 years)' },
+    { value: 1.5e9, label: '1.5 Billion Seconds', short: '1.5×10⁹ seconds (≈47.5 years)' },
+    { value: 2e9, label: '2 Billion Seconds', short: '2×10⁹ seconds (≈63.4 years)' },
+    { value: 2.5e9, label: '2.5 Billion Seconds', short: '2.5×10⁹ seconds (≈79.2 years)' },
+    { value: 3e9, label: '3 Billion Seconds', short: '3×10⁹ seconds (≈95.1 years)' }
 ];
 
 const minuteMilestones = [
-    { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes' },
-    { value: 5e5, label: '500,000 Minutes', short: '5×10⁵ minutes' },
-    { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes' },
-    { value: 2e6, label: '2 Million Minutes', short: '2×10⁶ minutes' },
-    { value: 3e6, label: '3 Million Minutes', short: '3×10⁶ minutes' },
-    { value: 5e6, label: '5 Million Minutes', short: '5×10⁶ minutes' },
-    { value: 7.5e6, label: '7.5 Million Minutes', short: '7.5×10⁶ minutes' },
-    { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes' },
-    { value: 1.5e7, label: '15 Million Minutes', short: '1.5×10⁷ minutes' },
-    { value: 2e7, label: '20 Million Minutes', short: '2×10⁷ minutes' },
-    { value: 21e6, label: '21 Million Minutes', short: '21×10⁶ minutes' },
-    { value: 22e6, label: '22 Million Minutes', short: '22×10⁶ minutes' },
-    { value: 22222222, label: '22,222,222 Minutes', short: 'repdigit minutes' },
-    { value: 23e6, label: '23 Million Minutes', short: '23×10⁶ minutes' },
-    { value: 24e6, label: '24 Million Minutes', short: '24×10⁶ minutes' },
-    { value: 2.5e7, label: '25 Million Minutes', short: '2.5×10⁷ minutes' },
-    { value: 3e7, label: '30 Million Minutes', short: '3×10⁷ minutes' },
-    { value: 4e7, label: '40 Million Minutes', short: '4×10⁷ minutes' },
-    { value: 5e7, label: '50 Million Minutes', short: '5×10⁷ minutes' }
+    { value: 1e5, label: '100,000 Minutes', short: '10⁵ minutes (≈69 days)' },
+    { value: 5e5, label: '500,000 Minutes', short: '5×10⁵ minutes (≈347 days)' },
+    { value: 1e6, label: '1 Million Minutes', short: '10⁶ minutes (≈1.9 years)' },
+    { value: 2e6, label: '2 Million Minutes', short: '2×10⁶ minutes (≈3.8 years)' },
+    { value: 3e6, label: '3 Million Minutes', short: '3×10⁶ minutes (≈5.7 years)' },
+    { value: 5e6, label: '5 Million Minutes', short: '5×10⁶ minutes (≈9.5 years)' },
+    { value: 7.5e6, label: '7.5 Million Minutes', short: '7.5×10⁶ minutes (≈14.3 years)' },
+    { value: 1e7, label: '10 Million Minutes', short: '10⁷ minutes (≈19 years)' },
+    { value: 1.5e7, label: '15 Million Minutes', short: '1.5×10⁷ minutes (≈28.5 years)' },
+    { value: 2e7, label: '20 Million Minutes', short: '2×10⁷ minutes (≈38 years)' },
+    { value: 21e6, label: '21 Million Minutes', short: '21×10⁶ minutes (≈39.9 years)' },
+    { value: 22e6, label: '22 Million Minutes', short: '22×10⁶ minutes (≈41.8 years)' },
+    { value: 22222222, label: '22,222,222 Minutes', short: '22,222,222 minutes, all twos (≈42.3 years)' },
+    { value: 23e6, label: '23 Million Minutes', short: '23×10⁶ minutes (≈43.7 years)' },
+    { value: 24e6, label: '24 Million Minutes', short: '24×10⁶ minutes (≈45.6 years)' },
+    { value: 2.5e7, label: '25 Million Minutes', short: '2.5×10⁷ minutes (≈47.5 years)' },
+    { value: 3e7, label: '30 Million Minutes', short: '3×10⁷ minutes (≈57 years)' },
+    { value: 4e7, label: '40 Million Minutes', short: '4×10⁷ minutes (≈76.1 years)' },
+    { value: 5e7, label: '50 Million Minutes', short: '5×10⁷ minutes (≈95.1 years)' }
 ];
 
 const hourMilestones = [
-    { value: 1e4, label: '10,000 Hours', short: '10⁴ hours' },
-    { value: 2.5e4, label: '25,000 Hours', short: '2.5×10⁴ hours' },
-    { value: 5e4, label: '50,000 Hours', short: '5×10⁴ hours' },
-    { value: 7.5e4, label: '75,000 Hours', short: '7.5×10⁴ hours' },
-    { value: 1e5, label: '100,000 Hours', short: '10⁵ hours' },
-    { value: 1.5e5, label: '150,000 Hours', short: '1.5×10⁵ hours' },
-    { value: 2e5, label: '200,000 Hours', short: '2×10⁵ hours' },
-    { value: 2.5e5, label: '250,000 Hours', short: '2.5×10⁵ hours' },
-    { value: 3e5, label: '300,000 Hours', short: '3×10⁵ hours' },
-    { value: 4e5, label: '400,000 Hours', short: '4×10⁵ hours' },
-    { value: 5e5, label: '500,000 Hours', short: '5×10⁵ hours' },
-    { value: 6e5, label: '600,000 Hours', short: '6×10⁵ hours' },
-    { value: 7.5e5, label: '750,000 Hours', short: '7.5×10⁵ hours' },
-    { value: 1e6, label: '1 Million Hours', short: '10⁶ hours' }
+    { value: 1e4, label: '10,000 Hours', short: '10⁴ hours (≈1.14 years)' },
+    { value: 2.5e4, label: '25,000 Hours', short: '2.5×10⁴ hours (≈2.9 years)' },
+    { value: 5e4, label: '50,000 Hours', short: '5×10⁴ hours (≈5.7 years)' },
+    { value: 7.5e4, label: '75,000 Hours', short: '7.5×10⁴ hours (≈8.6 years)' },
+    { value: 1e5, label: '100,000 Hours', short: '10⁵ hours (≈11.4 years)' },
+    { value: 1.5e5, label: '150,000 Hours', short: '1.5×10⁵ hours (≈17.1 years)' },
+    { value: 2e5, label: '200,000 Hours', short: '2×10⁵ hours (≈22.8 years)' },
+    { value: 2.5e5, label: '250,000 Hours', short: '2.5×10⁵ hours (≈28.5 years)' },
+    { value: 3e5, label: '300,000 Hours', short: '3×10⁵ hours (≈34.2 years)' },
+    { value: 4e5, label: '400,000 Hours', short: '4×10⁵ hours (≈45.6 years)' },
+    { value: 5e5, label: '500,000 Hours', short: '5×10⁵ hours (≈57 years)' },
+    { value: 6e5, label: '600,000 Hours', short: '6×10⁵ hours (≈68.4 years)' },
+    { value: 7.5e5, label: '750,000 Hours', short: '7.5×10⁵ hours (≈85.6 years)' },
+    { value: 1e6, label: '1 Million Hours', short: '10⁶ hours (≈114 years)' }
 ];
 
 const dayMilestones = [
-    { value: 1000, label: '1,000 Days', short: '10³ days' },
-    { value: 1500, label: '1,500 Days', short: '1.5×10³ days' },
-    { value: 2000, label: '2,000 Days', short: '2×10³ days' },
-    { value: 2500, label: '2,500 Days', short: '2.5×10³ days' },
-    { value: 3000, label: '3,000 Days', short: '3×10³ days' },
-    { value: 4000, label: '4,000 Days', short: '4×10³ days' },
-    { value: 5000, label: '5,000 Days', short: '5×10³ days' },
-    { value: 6000, label: '6,000 Days', short: '6×10³ days' },
-    { value: 7000, label: '7,000 Days', short: '7×10³ days' },
-    { value: 7500, label: '7,500 Days', short: '7.5×10³ days' },
-    { value: 8000, label: '8,000 Days', short: '8×10³ days' },
-    { value: 9000, label: '9,000 Days', short: '9×10³ days' },
-    { value: 10000, label: '10,000 Days', short: '10⁴ days' },
-    { value: 11111, label: '11,111 Days', short: '11,111 days' },
-    { value: 12345, label: '12,345 Days', short: '12,345 days' },
-    { value: 15000, label: '15,000 Days', short: '1.5×10⁴ days' },
-    { value: 16000, label: '16,000 Days', short: '1.6×10⁴ days' },
-    { value: 16384, label: '16,384 Days', short: '2¹⁴ days' },
-    { value: 17000, label: '17,000 Days', short: '1.7×10⁴ days' },
-    { value: 17500, label: '17,500 Days', short: '1.75×10⁴ days' },
-    { value: 18000, label: '18,000 Days', short: '1.8×10⁴ days' },
-    { value: 20000, label: '20,000 Days', short: '2×10⁴ days' },
-    { value: 22222, label: '22,222 Days', short: '22,222 days' },
-    { value: 25000, label: '25,000 Days', short: '2.5×10⁴ days' },
-    { value: 27500, label: '27,500 Days', short: '2.75×10⁴ days' },
-    { value: 30000, label: '30,000 Days', short: '3×10⁴ days' },
-    { value: 33333, label: '33,333 Days', short: '33,333 days' }
+    { value: 1000, label: '1,000 Days', short: '10³ days (≈2.7 years)' },
+    { value: 1500, label: '1,500 Days', short: '1.5×10³ days (≈4.1 years)' },
+    { value: 2000, label: '2,000 Days', short: '2×10³ days (≈5.5 years)' },
+    { value: 2500, label: '2,500 Days', short: '2.5×10³ days (≈6.8 years)' },
+    { value: 3000, label: '3,000 Days', short: '3×10³ days (≈8.2 years)' },
+    { value: 4000, label: '4,000 Days', short: '4×10³ days (≈11 years)' },
+    { value: 5000, label: '5,000 Days', short: '5×10³ days (≈13.7 years)' },
+    { value: 6000, label: '6,000 Days', short: '6×10³ days (≈16.4 years)' },
+    { value: 7000, label: '7,000 Days', short: '7×10³ days (≈19.2 years)' },
+    { value: 7500, label: '7,500 Days', short: '7.5×10³ days (≈20.5 years)' },
+    { value: 8000, label: '8,000 Days', short: '8×10³ days (≈21.9 years)' },
+    { value: 9000, label: '9,000 Days', short: '9×10³ days (≈24.6 years)' },
+    { value: 10000, label: '10,000 Days', short: '10⁴ days (≈27.4 years)' },
+    { value: 11111, label: '11,111 Days', short: '11,111 days, all ones (≈30.4 years)' },
+    { value: 12345, label: '12,345 Days', short: '12,345 days, the digits in order (≈33.8 years)' },
+    { value: 15000, label: '15,000 Days', short: '1.5×10⁴ days (≈41.1 years)' },
+    { value: 16000, label: '16,000 Days', short: '1.6×10⁴ days (≈43.8 years)' },
+    { value: 16384, label: '16,384 Days', short: '2¹⁴ days (≈44.9 years)' },
+    { value: 17000, label: '17,000 Days', short: '1.7×10⁴ days (≈46.5 years)' },
+    { value: 17500, label: '17,500 Days', short: '1.75×10⁴ days (≈47.9 years)' },
+    { value: 18000, label: '18,000 Days', short: '1.8×10⁴ days (≈49.3 years)' },
+    { value: 20000, label: '20,000 Days', short: '2×10⁴ days (≈54.8 years)' },
+    { value: 22222, label: '22,222 Days', short: '22,222 days, all twos (≈60.8 years)' },
+    { value: 25000, label: '25,000 Days', short: '2.5×10⁴ days (≈68.4 years)' },
+    { value: 27500, label: '27,500 Days', short: '2.75×10⁴ days (≈75.3 years)' },
+    { value: 30000, label: '30,000 Days', short: '3×10⁴ days (≈82.1 years)' },
+    { value: 33333, label: '33,333 Days', short: '33,333 days, all threes (≈91.3 years)' }
 ];
 
 const weekMilestones = [
-    { value: 250, label: '250 Weeks', short: '250 weeks' },
-    { value: 500, label: '500 Weeks', short: '500 weeks' },
-    { value: 750, label: '750 Weeks', short: '750 weeks' },
-    { value: 1000, label: '1,000 Weeks', short: '10³ weeks' },
-    { value: 1250, label: '1,250 Weeks', short: '1,250 weeks' },
-    { value: 1500, label: '1,500 Weeks', short: '1,500 weeks' },
-    { value: 1750, label: '1,750 Weeks', short: '1,750 weeks' },
-    { value: 2000, label: '2,000 Weeks', short: '2×10³ weeks' },
-    { value: 2100, label: '2,100 Weeks', short: '2,100 weeks' },
-    { value: 2200, label: '2,200 Weeks', short: '2,200 weeks' },
-    { value: 2222, label: '2,222 Weeks', short: 'repdigit weeks' },
-    { value: 2300, label: '2,300 Weeks', short: '2,300 weeks' },
-    { value: 2400, label: '2,400 Weeks', short: '2,400 weeks' },
-    { value: 2500, label: '2,500 Weeks', short: '2,500 weeks' },
-    { value: 3000, label: '3,000 Weeks', short: '3×10³ weeks' }
+    { value: 250, label: '250 Weeks', short: '250 weeks (≈4.8 years)' },
+    { value: 500, label: '500 Weeks', short: '500 weeks (≈9.6 years)' },
+    { value: 750, label: '750 Weeks', short: '750 weeks (≈14.4 years)' },
+    { value: 1000, label: '1,000 Weeks', short: '10³ weeks (≈19.2 years)' },
+    { value: 1250, label: '1,250 Weeks', short: '1,250 weeks (≈24 years)' },
+    { value: 1500, label: '1,500 Weeks', short: '1,500 weeks (≈28.7 years)' },
+    { value: 1750, label: '1,750 Weeks', short: '1,750 weeks (≈33.5 years)' },
+    { value: 2000, label: '2,000 Weeks', short: '2×10³ weeks (≈38.3 years)' },
+    { value: 2100, label: '2,100 Weeks', short: '2,100 weeks (≈40.2 years)' },
+    { value: 2200, label: '2,200 Weeks', short: '2,200 weeks (≈42.2 years)' },
+    { value: 2222, label: '2,222 Weeks', short: '2,222 weeks, all twos (≈42.6 years)' },
+    { value: 2300, label: '2,300 Weeks', short: '2,300 weeks (≈44.1 years)' },
+    { value: 2400, label: '2,400 Weeks', short: '2,400 weeks (≈46 years)' },
+    { value: 2500, label: '2,500 Weeks', short: '2,500 weeks (≈47.9 years)' },
+    { value: 3000, label: '3,000 Weeks', short: '3×10³ weeks (≈57.5 years)' }
 ];
 
 const monthMilestones = [
-    { value: 100, label: '100 Months', short: '100 months' },
-    { value: 200, label: '200 Months', short: '200 months' },
-    { value: 250, label: '250 Months', short: '250 months' },
-    { value: 300, label: '300 Months', short: '300 months' },
-    { value: 400, label: '400 Months', short: '400 months' },
-    { value: 444, label: '444 Months', short: 'repdigit months' },
-    { value: 500, label: '500 Months', short: '500 months' },
-    { value: 555, label: '555 Months', short: 'repdigit months' },
-    { value: 600, label: '600 Months', short: '600 months' },
-    { value: 666, label: '666 Months', short: 'number of the beast months' },
-    { value: 750, label: '750 Months', short: '750 months' },
-    { value: 1000, label: '1,000 Months', short: '10³ months' }
+    { value: 100, label: '100 Months', short: '100 months (≈8.3 years)' },
+    { value: 200, label: '200 Months', short: '200 months (≈16.7 years)' },
+    { value: 250, label: '250 Months', short: '250 months (≈20.8 years)' },
+    { value: 300, label: '300 Months', short: '300 months (≈25 years)' },
+    { value: 400, label: '400 Months', short: '400 months (≈33.3 years)' },
+    { value: 444, label: '444 Months', short: '444 months, all fours (≈37 years)' },
+    { value: 500, label: '500 Months', short: '500 months (≈41.7 years)' },
+    { value: 555, label: '555 Months', short: '555 months, all fives (≈46.3 years)' },
+    { value: 600, label: '600 Months', short: '600 months (≈50 years)' },
+    { value: 666, label: '666 Months', short: '666 months, the number of the beast (≈55.5 years)' },
+    { value: 750, label: '750 Months', short: '750 months (≈62.5 years)' },
+    { value: 1000, label: '1,000 Months', short: '10³ months (≈83.3 years)' }
 ];
 
 // Number base milestones
@@ -395,18 +395,18 @@ const baseMilestones = [
 
 // Pop culture milestones
 const popCultureMilestones = [
-    { value: 42e6, unit: MS_PER_SECOND, label: '42 Million Seconds', icon: '🌌', desc: 'The Answer to Life, the Universe, and Everything!' },
-    { value: 1337, unit: MS_PER_DAY, label: '1,337 Days', icon: '🎮', desc: 'You are now officially 1337 (elite)!' }
+    { value: 42e6, unit: MS_PER_SECOND, label: '42 Million Seconds', icon: '🌌', desc: 'Your age in seconds just hit 42 million, the Answer to Life, the Universe, and Everything. Deep Thought needed 7.5 million years to compute it; you got there in about 16 months.' },
+    { value: 1337, unit: MS_PER_DAY, label: '1,337 Days', icon: '🎮', desc: 'Day 1,337 of your life: in leetspeak those digits spell "leet". Peak elite status, reached about 4 months before your 4th birthday.' }
 ];
 
 // Nerdy holidays
 const nerdyHolidays = [
-    { month: 1, day: 7, name: 'e Day', icon: '🔢', desc: 'February 7 (2.71828…)', wikiKey: 'eDay' },
-    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'March 14 (3.14)', wikiKey: 'piDay' },
-    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day', wikiKey: 'starWarsDay' },
-    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'June 28 (τ ≈ 6.28)', wikiKey: 'tauDay' },
-    { month: 9, day: 23, name: 'Mole Day', icon: '⚗️', desc: 'October 23 (6.02×10²³)', wikiKey: 'moleDay' },
-    { month: 10, day: 23, name: 'Fibonacci Day', icon: '🌀', desc: 'November 23 (1-1-2-3)', wikiKey: 'fibonacciDay' }
+    { month: 1, day: 7, name: 'e Day', icon: '🔢', desc: 'the date reads 2/7, matching e ≈ 2.718, the base of natural logarithms', wikiKey: 'eDay' },
+    { month: 2, day: 14, name: 'Pi Day', icon: '🥧', desc: 'the date reads 3/14, matching π ≈ 3.14159, and it is also Einstein\'s birthday', wikiKey: 'piDay' },
+    { month: 4, day: 4, name: 'May the 4th', icon: '⚔️', desc: 'Star Wars Day, because "May the Fourth be with you"', wikiKey: 'starWarsDay' },
+    { month: 5, day: 28, name: 'Tau Day', icon: '🌀', desc: 'the date reads 6/28, matching τ = 2π ≈ 6.283, one full turn in radians', wikiKey: 'tauDay' },
+    { month: 9, day: 23, name: 'Mole Day', icon: '⚗️', desc: 'the date reads 10/23 for Avogadro\'s number, 6.022×10²³ particles per mole', wikiKey: 'moleDay' },
+    { month: 10, day: 23, name: 'Fibonacci Day', icon: '🌀', desc: 'the date reads 11/23, spelling out 1, 1, 2, 3, the start of the Fibonacci sequence', wikiKey: 'fibonacciDay' }
 ];
 
 // Earth birthday special labels

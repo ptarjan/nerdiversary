@@ -347,6 +347,17 @@ function loadFromUrlParams() {
     return false;
 }
 
+// Name placeholders for injected members; index 0 matches the
+// "Grace Hopper" placeholder on Person 1 in index.html
+const PLACEHOLDER_NAMES = [
+    'Grace Hopper',
+    'Alan Turing',
+    'Ada Lovelace',
+    'Katherine Johnson',
+    'Marie Curie',
+    'Carl Sagan',
+];
+
 /**
  * Add a new family member to the form
  */
@@ -366,7 +377,7 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group">
             <label for="name-${index}">Name</label>
-            <input type="text" id="name-${index}" name="name" placeholder="Name" required>
+            <input type="text" id="name-${index}" name="name" placeholder="${PLACEHOLDER_NAMES[index % PLACEHOLDER_NAMES.length]}" required>
         </div>
         <div class="form-group">
             <label for="birthdate-${index}">Birthday</label>
@@ -374,7 +385,7 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
-                Birth Time <span class="optional-label">(optional, <span class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></span>)</span>
+                Birth time <span class="optional-label">(optional, <span class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></span>)</span>
             </label>
             <input type="time" id="birthtime-${index}" name="birthtime" step="60">
             <select id="birthtz-${index}" name="birthtz" class="birth-timezone-select" style="display:none"></select>
@@ -506,7 +517,7 @@ async function submitForm() {
     });
 
     if (family.length === 0) {
-        alert('Please enter at least one birthday!');
+        alert('Add at least one birthday. The math needs a starting point.');
         return;
     }
 
@@ -516,8 +527,8 @@ async function submitForm() {
     // Warn user if save failed (they can still view results via URL)
     if (!saveSucceeded) {
         const proceed = confirm(
-            'Unable to save your data (you may be in private browsing mode). ' +
-            'Your birthdays will still appear on the next page, but won\'t be saved for next time.\n\n' +
+            'Saving failed, most likely because this browser is in private browsing mode. ' +
+            'Your milestones will still show on the next page, but the birthdays won\'t be remembered on your next visit.\n\n' +
             'Continue anyway?'
         );
         if (!proceed) {

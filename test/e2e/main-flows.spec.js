@@ -1,6 +1,7 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 import { PAGES } from '../../scripts/landing-pages-data.js';
+import { HAPPENING_NOW, NOTIFY_LABELS } from '../../js/shared.js';
 
 test.describe('Nerdiversary Main Flows', () => {
   /** @type {string[]} */
@@ -288,7 +289,7 @@ test.describe('Nerdiversary Main Flows', () => {
 
     // Celebration overlay should appear
     await expect(page.locator('.celebration-overlay')).toBeVisible();
-    await expect(page.locator('.celebration-title')).toContainText("It's Happening NOW!");
+    await expect(page.locator('.celebration-title')).toContainText(HAPPENING_NOW);
     await expect(page.locator('.celebration-emoji')).toBeVisible();
 
     // Confetti should be present
@@ -457,9 +458,10 @@ test.describe('Nerdiversary Main Flows', () => {
     const notifyBtn = page.locator('#enable-notifications');
     await expect(notifyBtn).toBeVisible();
 
-    // Check it has the expected text (either "Enable Notifications" or "Notifications On")
+    // The button must be in one of its declared states. Assert against the
+    // labels the app exports, so rewording the copy cannot fail this test.
     const btnText = await notifyBtn.textContent();
-    expect(btnText).toMatch(/Enable Notifications|Notifications On|Notifications Blocked/);
+    expect(Object.values(NOTIFY_LABELS).some(l => btnText.includes(l))).toBe(true);
   });
 
   test('notification button has correct initial state', async ({ page }) => {

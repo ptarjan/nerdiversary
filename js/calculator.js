@@ -130,7 +130,7 @@ const Calculator = {
                 addEvent({
                     id: `${key}-${yearNum}`,
                     title: `${planet.name} Year ${yearNum}`,
-                    description: `You've completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} around the Sun as measured from ${wikiLink(key, planet.name)}!`,
+                    description: `A year on ${wikiLink(key, planet.name)} lasts ${planet.days.toLocaleString()} Earth days. By that calendar, you've now completed ${yearNum} orbit${yearNum > 1 ? 's' : ''} of the Sun.`,
                     date: eventDate,
                     category: 'planetary',
                     icon: planet.icon,
@@ -146,7 +146,7 @@ const Calculator = {
             addEvent({
                 id: `seconds-${m.value}`,
                 title: m.label,
-                description: `You've been alive for exactly ${m.short}!`,
+                description: `You've been alive for exactly ${m.short}.`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_SECOND),
                 category: 'decimal',
                 icon: '🔢',
@@ -159,7 +159,7 @@ const Calculator = {
             addEvent({
                 id: `minutes-${m.value}`,
                 title: m.label,
-                description: `You've experienced exactly ${m.short}!`,
+                description: `Awake or asleep, you've now clocked exactly ${m.short}.`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_MINUTE),
                 category: 'decimal',
                 icon: '⏱️',
@@ -169,11 +169,11 @@ const Calculator = {
 
         // Hours
         for (const m of Milestones.hourMilestones) {
-            const extra = m.value === 10000 ? ` You've mastered life according to the ${wikiLink('tenKHours', '10,000-hour rule')}!` : '';
+            const extra = m.value === 10000 ? ` By the ${wikiLink('tenKHours', '10,000-hour rule')}, you're now an expert at being alive.` : '';
             addEvent({
                 id: `hours-${m.value}`,
                 title: m.label,
-                description: `You've lived for exactly ${m.short}!${extra}`,
+                description: `Your lifetime now totals exactly ${m.short}.${extra}`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_HOUR),
                 category: 'decimal',
                 icon: '⏰',
@@ -186,7 +186,7 @@ const Calculator = {
             addEvent({
                 id: `days-${m.value}`,
                 title: m.label,
-                description: `You've experienced ${m.short} on Earth!`,
+                description: `You've spent ${m.short} on this planet.`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_DAY),
                 category: 'decimal',
                 icon: '📆',
@@ -199,7 +199,7 @@ const Calculator = {
             addEvent({
                 id: `weeks-${m.value}`,
                 title: m.label,
-                description: `You've lived for ${m.short}!`,
+                description: `You've lived ${m.short}, and every single one of them contained a Monday.`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_WEEK),
                 category: 'decimal',
                 icon: '📅',
@@ -212,7 +212,7 @@ const Calculator = {
             addEvent({
                 id: `months-${m.value}`,
                 title: m.label,
-                description: `You've experienced ${m.short} of life!`,
+                description: `You've been around for ${m.short}.`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_MONTH),
                 category: 'decimal',
                 icon: '🗓️',
@@ -230,7 +230,7 @@ const Calculator = {
                 addEvent({
                     id: `binary-seconds-${power}`,
                     title: `2^${power} Seconds`,
-                    description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} seconds!`,
+                    description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} seconds. In binary, your age just rolled over to a 1 followed by ${power} zeros.`,
                     date: eventDate,
                     category: 'binary',
                     icon: '💻',
@@ -245,7 +245,7 @@ const Calculator = {
             addEvent({
                 id: `binary-minutes-${power}`,
                 title: `2^${power} Minutes`,
-                description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} minutes!`,
+                description: `You've lived for exactly 2${Milestones.toSuperscript(power)} = ${value.toLocaleString()} minutes. In binary, your age in minutes just rolled over to a 1 followed by ${power} zeros.`,
                 date: new Date(birthDate.getTime() + value * Milestones.MS_PER_MINUTE),
                 category: 'binary',
                 icon: '🔟',
@@ -258,7 +258,7 @@ const Calculator = {
             addEvent({
                 id: `hex-${m.hex}`,
                 title: `${m.hex} Seconds`,
-                description: `You've lived for ${m.hex} (${m.value.toLocaleString()}) seconds!`,
+                description: `Your age in seconds just hit ${m.hex} in hexadecimal (${m.value.toLocaleString()} in decimal).`,
                 date: new Date(birthDate.getTime() + m.value * Milestones.MS_PER_SECOND),
                 category: 'binary',
                 icon: '🔢',
@@ -276,7 +276,7 @@ const Calculator = {
                         addEvent({
                             id: `base${base}-${power}-${unit}`,
                             title: `${base}^${power} ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                            description: `You've lived for ${base}${Milestones.toSuperscript(power)} = ${value.toLocaleString()} ${unit} (${wikiLink(name, name)})!`,
+                            description: `You've lived for ${base}${Milestones.toSuperscript(power)} = ${value.toLocaleString()} ${unit}. Written in ${wikiLink(name, name)} (base ${base}), that's a 1 followed by ${power} zeros.`,
                             date: eventDate,
                             category: 'binary',
                             icon,
@@ -308,7 +308,7 @@ const Calculator = {
                 addEvent({
                     id: `${c.name}-${mult}`,
                     title: label,
-                    description: `You've lived for ${wikiLink(c.name, c.text)} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds!`,
+                    description: `You've been alive for ${wikiLink(c.name, c.text)} × ${mult.toExponential(0)} ≈ ${Math.floor(c.value * mult).toLocaleString()} seconds. For one instant, your age was an exactly irrational number of seconds.`,
                     date: new Date(birthDate.getTime() + c.value * mult * Milestones.MS_PER_SECOND),
                     category: 'mathematical',
                     icon: c.symbol,
@@ -335,7 +335,7 @@ const Calculator = {
                 addEvent({
                     id: `${idPrefix}-${unit}-${num}`,
                     title: `${num.toLocaleString()} ${name} ${unit} (${term})`,
-                    description: `${label} ${num.toLocaleString()} is ${term}, the ${ordinal} ${wikiLink(wikiKey, `${name} number`)}!`,
+                    description: `${label} ${num.toLocaleString()} is ${term}, the ${ordinal} ${wikiLink(wikiKey, `${name} number`)}: every term is the sum of the two before it.`,
                     date: new Date(birthDate.getTime() + num * ms),
                     category: 'fibonacci',
                     icon,
@@ -379,7 +379,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-days-${perfect}`,
                 title: `${perfect} Perfect Days`,
-                description: `Day ${perfect} is a ${wikiLink('perfect', 'perfect number')}! (${perfect} = sum of its divisors)`,
+                description: `Day ${perfect} is a ${wikiLink('perfect', 'perfect number')}: ${perfect} equals the sum of its proper divisors. Only four such numbers exist below 33 million.`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '💎',
@@ -392,7 +392,7 @@ const Calculator = {
             addEvent({
                 id: `perfect-hours-${perfect}`,
                 title: `${perfect.toLocaleString()} Perfect Hours`,
-                description: `Hour ${perfect.toLocaleString()} is a ${wikiLink('perfect', 'perfect number')}!`,
+                description: `Hour ${perfect.toLocaleString()} is a ${wikiLink('perfect', 'perfect number')}, equal to the sum of its proper divisors. The ancient Greeks knew only four of these, and this is one of them.`,
                 date: new Date(birthDate.getTime() + perfect * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '💎',
@@ -414,7 +414,7 @@ const Calculator = {
                 addEvent({
                     id: `triangular-days-${tri}`,
                     title: `${tri.toLocaleString()} Triangular Days`,
-                    description: `Day ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+3+...+${n} = ${tri})`,
+                    description: `Day ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}: add every number from 1 to ${n} and you get exactly ${tri}. That many dots stack into a perfect triangle.`,
                     date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_DAY),
                     category: 'mathematical',
                     icon: '🔺',
@@ -432,7 +432,7 @@ const Calculator = {
             addEvent({
                 id: `triangular-hours-${tri}`,
                 title: `${tri.toLocaleString()} Triangular Hours`,
-                description: `Hour ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}! (1+2+...+${n})`,
+                description: `Hour ${tri.toLocaleString()} is ${wikiLink('triangular', 'triangular')}: the sum of every whole number from 1 to ${n}.`,
                 date: new Date(birthDate.getTime() + tri * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🔺',
@@ -456,7 +456,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-days-${pal}`,
                 title: `${pal.toLocaleString()} Palindrome Days`,
-                description: `Day ${pal} is a ${wikiLink('palindrome', 'palindrome')} - reads the same forwards and backwards!`,
+                description: `Day ${pal} of your life reads the same forwards and backwards, a ${wikiLink('palindrome', 'palindrome')}.`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_DAY),
                 category: 'mathematical',
                 icon: '🪞',
@@ -469,7 +469,7 @@ const Calculator = {
             addEvent({
                 id: `palindrome-hours-${pal}`,
                 title: `${pal.toLocaleString()} Palindrome Hours`,
-                description: `Hour ${pal.toLocaleString()} is a ${wikiLink('palindrome', 'palindrome')}!`,
+                description: `Hour ${pal.toLocaleString()} is a ${wikiLink('palindrome', 'palindrome')}: its digits read the same in either direction.`,
                 date: new Date(birthDate.getTime() + pal * Milestones.MS_PER_HOUR),
                 category: 'mathematical',
                 icon: '🪞',
@@ -491,7 +491,7 @@ const Calculator = {
                 addEvent({
                     id: `repunit-${unit}-${rep}`,
                     title: `${rep.toLocaleString()} Repunit ${unit.charAt(0).toUpperCase() + unit.slice(1)}`,
-                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} is a ${wikiLink('repunit', 'repunit')} (all 1s)!`,
+                    description: `${unit.charAt(0).toUpperCase() + unit.slice(1, -1)} ${rep.toLocaleString()} of your life is a ${wikiLink('repunit', 'repunit')}, a number written with only 1s. The name is short for "repeated unit".`,
                     date: new Date(birthDate.getTime() + rep * ms),
                     category: 'binary',
                     icon: '1️⃣',
@@ -510,8 +510,8 @@ const Calculator = {
                 id: `speed-of-light-${mult}x`,
                 title: `${label} Seconds`,
                 description: mult === 1
-                    ? `You've lived for ${seconds.toLocaleString()} seconds - the ${wikiLink('speedOfLight', 'speed of light')} in m/s!`
-                    : `You've lived for ${mult} × the speed of light = ${seconds.toLocaleString()} seconds!`,
+                    ? `You've lived for ${seconds.toLocaleString()} seconds, the exact value of the ${wikiLink('speedOfLight', 'speed of light')} in meters per second. Getting here took you about 9.5 years.`
+                    : `You've lived for ${mult} × the speed of light in m/s = ${seconds.toLocaleString()} seconds. Each multiple of c takes about 9.5 years to live through.`,
                 date: new Date(birthDate.getTime() + seconds * Milestones.MS_PER_SECOND),
                 category: 'scientific',
                 icon: '💡',
@@ -530,7 +530,7 @@ const Calculator = {
             addEvent({
                 id: `e-pi-${mult}`,
                 title: `e^π × ${label} Seconds`,
-                description: `You've lived for e^π × ${mult.toLocaleString()} ≈ ${Math.floor(ePi * mult).toLocaleString()} seconds!`,
+                description: `You've lived for e^π × ${mult.toLocaleString()} ≈ ${Math.floor(ePi * mult).toLocaleString()} seconds. e^π is Gelfond's constant (about 23.14), proven transcendental while π^e remains an open question.`,
                 date: new Date(birthDate.getTime() + ePi * mult * Milestones.MS_PER_SECOND),
                 category: 'mathematical',
                 icon: '🧮',
@@ -563,15 +563,17 @@ const Calculator = {
             const eventDate = new Date(birthDate.getTime() + secondsNeeded * Milestones.MS_PER_SECOND);
 
             // Format the distance nicely
+            // Thresholds are in meters: 1e12 m = 1 billion km, 1e9 m = 1 million km,
+            // 1e6 m = 1 thousand km (the constant names describe magnitude, not unit)
             let distanceStr;
             if (dest.meters >= Milestones.DISTANCE_THRESHOLD_LIGHT_YEAR) {
                 distanceStr = `${(dest.meters / Milestones.METERS_PER_LIGHT_YEAR).toFixed(2)} light-years`;
             } else if (dest.meters >= Milestones.DISTANCE_THRESHOLD_TRILLION_KM) {
-                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_TRILLION_KM).toFixed(1)} trillion km`;
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_TRILLION_KM).toFixed(1)} billion km`;
             } else if (dest.meters >= Milestones.DISTANCE_THRESHOLD_BILLION_KM) {
-                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_BILLION_KM).toFixed(1)} billion km`;
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_BILLION_KM).toFixed(1)} million km`;
             } else {
-                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_MILLION_KM).toFixed(0)} million km`;
+                distanceStr = `${(dest.meters / Milestones.DISTANCE_THRESHOLD_MILLION_KM).toFixed(0)},000 km`;
             }
 
             // Use key directly - WIKI_URLS keys match COSMIC_DISTANCES keys
@@ -580,7 +582,7 @@ const Calculator = {
             addEvent({
                 id: `lightspeed-${key}`,
                 title: `Light Speed to ${dest.name}`,
-                description: `If you traveled at the ${wikiLink('speedOfLight', 'speed of light')} since birth, you'd have reached ${destLink} (${distanceStr} away)!`,
+                description: `A photon that left Earth at the moment of your birth, traveling at the ${wikiLink('speedOfLight', 'speed of light')}, has just now arrived at ${destLink}, ${distanceStr} away.`,
                 date: eventDate,
                 category: 'scientific',
                 icon: dest.icon,
@@ -594,7 +596,7 @@ const Calculator = {
             addEvent({
                 id: `lightspeed-${unit.seconds}s`,
                 title: unit.name,
-                description: `At age ${unit.seconds.toLocaleString()} seconds, you've lived long enough for light to travel ${unitLink} - ${unit.desc}!`,
+                description: `At age ${unit.seconds.toLocaleString()} second${unit.seconds === 1 ? '' : 's'}, light that set off when you were born has now traveled ${unitLink}: ${unit.desc}.`,
                 date: new Date(birthDate.getTime() + unit.seconds * Milestones.MS_PER_SECOND),
                 category: 'scientific',
                 icon: '💡',
@@ -610,7 +612,7 @@ const Calculator = {
             addEvent({
                 id: `lunation-${n}`,
                 title: `${n.toLocaleString()} New Moons`,
-                description: `${n.toLocaleString()} ${wikiLink('lunation', 'lunar months')} have passed since your birth!`,
+                description: `The Moon has cycled from new to new ${n.toLocaleString()} times since you were born. These ${wikiLink('lunation', 'lunar months')} average 29.53 days each.`,
                 date: eventDate,
                 category: 'scientific',
                 icon: '🌑',
@@ -633,7 +635,7 @@ const Calculator = {
                 addEvent({
                     id: `frac-birthday-${age}-${frac}`,
                     title: `${age - 1}${label} Years Old`,
-                    description: `You're exactly ${age - 1}${label} years old!`,
+                    description: `You're exactly ${age - 1}${label} years old.`,
                     date: eventDate,
                     category: 'planetary',
                     icon: '🎂',
@@ -647,14 +649,14 @@ const Calculator = {
         const ordinal = Milestones.getOrdinal(year);
         const labels = [];
 
-        if (year === 42) { labels.push(`${wikiLink('answer42', 'The Answer')}! 🌌`); }
+        if (year === 42) { labels.push(`${wikiLink('answer42', 'The Answer')} to Life, the Universe, and Everything`); }
         if (Milestones.primeAges.has(year)) { labels.push('Prime'); }
         if (Milestones.squareAges[year]) { labels.push(`Perfect Square (${Milestones.squareAges[year]})`); }
         if (Milestones.powerOf2Ages[year]) { labels.push(`Power of 2 (${Milestones.powerOf2Ages[year]})`); }
         if (Milestones.cubeAges[year]) { labels.push(`Perfect Cube (${Milestones.cubeAges[year]})`); }
         if (Milestones.hexRoundAges[year]) { labels.push(`Hex Round (${Milestones.hexRoundAges[year]})`); }
 
-        const specialLabel = labels.length > 0 ? ` — ${labels.join(', ')}` : '';
+        const specialLabel = labels.length > 0 ? ` This year's number is special: ${labels.join(', ')}.` : '';
 
         return {
             id: `earth-birthday-${year}`,
@@ -673,7 +675,7 @@ const Calculator = {
         return {
             id: `${holiday.name.toLowerCase().replace(/\s/g, '-')}-${year}`,
             title: `${holiday.name} ${year}`,
-            description: `${linkText}! (${holiday.desc})`,
+            description: `It's ${linkText}: ${holiday.desc}.`,
             date: holidayDate,
             category: 'pop-culture',
             icon: holiday.icon,

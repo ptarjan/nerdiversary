@@ -1266,7 +1266,7 @@ test('Milestone offsets are unique per minute (collisions merged, not dropped)',
     assertEqual(new Set(msValues).size, msValues.length, 'Offsets must be unique by ms. ');
 
     // The 1 AU / Light Speed to the Sun collision must be merged into one label
-    const au = offsets.find(o => o.label.includes('1 AU (Sun Distance)'));
+    const au = offsets.find(o => o.label.includes('1 Astronomical Unit'));
     assertTrue(au !== undefined, 'Should have the 1 AU milestone');
     assertTrue(au.label.includes('Light Speed to the Sun'),
         `Colliding milestones should merge labels, got: "${au.label}"`);

@@ -6,7 +6,7 @@ import Nerdiversary from './nerdiversary.js';
 import Milestones from './milestones.js';
 import Notifications from './notifications.js';
 import * as Storage from './storage.js';
-import { parseFamilyParam, formatICalDate, getCategoryInfo, generateICal, WORKER_URL } from './shared.js';
+import { parseFamilyParam, formatICalDate, getCategoryInfo, generateICal, WORKER_URL, HAPPENING_NOW, NOTIFY_LABELS } from './shared.js';
 
 let allEvents = [];
 let familyMembers = [];
@@ -52,13 +52,13 @@ function showLoadingError(message) {
         timeline.innerHTML = `
             <div class="empty-state">
                 <p>${message}</p>
-                <p><a href="index.html" style="color: #7c3aed;">Go back and try again</a></p>
+                <p><a href="index.html" style="color: #7c3aed;">Go back and re-enter the birthdays</a></p>
             </div>
         `;
     }
     const nextEvent = document.getElementById('next-event');
     if (nextEvent) {
-        nextEvent.innerHTML = '<div class="countdown-loading">Unable to load</div>';
+        nextEvent.innerHTML = '<div class="countdown-loading">Countdown unavailable</div>';
     }
 }
 
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         startCountdownTimer();
     } catch (err) {
         console.error('Failed to initialize results page:', err);
-        showLoadingError('Something went wrong loading your nerdiversaries. Please try again.');
+        showLoadingError('Calculating your nerdiversaries failed partway through. Reloading the page usually fixes it.');
     }
 });
 
@@ -298,7 +298,7 @@ function displayNextEvent() {
     const nextEvent = upcomingEvents[0];
 
     if (!nextEvent) {
-        container.innerHTML = '<p class="empty-state">No upcoming events found</p>';
+        container.innerHTML = '<p class="empty-state">No upcoming milestones for this selection</p>';
         return;
     }
 
@@ -422,7 +422,7 @@ function displayTimeline() {
     const displayEvents = filteredEvents.slice(0, limit);
 
     if (displayEvents.length === 0) {
-        timeline.innerHTML = '<div class="empty-state"><p>No events found for this filter.</p></div>';
+        timeline.innerHTML = '<div class="empty-state"><p>No milestones match this filter. Try another category or view.</p></div>';
         return;
     }
 
@@ -598,7 +598,7 @@ async function setupNotifications() {
         const isEnabled = Notifications.isEnabled();
 
         if (currentPermission === 'denied') {
-            showToast('Notifications blocked. Please enable in browser settings.');
+            showToast('Notifications are blocked for this site. Allow them in your browser settings, then tap the bell again.');
             return;
         }
 
@@ -614,14 +614,14 @@ async function setupNotifications() {
                 });
             }
             updateNotificationButton(notifyBtn, currentPermission, false);
-            showToast('Notifications disabled');
+            showToast('Notifications off. No more milestone alerts.');
         } else {
             // Request permission if needed
             if (currentPermission !== 'granted') {
                 const result = await Notifications.requestPermission();
                 if (!result.granted) {
                     if (result.reason === 'denied') {
-                        showToast('Notifications blocked. Please enable in browser settings.');
+                        showToast('Notifications are blocked for this site. Allow them in your browser settings, then tap the bell again.');
                     }
                     return;
                 }
@@ -638,18 +638,18 @@ async function setupNotifications() {
                 const pushResult = await Notifications.subscribeToPush(familyParam);
                 if (pushResult.success) {
                     console.log('Push notifications subscribed');
-                    showToast('Notifications enabled! You\'ll be notified even when the app is closed.');
+                    showToast('Notifications on. Milestone alerts will arrive even when the app is closed.');
                 } else {
                     console.log('Push subscription failed, using local notifications:', pushResult.reason);
-                    showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+                    showToast('Notifications on. You\'ll get a heads-up before each upcoming nerdiversary.');
                 }
             } else {
-                showToast('Notifications enabled! You\'ll be notified of upcoming nerdiversaries.');
+                showToast('Notifications on. You\'ll get a heads-up before each upcoming nerdiversary.');
             }
 
             // Show a test notification
-            await Notifications.showNotification('Notifications Enabled!', {
-                body: 'You\'ll be notified when your nerdiversaries are approaching.',
+            await Notifications.showNotification('Notifications are on', {
+                body: 'This is what a milestone alert looks like. The real ones arrive as each nerdiversary approaches.',
                 tag: 'nerdiversary-enabled'
             });
         }
@@ -680,16 +680,16 @@ function updateNotificationButton(button, permission, enabled) {
         button.classList.add('disabled');
         button.classList.remove('active');
         if (icon) { icon.textContent = '🔕'; }
-        if (text) { text.textContent = 'Notifications Blocked'; }
+        if (text) { text.textContent = NOTIFY_LABELS.blocked; }
     } else if (enabled) {
         button.classList.add('active');
         button.classList.remove('disabled');
         if (icon) { icon.textContent = '🔔'; }
-        if (text) { text.textContent = 'Notifications On'; }
+        if (text) { text.textContent = NOTIFY_LABELS.on; }
     } else {
         button.classList.remove('active', 'disabled');
         if (icon) { icon.textContent = '🔕'; }
-        if (text) { text.textContent = 'Enable Notifications'; }
+        if (text) { text.textContent = NOTIFY_LABELS.off; }
     }
 }
 
@@ -736,7 +736,7 @@ function showPWAInstallModal() {
     modal.innerHTML = `
         <div class="import-modal-content">
             <h3>Add to Home Screen</h3>
-            <p>To enable notifications on iPad/iPhone, you need to install this app first:</p>
+            <p>iPhone and iPad only deliver web notifications to installed apps, so add this one to your Home Screen first:</p>
             <div class="pwa-install-steps">
                 <div class="pwa-step">
                     <span class="pwa-step-number">1</span>
@@ -752,7 +752,7 @@ function showPWAInstallModal() {
                 </div>
                 <div class="pwa-step">
                     <span class="pwa-step-number">4</span>
-                    <span>Tap "Enable Notifications" again</span>
+                    <span>Tap "Enable notifications" again</span>
                 </div>
             </div>
             <p class="pwa-note">This is required by Apple for web app notifications.</p>
@@ -774,7 +774,7 @@ function showUnsupportedBrowserModal() {
     modal.className = 'import-modal';
     modal.innerHTML = `
         <div class="import-modal-content">
-            <h3>Safari Required</h3>
+            <h3>Safari required</h3>
             <p>On iOS, only apps installed from <strong>Safari</strong> can send notifications.</p>
             <p>To enable notifications:</p>
             <div class="pwa-install-steps">
@@ -820,8 +820,8 @@ function showSubscribeModal(calendarUrl) {
     modal.className = 'import-modal';
     modal.innerHTML = `
         <div class="import-modal-content">
-            <h3>🔔 Subscribe to Your Nerdiversaries</h3>
-            <p>Your calendar will auto-update with new events!</p>
+            <h3>🔔 Subscribe to your nerdiversaries</h3>
+            <p>Your calendar app stays in sync: new milestones show up automatically as they're computed.</p>
             <div class="import-options">
                 <a href="${googleCalUrl}" target="_blank" class="import-option" id="gcal-subscribe">
                     <span class="import-icon">📅</span>
@@ -872,10 +872,10 @@ function copyCalendarUrl() {
     const input = document.getElementById('calendar-url-input');
     input.select();
     navigator.clipboard.writeText(input.value).then(() => {
-        showToast('Calendar URL copied!');
+        showToast('Calendar URL copied to your clipboard');
     }).catch(() => {
         const success = document.execCommand('copy');
-        showToast(success ? 'Calendar URL copied!' : 'Failed to copy URL');
+        showToast(success ? 'Calendar URL copied to your clipboard' : 'Copying failed. Select the URL and copy it by hand.');
     });
 }
 
@@ -934,12 +934,12 @@ function shareResults() {
     const shareUrl = `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
 
     const shareText = familyMembers.length > 1
-        ? 'Check out our family\'s nerdy anniversaries!'
-        : 'Check out my nerdy anniversaries!';
+        ? 'Our family\'s nerdy time milestones: billion-second birthdays, Mars years, and more'
+        : 'My nerdy time milestones: billion-second birthdays, Mars years, and more';
 
     if (navigator.share) {
         navigator.share({
-            title: familyMembers.length > 1 ? 'Our Family Nerdiversaries' : 'My Nerdiversaries',
+            title: familyMembers.length > 1 ? 'Our family nerdiversaries' : 'My nerdiversaries',
             text: shareText,
             url: shareUrl
         }).catch(err => {
@@ -967,36 +967,36 @@ function generateShareText(event) {
     const hooks = {
         planetary: event.planet
             ? [
-                `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} a birthday on ${event.planet}! ${event.icon}`,
-                `Forget Earth birthdays. ${personPrefix}${isPast ? 'turned' : 'will turn'} ${event.title.match(/\d+/)?.[0] || 'another year'} in ${event.planet} years! ${event.icon}`,
+                `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} a birthday on ${event.planet}. ${event.icon}`,
+                `${personPrefix}${isPast ? 'turned' : 'will turn'} ${event.title.match(/\d+/)?.[0] || 'another year'} in ${event.planet} years. Earth years are just one option. ${event.icon}`,
             ]
             : [
-                `${event.icon} ${personPrefix}${isPast ? 'just turned' : 'will turn'} ${event.title}!`,
-                `${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title}! ${event.icon}`,
+                `${event.icon} ${personPrefix}${isPast ? 'just turned' : 'will turn'} ${event.title}.`,
+                `${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title}. ${event.icon}`,
             ],
         decimal: [
-            `${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title}! ${event.icon}`,
-            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title} on ${dateStr}!`,
+            `${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title}. ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} ${event.title} on ${dateStr}.`,
         ],
         binary: [
-            `${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}! Only true nerds celebrate this. ${event.icon}`,
-            `${event.icon} Programmers assemble! ${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title}`,
+            `${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}. A milestone only visible in the right number base. ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title}. Off-by-one errors not invited.`,
         ],
         mathematical: [
-            `${event.icon} ${personPrefix}${isPast ? 'just lived' : 'will live'} ${event.title}! Math is beautiful.`,
-            `${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} ${event.title}! ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'just lived' : 'will live'} ${event.title}. The math checks out.`,
+            `${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} ${event.title}. ${event.icon}`,
         ],
         fibonacci: [
-            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} a Fibonacci milestone: ${event.title}!`,
-            `The golden ratio approves! ${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title} ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'reached' : 'will reach'} a Fibonacci milestone: ${event.title}.`,
+            `${personPrefix}${isPast ? 'just hit' : 'will hit'} ${event.title}. The golden ratio approves. ${event.icon}`,
         ],
         scientific: [
-            `${event.icon} ${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}!`,
-            `Science nerds unite! ${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title} ${event.icon}`,
+            `${event.icon} ${personPrefix}${isPast ? 'just reached' : 'will reach'} ${event.title}.`,
+            `${personPrefix}${isPast ? 'hit' : 'will hit'} ${event.title}. Peer review welcome. ${event.icon}`,
         ],
         'pop-culture': [
-            `${event.icon} ${event.title}! ${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} on ${dateStr}`,
-            `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} ${event.title}! ${event.icon}`,
+            `${event.icon} ${event.title}. ${personPrefix}${isPast ? 'celebrated' : 'will celebrate'} on ${dateStr}`,
+            `${personPrefix}${isPast ? 'just celebrated' : 'will celebrate'} ${event.title}. ${event.icon}`,
         ],
     };
 
@@ -1004,7 +1004,7 @@ function generateShareText(event) {
     const baseText = categoryHooks[Math.floor(Math.random() * categoryHooks.length)];
 
     return event.rarity === 'legendary'
-        ? `💎 Once-in-a-lifetime milestone! ${baseText}`
+        ? `💎 Once in a lifetime: ${baseText}`
         : baseText;
 }
 
@@ -1038,7 +1038,7 @@ function showShareModal(event) {
     modal.className = 'import-modal';
     modal.innerHTML = `
         <div class="import-modal-content share-modal-content">
-            <h3>${event.icon} Share This Milestone</h3>
+            <h3>${event.icon} Share this milestone</h3>
             <div class="share-preview">
                 <p class="share-preview-text">"${escapeHtml(shareText)}"</p>
             </div>
@@ -1083,7 +1083,7 @@ function showShareModal(event) {
 function copyMilestoneShare(text, url) {
     const fullText = `${text} ${url}`;
     navigator.clipboard.writeText(fullText).then(() => {
-        showToast('Copied to clipboard!');
+        showToast('Share text and link copied to your clipboard');
     }).catch(() => {
         const textArea = document.createElement('textarea');
         textArea.value = fullText;
@@ -1091,7 +1091,7 @@ function copyMilestoneShare(text, url) {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        showToast('Copied to clipboard!');
+        showToast('Share text and link copied to your clipboard');
     });
 }
 
@@ -1100,7 +1100,7 @@ function copyMilestoneShare(text, url) {
  */
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        showToast('Link copied to clipboard!');
+        showToast('Link copied to your clipboard');
     }).catch(() => {
         // Fallback
         const textArea = document.createElement('textarea');
@@ -1109,7 +1109,7 @@ function copyToClipboard(text) {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        showToast('Link copied to clipboard!');
+        showToast('Link copied to your clipboard');
     });
 }
 
@@ -1136,7 +1136,7 @@ function showCelebration(event) {
             ? `${event.personName}: ${event.title}`
             : event.title;
 
-        Notifications.showNotification(`${event.icon} It's Happening NOW!`, {
+        Notifications.showNotification(`${event.icon} ${HAPPENING_NOW}`, {
             body: notificationBody,
             tag: `nerdiversary-celebration-${event.id}`,
             data: {
@@ -1153,11 +1153,11 @@ function showCelebration(event) {
     overlay.innerHTML = `
         <div class="celebration-content">
             <span class="celebration-emoji">${event.icon}</span>
-            <h2 class="celebration-title">🎉 It's Happening NOW! 🎉</h2>
+            <h2 class="celebration-title">🎉 ${HAPPENING_NOW} 🎉</h2>
             ${showPerson ? `<p class="celebration-person" style="background: ${event.personColor}">${escapeHtml(event.personName)}</p>` : ''}
             <p class="celebration-event">${event.title}</p>
             <p class="celebration-description">${event.description}</p>
-            <button class="celebration-dismiss">Continue to Next Event</button>
+            <button class="celebration-dismiss">On to the next milestone</button>
         </div>
     `;
     document.body.appendChild(overlay);
@@ -1222,8 +1222,8 @@ window.testCelebration = function () {
     } else {
         showCelebration({
             icon: '🎉',
-            title: 'Test Celebration!',
-            description: 'This is what happens when a nerdiversary occurs!',
+            title: 'Test celebration',
+            description: 'This is what the screen does when a real nerdiversary lands.',
             personName: 'Test',
             personColor: 'rgba(124, 58, 237, 0.8)'
         });
