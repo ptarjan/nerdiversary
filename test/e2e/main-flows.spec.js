@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { PAGES } from '../../scripts/landing-pages-data.js';
 
 test.describe('Nerdiversary Main Flows', () => {
   /** @type {string[]} */
@@ -226,10 +227,13 @@ test.describe('Nerdiversary Main Flows', () => {
   });
 
   test('SEO landing page loads and its form reaches results', async ({ page }) => {
-    await page.goto('/billion-seconds.html');
+    // Assert against the page data, not a copy of it, so rewriting the copy
+    // cannot leave this test asserting a title that no longer ships.
+    const lp = PAGES.find(p => p.slug === 'billion-seconds');
+    await page.goto(`/${lp.slug}.html`);
 
-    await expect(page).toHaveTitle(/Billion Second Birthday Calculator/);
-    await expect(page.locator('h1')).toContainText('1 billion seconds');
+    await expect(page).toHaveTitle(`${lp.title} - Nerdiversary`);
+    await expect(page.locator('h1')).toContainText(lp.heading);
 
     await page.fill('#lp-date', '1990-05-15');
     await page.click('button[type="submit"]');

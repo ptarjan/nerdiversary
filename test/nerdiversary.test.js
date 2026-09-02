@@ -4,6 +4,8 @@
  */
 
 // Load the Nerdiversary and Milestones modules
+import { readFileSync } from 'node:fs';
+import { PAGES } from '../scripts/landing-pages-data.js';
 import Milestones from '../js/milestones.js';
 import Nerdiversary from '../js/nerdiversary.js';
 import Calculator from '../js/calculator.js';
@@ -1677,6 +1679,34 @@ test('No milestone titles collide with holiday name prefixes', () => {
 
     assertEqual(collisions.length, 0,
         `Milestone titles collide with holiday names: ${collisions.slice(0, 3).map(c => `"${c.title}"`).join(', ')}. `);
+});
+
+// ============================================
+// LANDING PAGE / GENERATED HTML
+// ============================================
+console.log('\n--- Landing Pages ---');
+
+test('every landing page ships the title and heading its data declares', () => {
+    const root = new URL('..', import.meta.url).pathname;
+    const stale = [];
+    for (const page of PAGES) {
+        const html = readFileSync(`${root}${page.slug}.html`, 'utf8');
+        if (!html.includes(`<title>${page.title} - Nerdiversary</title>`)) {
+            stale.push(`${page.slug}: title`);
+        }
+        if (!html.includes(page.heading)) { stale.push(`${page.slug}: heading`); }
+    }
+    assertEqual(stale.length, 0,
+        `Generated HTML is stale — run \`npm run generate:landing\`: ${stale.join(', ')}. `);
+});
+
+test('landing page titles and descriptions fit in a search result', () => {
+    // Google truncates around 60 chars; " - Nerdiversary" costs 15 of them.
+    const tooLong = PAGES.filter(p => p.title.length > 45).map(p => `${p.slug} (${p.title.length})`);
+    assertEqual(tooLong.length, 0, `Titles over 45 chars: ${tooLong.join(', ')}. `);
+
+    const longDesc = PAGES.filter(p => p.description.length > 155).map(p => `${p.slug} (${p.description.length})`);
+    assertEqual(longDesc.length, 0, `Descriptions over 155 chars: ${longDesc.join(', ')}. `);
 });
 
 // ============================================
