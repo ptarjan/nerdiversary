@@ -1,7 +1,7 @@
 {
   "name": "Nerdiversary",
   "short_name": "Nerdiversary",
-  "description": "Calculate your nerdy birthday milestones and get notified when they happen",
+  "description": "The dates you turn 1 billion seconds, 10,000 days and 1 Mars year old, with optional alerts before each one",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

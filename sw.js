@@ -1,9 +1,18 @@
 /**
- * Service Worker for Nerdiversary PWA
- * Network-first caching: always fetch from network, fall back to cache when offline.
+ * Service worker, registered by js/notifications.js from every page that
+ * loads it (index.html, results.html). Two jobs:
+ * - Offline: network first for same-origin GETs, cache when the network fails.
+ *   Online visitors always get the deployed files, so a deploy needs no version
+ *   bump here.
+ * - Push: show the notifications the worker (worker/worker.js) sends, and open
+ *   or focus the results page when one is tapped.
  */
 
+// Changing the name makes the next activation delete every older cache.
 const CACHE_NAME = 'nerdiversary-v4';
+// Pre-cached at install so the app works offline after one visit. cache.addAll
+// fails the whole install if any one of these is missing, so remove entries
+// along with the files.
 const OFFLINE_ASSETS = [
     './',
     './index.html',
@@ -25,9 +34,8 @@ const OFFLINE_ASSETS = [
     './assets/logo.svg'
 ];
 
-/**
- * Install event - pre-cache assets for offline use, then activate immediately
- */
+// Pre-cache, then take over from any previous worker without waiting for its
+// tabs to close.
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -36,9 +44,7 @@ self.addEventListener('install', event => {
     );
 });
 
-/**
- * Activate event - clean up old caches and claim clients
- */
+// Delete caches from other CACHE_NAMEs and control already-open pages.
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys()
@@ -49,9 +55,8 @@ self.addEventListener('activate', event => {
     );
 });
 
-/**
- * Fetch event - network first, fall back to cache when offline
- */
+// Cross-origin requests (fonts, the worker's API) and non-GETs go straight to
+// the network untouched.
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') { return; }
     if (!event.request.url.startsWith(self.location.origin)) { return; }
@@ -59,7 +64,8 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         fetch(event.request)
             .then(response => {
-                // Cache successful responses for offline use
+                // Every successful response refreshes the cache, so anything
+                // visited once is available offline.
                 if (response.ok) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -67,10 +73,10 @@ self.addEventListener('fetch', event => {
                 return response;
             })
             .catch(() =>
-                // Network failed — serve from cache
                 caches.match(event.request).then(cached => {
                     if (cached) { return cached; }
-                    // Navigation requests fall back to cached index
+                    // An uncached page, e.g. results.html?family=..., gets the home
+                    // page, which forwards to results from device storage.
                     if (event.request.mode === 'navigate') {
                         return caches.match('./index.html');
                     }
@@ -80,26 +86,23 @@ self.addEventListener('fetch', event => {
     );
 });
 
-/**
- * Push event - handle incoming push notifications
- */
+// The worker sends JSON {title, body}; any field it omits falls back to these
+// defaults. A non-JSON payload becomes the body.
 self.addEventListener('push', event => {
     let data = {
-        title: 'Nerdiversary Alert!',
-        body: 'A nerdy milestone is coming up!',
+        title: 'Nerdiversary',
+        body: 'You have a milestone coming up. Tap to see which one.',
         icon: './assets/icon-192x192.png',
         badge: './assets/favicon-96x96.png',
         tag: 'nerdiversary-notification',
         data: {}
     };
 
-    // Parse push data if available
     if (event.data) {
         try {
             const pushData = event.data.json();
             data = { ...data, ...pushData };
         } catch {
-            // If not JSON, use as body text
             data.body = event.data.text();
         }
     }
@@ -115,7 +118,7 @@ self.addEventListener('push', event => {
         actions: [
             {
                 action: 'view',
-                title: 'View Details'
+                title: 'Open'
             },
             {
                 action: 'dismiss',
@@ -129,9 +132,8 @@ self.addEventListener('push', event => {
     );
 });
 
-/**
- * Notification click event - handle user interaction
- */
+// Also handles the notifications js/notifications.js shows through this
+// worker's registration.
 self.addEventListener('notificationclick', event => {
     event.notification.close();
 
@@ -142,32 +144,22 @@ self.addEventListener('notificationclick', event => {
         return;
     }
 
-    // Default action or 'view' action - open the results page
-    // results.html will load family data from storage if no URL param is present
+    // Local notifications carry the page URL in data.url; server pushes carry
+    // none, and a bare results.html loads the birthdays from device storage.
     const urlToOpen = (notificationData && notificationData.url) || './results.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(windowClients => {
-                // Check if there's already a window open
+                // Any open results tab wins over opening urlToOpen.
                 for (const client of windowClients) {
                     if (client.url.includes('results.html') && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                // Open new window if none found
                 if (clients.openWindow) {
                     return clients.openWindow(urlToOpen);
                 }
             })
     );
-});
-
-/**
- * Message event - handle messages from the main thread
- */
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
 });

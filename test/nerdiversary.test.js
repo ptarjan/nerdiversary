@@ -1,18 +1,21 @@
 /**
- * Nerdiversary Tests
- * Run with: node test/nerdiversary.test.js
+ * Unit tests for the shared calculation code (js/), the Cloudflare worker and
+ * the landing-page data. Plain Node with a tiny local test() helper, no
+ * framework. Run with: npm test
+ *
+ * Some worker tests read worker.js as text and check for the calls that keep
+ * it in sync with js/ (Calculator, shared.js); the rest call exported functions.
  */
 
-// Load the Nerdiversary and Milestones modules
 import { readFileSync } from 'node:fs';
 import { PAGES } from '../scripts/landing-pages-data.js';
 import Milestones from '../js/milestones.js';
 import Nerdiversary from '../js/nerdiversary.js';
 import Calculator from '../js/calculator.js';
-import { parseFamilyParam, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo, generateICal, localToUtcWithTimezone } from '../js/shared.js';
-import { buildFamilyEvents, generateMilestoneOffsets, buildSharePage } from '../worker/worker.js';
+import { HAPPENING_NOW, parseFamilyParam, buildFamilyParam, escapeHtml, formatNotificationTitle, formatICalDate, escapeICalText, getCategoryInfo, generateICal, localToUtcWithTimezone } from '../js/shared.js';
+import { buildFamilyEvents, generateMilestoneOffsets, buildSharePage, handleScheduled } from '../worker/worker.js';
 
-// Node.js built-ins for worker.js verification tests
+// For the source-text checks on worker.js, notifications.js and sw.js
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -253,8 +256,8 @@ test('All 7 planets are defined', () => {
 });
 
 test('Mercury years continue past age 48 (MAX_PLANETARY_YEARS regression)', () => {
-    // 200 orbits × 88 days ≈ 48 Earth years — the old cap silently ended
-    // Mercury milestones for anyone older than that
+    // 200 orbits × 88 days ≈ 48 Earth years, so MAX_PLANETARY_YEARS must be
+    // high enough that Mercury milestones continue for older people.
     const birthDate = new Date('1970-01-15T12:00:00Z');
     const events = Nerdiversary.calculate(birthDate, 100);
     const mercury300 = events.find(e => e.id === 'mercury-300');
@@ -869,8 +872,6 @@ test('Service worker caches essential assets', () => {
 // ============================================
 console.log('\n--- Worker Push Notification Logic ---');
 
-// workerPath and workerCode already declared above
-
 test('Worker generates milestone offsets', () => {
     // Check that generateMilestoneOffsets function exists
     const hasGenerator = workerCode.includes('function generateMilestoneOffsets()');
@@ -888,7 +889,7 @@ test('Worker imports parseFamilyParam from shared module', () => {
     const importsParser = workerCode.includes('parseFamilyParam');
     assertTrue(importsParser, 'Should import parseFamilyParam from shared');
 
-    // Verify it no longer defines its own version
+    // The worker must not keep its own copy of the parser
     const hasLocalParser = workerCode.includes('function parseFamilyParam(');
     assertTrue(!hasLocalParser, 'Should NOT have a local parseFamilyParam definition');
 });
@@ -953,9 +954,9 @@ test('Worker caches milestone offsets', () => {
     assertTrue(hasGetter, 'Should have getter that returns cached offsets');
 });
 
-// Functional tests for parseFamilyParam logic (extracted and tested directly)
+// These check the family-param string format itself; parseFamilyParam is
+// tested under SHARED MODULE TESTS.
 test('parseFamilyParam logic handles single member', () => {
-    // Simulate the parsing logic
     const familyParam = 'Alice|1990-05-15|14:30';
     const parts = familyParam.split('|');
     assertEqual(parts[0], 'Alice', 'Should extract name');
@@ -1058,8 +1059,8 @@ test('Family URL round-trips names containing commas and pipes', () => {
 });
 
 test('parseFamilyParam tolerates raw % in names (legacy URLs)', () => {
-    // Old-style URLs lose the name encoding after one URLSearchParams decode;
-    // a raw % must not throw and wipe out the whole family
+    // Links made before names were double-encoded arrive with a raw % after
+    // URLSearchParams decodes them; that must not throw and drop the whole family.
     const result = parseFamilyParam('100% Nerd|1990-05-15,Alice|1985-03-22');
     assertEqual(result.length, 2, 'Both members should survive');
     assertEqual(result[0].name, '100% Nerd');
@@ -1068,27 +1069,27 @@ test('parseFamilyParam tolerates raw % in names (legacy URLs)', () => {
 
 test('formatNotificationTitle returns NOW message for 0 minutes', () => {
     const title = formatNotificationTitle('\u{1F389}', 0);
-    assertTrue(title.includes("It's happening NOW!"), 'Should contain NOW message');
+    assertTrue(title.includes(HAPPENING_NOW), 'Should contain the HAPPENING_NOW line');
 });
 
 test('formatNotificationTitle returns minutes message for < 60', () => {
     const title = formatNotificationTitle('\u{1F389}', 30);
-    assertTrue(title.includes('30 minutes away'), 'Should contain minutes message');
+    assertTrue(/\b30 minutes\b/.test(title), 'Should count 30 minutes');
 });
 
 test('formatNotificationTitle returns hours message for < 1440', () => {
     const title = formatNotificationTitle('\u{1F389}', 120);
-    assertTrue(title.includes('2 hours away'), 'Should contain hours message');
+    assertTrue(/\b2 hours\b/.test(title), 'Should count 2 hours');
 });
 
 test('formatNotificationTitle returns days message for >= 1440', () => {
     const title = formatNotificationTitle('\u{1F389}', 2880);
-    assertTrue(title.includes('2 days away'), 'Should contain days message');
+    assertTrue(/\b2 days\b/.test(title), 'Should count 2 days');
 });
 
 test('formatNotificationTitle handles singular hour', () => {
     const title = formatNotificationTitle('\u{1F389}', 60);
-    assertTrue(title.includes('1 hour away'), 'Should say "hour" not "hours"');
+    assertTrue(/\b1 hour\b/.test(title) && !title.includes('hours'), 'Should say "hour" not "hours"');
 });
 
 test('formatICalDate formats correctly', () => {
@@ -1123,6 +1124,68 @@ test('localToUtcWithTimezone handles DST correctly', () => {
     // Jan 15 in Denver is MST (UTC-7): 14:30 local = 21:30 UTC
     const winter = localToUtcWithTimezone('1990-01-15', '14:30', 'America/Denver');
     assertEqual(winter.toISOString().slice(0, 16), '1990-01-15T21:30');
+});
+
+// [zone, date, time, expected UTC] around each 2024 DST switch, one zone per
+// hemisphere plus a US zone.
+function assertUtc(cases) {
+    for (const [zone, date, time, expected] of cases) {
+        const actual = localToUtcWithTimezone(date, time, zone).toISOString().slice(0, 16);
+        assertEqual(actual, expected, `${zone} ${date} ${time}: `);
+    }
+}
+
+test('localToUtcWithTimezone uses the offset in force at the wall-clock time near a DST switch', () => {
+    assertUtc([
+        ['Europe/Paris', '2024-03-31', '01:30', '2024-03-31T00:30'],
+        ['Europe/Paris', '2024-03-31', '03:30', '2024-03-31T01:30'],
+        ['Europe/Paris', '2024-10-27', '03:30', '2024-10-27T02:30'],
+        ['America/New_York', '2024-03-10', '03:30', '2024-03-10T07:30'],
+        ['America/New_York', '2024-11-03', '02:30', '2024-11-03T07:30'],
+        ['Australia/Sydney', '2024-10-06', '01:30', '2024-10-05T15:30'],
+        ['Australia/Sydney', '2024-04-07', '03:30', '2024-04-06T17:30'],
+    ]);
+});
+
+test('localToUtcWithTimezone shifts a spring-forward gap time forward by the gap', () => {
+    assertUtc([
+        ['Europe/Paris', '2024-03-31', '02:30', '2024-03-31T01:30'],
+        ['America/New_York', '2024-03-10', '02:30', '2024-03-10T07:30'],
+        ['Australia/Sydney', '2024-10-06', '02:30', '2024-10-05T16:30'],
+    ]);
+});
+
+test('localToUtcWithTimezone picks the earlier instant in a fall-back overlap', () => {
+    assertUtc([
+        ['Europe/Paris', '2024-10-27', '02:30', '2024-10-27T00:30'],
+        ['America/New_York', '2024-11-03', '01:30', '2024-11-03T05:30'],
+        ['Australia/Sydney', '2024-04-07', '02:30', '2024-04-06T15:30'],
+    ]);
+});
+
+test('localToUtcWithTimezone round-trips every existing wall-clock minute on DST switch days', () => {
+    const days = [
+        ['Europe/Paris', '2024-03-31'], ['Europe/Paris', '2024-10-27'],
+        ['America/New_York', '2024-03-10'], ['America/New_York', '2024-11-03'],
+        ['Australia/Sydney', '2024-04-07'], ['Australia/Sydney', '2024-10-06'],
+    ];
+    for (const [zone, date] of days) {
+        const fmt = new Intl.DateTimeFormat('en-CA', {
+            timeZone: zone, hourCycle: 'h23',
+            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+        });
+        let gapMinutes = 0;
+        for (let m = 0; m < 24 * 60; m += 5) {
+            const time = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            const shown = fmt.format(localToUtcWithTimezone(date, time, zone)).replace(', ', ' ');
+            if (shown !== `${date} ${time}`) {
+                gapMinutes += 5;
+            }
+        }
+        // Only the skipped hour of a spring-forward day may fail to round-trip.
+        const expectedGap = ['2024-03-31', '2024-03-10', '2024-10-06'].includes(date) ? 60 : 0;
+        assertEqual(gapMinutes, expectedGap, `${zone} ${date} non-round-tripping minutes: `);
+    }
 });
 
 test('parseFamilyParam honors explicit birth timezone', () => {
@@ -1221,7 +1284,8 @@ test('Share page emits milestone-specific OG tags and category card', () => {
     const url = new URL('https://worker.test/share?t=1%20Billion%20Seconds&d=2027-03-03T12:00:00Z&i=%F0%9F%94%A2&c=decimal&n=Paul&f=Paul%7C1995-06-27');
     const html = buildSharePage(url);
 
-    assertTrue(html.includes('Paul reaches 1 Billion Seconds on March 3, 2027!'),
+    const ogTitle = html.match(/<meta property="og:title" content="([^"]*)">/)[1];
+    assertTrue(['Paul', '1 Billion Seconds', 'March 3, 2027'].every(part => ogTitle.includes(part)),
         'OG title should name the person, milestone, and date');
     assertTrue(html.includes('assets/og/decimal.jpg'), 'Should use the category card image');
     assertTrue(html.includes('results.html?family=Paul%257C1995-06-27') || html.includes('results.html?family=Paul%7C1995-06-27'),
@@ -1265,10 +1329,15 @@ test('Milestone offsets are unique per minute (collisions merged, not dropped)',
     const msValues = offsets.map(o => o.ms);
     assertEqual(new Set(msValues).size, msValues.length, 'Offsets must be unique by ms. ');
 
-    // The 1 AU / Light Speed to the Sun collision must be merged into one label
-    const au = offsets.find(o => o.label.includes('1 Astronomical Unit'));
+    // 1 AU of light-travel and light reaching the Sun land on the same minute:
+    // both titles must survive in the merged label
+    const events = Calculator.calculate(new Date('2000-01-01T00:00:00Z'), { yearsAhead: 1 });
+    const titleOf = id => events.find(e => e.id === id).title;
+    const auTitle = titleOf('lightspeed-499s');
+    const sunTitle = titleOf('lightspeed-sun');
+    const au = offsets.find(o => o.label.includes(auTitle));
     assertTrue(au !== undefined, 'Should have the 1 AU milestone');
-    assertTrue(au.label.includes('Light Speed to the Sun'),
+    assertTrue(au.label.includes(sunTitle),
         `Colliding milestones should merge labels, got: "${au.label}"`);
 });
 
@@ -1333,7 +1402,7 @@ test('With rounding, all offset-based notifications target correct birth minute'
     const refBirth = new Date('2000-01-01T00:00:00Z');
     const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
 
-    // Generate rounded offsets (matching fixed worker logic)
+    // Round offsets to the minute, as generateMilestoneOffsets() does
     const offsets = [];
     for (const event of events) {
         if (event.isSharedHoliday) continue;
@@ -1385,7 +1454,7 @@ test('Backtest: 1 billion seconds notification fires at correct minute', () => {
     const rawOffset = billionSeconds.date.getTime() - birthMs;
     assertTrue(rawOffset % 60000 !== 0, '1B seconds offset should have sub-minute component');
 
-    // Apply rounding fix
+    // Round to the minute, as generateMilestoneOffsets() does
     const roundedOffset = Math.round(rawOffset / 60000) * 60000;
 
     // Simulate cron for "at event time" (notifMinutes=0)
@@ -1490,8 +1559,24 @@ test('getCalendarEventsAt finds earth birthdays', () => {
     const events = Calculator.getCalendarEventsAt(birthDate, birthdayTime);
     assertTrue(events.length === 1, `Should find 1 event, got ${events.length}`);
     assertEqual(events[0].id, 'earth-birthday-35');
-    assertEqual(events[0].title, '35th Birthday');
+    assertTrue(events[0].title.includes(Milestones.getOrdinal(35)), `Title should name the 35th birthday, got: ${events[0].title}`);
     assertEqual(events[0].icon, '🎂');
+});
+
+test('Leap-day births: push and calendar lookups agree with calculate() every year', () => {
+    const birthDate = new Date('2000-02-29T10:00:00Z');
+    const shown = Calculator.calculate(birthDate, { yearsAhead: 9 })
+        .filter(e => e.id.startsWith('earth-birthday-'));
+    assertTrue(shown.length === 8, `Expected 8 birthdays in 9 years, got ${shown.length}`);
+    for (const event of shown) {
+        for (const lookup of ['getEarthBirthdayAt', 'getCalendarEventsAt']) {
+            const found = Calculator[lookup](birthDate, event.date).filter(e => e.id === event.id);
+            assertEqual(found.length, 1, `${lookup} at ${event.date.toISOString()} (${event.id}): `);
+        }
+    }
+    // Leap years keep Feb 29 itself, so Mar 1 must not fire a second time
+    assertEqual(Calculator.getEarthBirthdayAt(birthDate, new Date('2004-03-01T10:00:00Z')).length, 0,
+        'Mar 1 of a leap year: ');
 });
 
 test('getCalendarEventsAt finds nerdy holidays', () => {
@@ -1564,7 +1649,7 @@ test('Backtest: earth birthdays fire at birth local HH:MM', () => {
     // Earth birthdays fire at the birth's local hour:minute.
     // In the worker (UTC timezone), local = UTC, so this guarantees the SQL
     // query on SUBSTR(birth_datetime, 12, 5) matches event HH:MM.
-    // (Shared holidays now fire at midnight local, handled separately.)
+    // Shared holidays fire at local midnight instead and are tested separately.
     const birthDatetimes = [
         '1984-05-02T20:37',
         '1990-03-14T10:00',
@@ -1707,6 +1792,118 @@ test('landing page titles and descriptions fit in a search result', () => {
 
     const longDesc = PAGES.filter(p => p.description.length > 155).map(p => `${p.slug} (${p.description.length})`);
     assertEqual(longDesc.length, 0, `Descriptions over 155 chars: ${longDesc.join(', ')}. `);
+});
+
+// ============================================
+// WORKER CRON
+// ============================================
+console.log('\n--- Worker Cron ---');
+
+/**
+ * Run one cron minute against an in-memory stand-in for D1 and a push service
+ * that accepts everything. The fake enforces the schema's NOT NULL columns on
+ * notification_log inserts, as D1 does. Returns the logged rows and any error.
+ */
+async function runCronWithFakes({ now, subscriptions, members }) {
+    const b64url = bytes => Buffer.from(bytes).toString('base64url');
+    const vapid = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+    const vapidJwk = await crypto.subtle.exportKey('jwk', vapid.privateKey);
+    const client = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+    const p256dh = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', client.publicKey)));
+    const auth = b64url(crypto.getRandomValues(new Uint8Array(16)));
+
+    const logged = [];
+    const statement = sql => ({
+        args: [],
+        bind(...args) { this.args = args; return this; },
+        async all() {
+            if (/JOIN subscriptions/.test(sql)) { return { results: members }; }
+            if (/FROM subscriptions s/.test(sql)) {
+                // Emulate the correlated name subquery, if the SQL still has one
+                return { results: subscriptions.map(sub => /as name/.test(sql) ? { ...sub, p256dh, auth, name: null } : { ...sub, p256dh, auth }) };
+            }
+            return { results: [] };
+        },
+        async run() { return {}; },
+    });
+    const env = {
+        VAPID_PUBLIC_KEY: 'test-public-key',
+        VAPID_PRIVATE_KEY: vapidJwk.d,
+        DB: {
+            prepare: statement,
+            async batch(stmts) {
+                for (const st of stmts) {
+                    if (st.args.some(a => a === null || a === undefined)) {
+                        throw new Error('NOT NULL constraint failed: notification_log.person_name');
+                    }
+                }
+                logged.push(...stmts.map(st => st.args));
+            },
+        },
+    };
+
+    const realFetch = globalThis.fetch;
+    const realLog = console.log;
+    globalThis.fetch = async () => new Response(null, { status: 201 });
+    console.log = () => {};
+    let error = null;
+    try {
+        await handleScheduled(env, now);
+    } catch (e) {
+        error = e;
+    } finally {
+        globalThis.fetch = realFetch;
+        console.log = realLog;
+    }
+    return { logged, error };
+}
+
+const holidayWithNoFamily = await runCronWithFakes({
+    now: new Date('2030-03-14T00:00:00Z'), // Pi Day, midnight UTC
+    subscriptions: [{
+        subscription_id: 'sub-without-family',
+        endpoint: 'https://push.example/abc',
+        notification_times: '[0]',
+        timezone: 'UTC',
+    }],
+    members: [],
+});
+
+test('Cron logs a holiday push for a subscription with no family members', () => {
+    assertEqual(holidayWithNoFamily.error, null, 'handleScheduled threw: ');
+    assertEqual(holidayWithNoFamily.logged.length, 1, 'Logged rows: ');
+    const [subscriptionId, personName, , body] = holidayWithNoFamily.logged[0];
+    assertEqual(subscriptionId, 'sub-without-family');
+    assertEqual(personName, '', 'Holiday log rows name no one: ');
+    assertEqual(body.includes('Pi Day'), true, `Body was "${body}". `);
+});
+
+// ============================================
+// SHARED HELPERS: HTML ESCAPING, FAMILY PARAM
+// ============================================
+
+test('escapeHtml escapes quotes, so a name cannot leave an attribute value', () => {
+    const name = '"><img src=x onerror=alert(1)>\'';
+    const escaped = escapeHtml(name);
+    assertEqual(escaped, '&quot;&gt;&lt;img src=x onerror=alert(1)&gt;&#39;');
+    assertTrue(!/["'<>]/.test(escaped), `Unescaped markup left in ${escaped}`);
+    assertEqual(escapeHtml('Tom & Jerry'), 'Tom &amp; Jerry');
+});
+
+test('buildFamilyParam round-trips through parseFamilyParam, including , | and % in names', () => {
+    const family = [
+        { name: 'A, B|C 100%', date: '1990-05-15', time: '', timezone: '' },
+        { name: 'Dee', date: '1985-06-20', time: '08:30', timezone: '' },
+        { name: 'Eve', date: '2000-01-01', time: '', timezone: 'America/Denver' },
+    ];
+    const param = buildFamilyParam(family);
+    assertEqual(param.split(',').length, 3, `Param was ${param}. `);
+    assertTrue(param.startsWith('A%2C%20B%7CC%20100%25|1990-05-15,'), `Param was ${param}. `);
+    assertTrue(param.includes('Dee|1985-06-20|08:30,'), 'A time with no zone has no trailing field. ');
+    assertTrue(param.endsWith('Eve|2000-01-01||America/Denver'), 'A zone with no time keeps the empty time field. ');
+    const parsed = parseFamilyParam(param);
+    assertEqual(parsed.map(m => m.name).join(';'), 'A, B|C 100%;Dee;Eve');
+    assertEqual(parsed[2].timezone, 'America/Denver');
 });
 
 // ============================================

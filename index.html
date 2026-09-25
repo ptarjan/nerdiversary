@@ -3,34 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Every Nerdy Milestone Date From One Birthday - Nerdiversary</title>
-    <meta name="description" content="Enter your birthday and get the exact dates you turn 1 billion seconds, 10,000 days, a Mars year, and 2^20 minutes old. Dozens of milestones, free.">
+    <title>Billion-second, 10,000-day and Mars birthdays - Nerdiversary</title>
+    <meta name="description" content="Enter your birthday to get the exact dates you turn 1 billion seconds, 10,000 days and 1 Mars year old, plus 2,000 more milestones over 100 years.">
     <link rel="canonical" href="https://paultarjan.com/nerdiversary/">
 
-    <!-- Open Graph / Social Media (image must be an absolute PNG URL for scrapers) -->
+    <!-- Link previews (Open Graph, Twitter). og:image must be an absolute URL; scrapers do not resolve relative ones. -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://paultarjan.com/nerdiversary/">
     <meta property="og:site_name" content="Nerdiversary">
-    <meta property="og:title" content="Every Nerdy Milestone Date From One Birthday">
-    <meta property="og:description" content="The exact dates you turn 1 billion seconds, 10,000 days, and a Mars year old. Enter a birthday, get every nerdy milestone.">
+    <meta property="og:title" content="Billion-second, 10,000-day and Mars birthdays">
+    <meta property="og:description" content="You turn 1 billion seconds old at about age 31.7 and 10,000 days old at age 27.4. Enter a birthday to get the exact date of each milestone.">
     <meta property="og:image" content="https://paultarjan.com/nerdiversary/assets/og/default.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Nerdiversary: the milestone dates hiding in your birthday">
+    <meta property="og:image:alt" content="A party popper above the word Nerdiversary and the line: Nerdy milestone incoming!">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Every Nerdy Milestone Date From One Birthday">
-    <meta name="twitter:description" content="The exact dates you turn 1 billion seconds, 10,000 days, and a Mars year old. Enter a birthday, get every nerdy milestone.">
+    <meta name="twitter:title" content="Billion-second, 10,000-day and Mars birthdays">
+    <meta name="twitter:description" content="You turn 1 billion seconds old at about age 31.7 and 10,000 days old at age 27.4. Enter a birthday to get the exact date of each milestone.">
     <meta name="twitter:image" content="https://paultarjan.com/nerdiversary/assets/og/default.jpg">
     <meta name="theme-color" content="#7c3aed">
 
-    <!-- Structured Data -->
+    <!-- schema.org description for search engines -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Nerdiversary",
       "url": "https://paultarjan.com/nerdiversary/",
-      "description": "Enter your birthday and get the exact dates you turn 1 billion seconds, 10,000 days, a Mars year, and 2^20 minutes old. Dozens of nerdy milestones, free.",
+      "description": "Enter your birthday to get the exact dates you turn 1 billion seconds, 10,000 days and 1 Mars year old, plus 2,000 more milestones over 100 years.",
       "applicationCategory": "LifestyleApplication",
       "operatingSystem": "Any",
       "browserRequirements": "Requires JavaScript",
@@ -42,7 +42,7 @@
     }
     </script>
 
-    <!-- PWA -->
+    <!-- Installable app: manifest plus iOS home-screen settings -->
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -69,7 +69,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script>
-        // Prevent FOUT by hiding content until fonts load
+        // Keep the page invisible (.fonts-loading in css/style.css) until the
+        // web fonts arrive, so text never visibly switches font.
         document.documentElement.classList.add('fonts-loading');
         Promise.all([
             document.fonts.load('400 1em Orbitron'),
@@ -81,7 +82,7 @@
         }).catch(() => {
             document.documentElement.classList.remove('fonts-loading');
         });
-        // Fallback: show content after 1s even if fonts haven't loaded
+        // Show the page after 1 s whether or not the fonts have loaded.
         setTimeout(() => document.documentElement.classList.remove('fonts-loading'), 1000);
     </script>
 </head>
@@ -92,11 +93,11 @@
     <main class="container">
         <header class="hero">
             <div class="logo-container">
-                <img src="assets/logo.svg" alt="Nerdiversary Logo" class="logo">
+                <img src="assets/logo.svg" alt="Nerdiversary logo" class="logo">
             </div>
             <h1 class="title">Nerdiversary</h1>
-            <p class="tagline">The milestone dates hiding in your birthday</p>
-            <p class="subtitle">A billion seconds lands at age 31.7. A Mars year takes 687 days. π × 10<sup>9</sup> seconds arrives just before your 100th birthday. Enter your birthday to get your exact dates.</p>
+            <p class="tagline">Your age counted in seconds, planet years and powers of two</p>
+            <p class="subtitle">You turn 1 billion seconds old at about age 31.7. A year on Mars lasts 687 Earth days, so your first Mars birthday comes before your second Earth one. Enter a birthday to get the exact date and time of each milestone.</p>
         </header>
 
         <section class="input-section">
@@ -107,7 +108,7 @@
                             <span class="member-label">Person 1</span>
                         </div>
                         <div class="form-group">
-                            <label for="name-0">Name <span class="optional-label">(for family mode)</span></label>
+                            <label for="name-0">Name <span class="optional-label">(optional for one person)</span></label>
                             <input type="text" id="name-0" name="name" placeholder="Grace Hopper">
                         </div>
                         <div class="form-group">
@@ -116,7 +117,7 @@
                         </div>
                         <div class="form-group optional">
                             <label for="birthtime-0">
-                                Birth time <span class="optional-label">(optional, <span class="timezone-toggle" data-index="0"><span class="timezone-label"></span></span>)</span>
+                                Birth time <span class="optional-label">(optional, in <span class="timezone-toggle" data-index="0" title="Change the time zone of the birth time"><span class="timezone-label"></span></span>)</span>
                             </label>
                             <input type="time" id="birthtime-0" name="birthtime" step="60">
                             <select id="birthtz-0" name="birthtz" class="birth-timezone-select" style="display:none"></select>
@@ -126,75 +127,86 @@
 
                 <button type="button" id="add-member" class="add-member-btn">
                     <span class="btn-icon">👨‍👩‍👧‍👦</span>
-                    <span class="btn-text">Add a family member</span>
+                    <span class="btn-text">Add another person</span>
                 </button>
 
                 <button type="submit" class="submit-btn">
-                    <span class="btn-text">Calculate my nerdiversaries</span>
+                    <span class="btn-text">Show my milestone dates</span>
                     <span class="btn-icon">🚀</span>
                 </button>
             </form>
         </section>
 
         <section class="features">
-            <h2>What counts as a nerdiversary?</h2>
+            <h2>What gets counted</h2>
             <div class="feature-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🪐</div>
                     <h3>Planetary years</h3>
-                    <p>A Mercury year is 88 days, a Mars year is 687. Get your birthday on Mercury, Venus, Mars, Jupiter, Saturn, Uranus, and Neptune.</p>
+                    <p>A year lasts 88 Earth days on Mercury, 687 Earth days on Mars and 84 Earth years on Uranus. You get the date of every birthday you reach on each planet.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔢</div>
-                    <h3>Decimal milestones</h3>
-                    <p>1 billion seconds at age 31.7. 10,000 days at 27.4. 1 million hours if you make it to 114.</p>
+                    <h3>Round numbers in base 10</h3>
+                    <p>You turn 1 billion seconds old at age 31.7, 10,000 days old at 27.4, and 1 million hours old at 114.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💻</div>
                     <h3>Binary and hex</h3>
-                    <p>2²⁰ minutes is a real date, just shy of your second birthday. So is 0x1000000 seconds. Round numbers in the bases that matter.</p>
+                    <p>Round numbers in base 2 and base 16, the ones computers count in. You pass 2²⁰ (1,048,576) minutes just before your 2nd birthday, and 0x1000000 (16,777,216) seconds at about 6 months.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">π</div>
                     <h3>Mathematical constants</h3>
-                    <p>π × 10⁹ seconds, e × 10⁸ seconds, and other constants scaled until they land on a date you can circle.</p>
+                    <p>Constants such as π (3.14159) and e (2.71828), times a power of ten, counted in seconds. You pass e × 10⁸ seconds at age 8.6 and π × 10⁹ seconds at 99.6.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🌀</div>
                     <h3>Fibonacci time</h3>
-                    <p>Fibonacci numbers in seconds, minutes, and days. The gaps grow with the sequence, so catch the early ones.</p>
+                    <p>Each Fibonacci number is the sum of the two before it: 1, 1, 2, 3, 5, 8, 13. You turn 144, 233 and 377 days old, and each gap is longer than the last.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Scientific</h3>
+                    <p>Light from the moment you were born reaches the Moon 1.3 seconds later and Proxima Centauri, the nearest star, when you are about 4¼. Also counted: round numbers of new moons (one every 29.5 days), and multiples of 299,792,458 seconds, the speed of light in metres per second.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎬</div>
+                    <h3>Pop culture</h3>
+                    <p>42 million seconds, after the answer in The Hitchhiker's Guide to the Galaxy, at about 16 months. Day 1,337, "leet" in gamer slang. Plus each Pi Day (March 14), Mole Day, May the 4th and other nerd holidays.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔔</div>
-                    <h3>Push notifications</h3>
-                    <p>A billion seconds passes at one exact moment. Get a push before it does.</p>
+                    <h3>Notifications</h3>
+                    <p>Turn on notifications to get an alert a day before each milestone, an hour before, and at the minute it happens.</p>
                 </div>
             </div>
         </section>
 
         <footer class="footer">
-            <p class="footer-note">Because celebrating every 365.2425 days is so mainstream</p>
+            <p class="footer-note">Dates are exact to the minute when you add a birth time, and shown in your device's time zone.</p>
             <p class="footer-calculators">
-                Milestone calculators:
-                <a href="billion-seconds.html">Billion Seconds</a> ·
-                <a href="2-billion-seconds.html">2 Billion Seconds</a> ·
-                <a href="10000-days.html">10,000 Days</a> ·
-                <a href="20000-days.html">20,000 Days</a> ·
-                <a href="1000-days.html">1,000 Days</a> ·
-                <a href="half-birthday.html">Half Birthday</a> ·
-                <a href="mars-year.html">Mars Years</a> ·
-                <a href="saturn-return.html">Saturn Return</a> ·
-                <a href="1000-weeks.html">1,000 Weeks</a> ·
-                <a href="million-minutes.html">Million Minutes</a> ·
-                <a href="how-many-days-old.html">How Many Days Old Am I?</a>
+                One-milestone calculators:
+                <a href="billion-seconds.html">Billion seconds</a> ·
+                <a href="2-billion-seconds.html">2 billion seconds</a> ·
+                <a href="10000-days.html">10,000 days</a> ·
+                <a href="20000-days.html">20,000 days</a> ·
+                <a href="1000-days.html">1,000 days</a> ·
+                <a href="half-birthday.html">Half birthday</a> ·
+                <a href="mars-year.html">Mars years</a> ·
+                <a href="saturn-return.html">Saturn birthday</a> ·
+                <a href="1000-weeks.html">1,000 weeks</a> ·
+                <a href="million-minutes.html">Million minutes</a> ·
+                <a href="how-many-days-old.html">How many days old am I?</a>
             </p>
-            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Feedback</a></p>
+            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">Source code on GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Report a problem</a></p>
         </footer>
     </main>
 
     <script type="module" src="js/main.js"></script>
     <script type="module">
-        // Register service worker for PWA and push notifications
+        // Register sw.js (offline cache, push) on the home page too, so it is
+        // installed before the first visit to results.html.
         import Notifications from './js/notifications.js';
         Notifications.registerServiceWorker();
     </script>

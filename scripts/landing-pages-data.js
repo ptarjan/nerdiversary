@@ -1,16 +1,24 @@
 /**
- * Data for the SEO landing pages — shared by generate-landing-pages.js
- * (HTML + sitemap + robots) and generate-og-cards.js (per-page share cards).
+ * Content of the search landing pages. Read by generate-landing-pages.js
+ * (the HTML, sitemap and robots.txt), generate-og-cards.js (each page's
+ * lp-<slug>.jpg card) and the tests.
  *
- * Each page: slug, emoji, title (tag + h2 links), heading (h1), description
- * (meta), intro, math (bullet list), fact, table (static indexable content),
- * and optionally live (instant on-page answer instead of redirecting) and
- * cta (submit button text).
+ * Fields per page (strings may contain HTML):
+ *   slug         file name: <slug>.html and assets/og/lp-<slug>.jpg
+ *   emoji        shown above the h1 and on the card
+ *   title        <title> (with " - Nerdiversary" appended), og/twitter
+ *                title, and link text from the other landing pages
+ *   heading      the h1, the card's label and og:image:alt
+ *   description  meta, og and twitter description
+ *   intro, fact  paragraphs;  math  bullet list under "The math"
+ *   table        optional { heading, headers, rows, note } date table
+ *   live         optional; true answers on the page instead of opening
+ *                results.html
+ *   cta          optional submit button text
  *
- * Copy rules (from Search Console data): searchers want the NUMBER, so
- * title and description lead with the answer, never with "Calculator".
- * Title ≤ 45 chars (the " - Nerdiversary" suffix eats the rest of Google's
- * ~60); description ≤ 155 chars with the numeric answer early.
+ * Searchers want the number, so title and description state it first.
+ * Title stays within 45 characters so it fits Google's ~60 with the suffix;
+ * description within 155. npm test enforces both limits.
  */
 
 export const SITE_URL = 'https://paultarjan.com/nerdiversary/';
@@ -37,30 +45,27 @@ function yearRows(offsetDays, from, to) {
     return rows;
 }
 
-const JAN1_NOTE = 'Dates assume a January 1 birth — enter your exact birthday above for your date.';
+const JAN1_NOTE = 'These dates assume a January 1 birth. Enter your birthday above to get yours.';
 
-/** "X years and Y months" for a day count, for prose sanity checks. */
-export function daysToYears(days) {
-    return days / DAYS_PER_YEAR;
-}
+const AVG_YEAR = '365.2425 days per year (the average calendar year, counting leap days)';
 
 export const PAGES = [
     {
         slug: 'billion-seconds',
         emoji: '🔢',
-        title: '1 Billion Seconds Is 31.7 Years: Your Date',
-        heading: 'Your billion-second birthday lands at age 31.7',
-        description: 'One billion seconds is 31.7 years — your billion birthday lands 31 years, 8 months, 8 days after birth. Get the exact date and time of yours.',
-        intro: 'How long is a billion seconds? <strong>31 years, 8 months, and 8 days</strong> — which makes the billion-second birthday one of the great hidden ones. Unless someone does the math, it slips by unnoticed. Enter your birthday (and birth time, if you know it) to pin down your exact billionth second.',
+        title: '1 billion seconds is 31.7 years: your date',
+        heading: 'You turn 1 billion seconds old at 31.7 years',
+        description: '1 billion seconds is 31.7 years: about 31 years, 8 months and 8 days after you are born. Enter your birthday to get your date.',
+        intro: 'A billion seconds is <strong>about 31 years, 8 months and 8 days</strong>. No calendar marks it, so most people pass it without noticing. Enter your birthday to get your date. For the exact second, add your birth time in the <a href="index.html">full calculator</a>.',
         math: [
-            '1,000,000,000 seconds ÷ 86,400 seconds per day = <strong>11,574 days</strong> (and change)',
-            '11,574 days ÷ 365.2425 days per year ≈ <strong>31.69 years</strong>',
-            'Born at 9:00 AM? Your billionth second strikes at 10:46:40 AM — the time of day matters',
+            '1,000,000,000 seconds ÷ 86,400 seconds per day = <strong>11,574 days</strong>, plus 1 hour, 46 minutes and 40 seconds',
+            `11,574 days ÷ ${AVG_YEAR} = <strong>31.69 years</strong>`,
+            'Because of those extra 1 hour 46 minutes 40 seconds, birth time matters: born at 9:00 AM, you reach a billion seconds at 10:46:40 AM',
         ],
-        fact: 'For scale: a million seconds is only 11.6 days, while a billion is 31.7 years. That gap is why millionaires and billionaires are not the same thing.',
+        fact: 'A million seconds is 11.6 days. A billion seconds is 1,000 times longer: 31.7 years.',
         table: {
-            heading: 'When is your billion-second birthday? By birth year',
-            headers: ['Born', 'Billion-second birthday'],
+            heading: 'Billion-second birthday by birth year',
+            headers: ['Born', 'Turns 1 billion seconds old'],
             rows: yearRows(11574.074, 1975, 2005),
             note: JAN1_NOTE,
         },
@@ -68,19 +73,19 @@ export const PAGES = [
     {
         slug: '2-billion-seconds',
         emoji: '⏳',
-        title: '2 Billion Seconds Is 63.4 Years: Your Date',
-        heading: 'Your 2-billion-second birthday lands at age 63.4',
-        description: 'Two billion seconds is 63.4 years — the 2,000,000,000-second birthday arrives about 63 years and 4½ months after birth. Find your exact date.',
-        intro: 'How long is 2 billion seconds? <strong>63 years and 4½ months</strong>. Your second billion takes just as long as the first but gets none of the press — and it lands squarely in "still plenty of time to celebrate properly" territory. Enter your birthday to find your exact moment.',
+        title: '2 billion seconds is 63.4 years: your date',
+        heading: 'You turn 2 billion seconds old at 63.4 years',
+        description: '2 billion seconds is 63.4 years: about 63 years and 4½ months after you are born. Enter your birthday to get your date.',
+        intro: 'Two billion seconds is <strong>about 63 years and 4½ months</strong>. It takes exactly as long as the first billion, and even fewer people notice it. Enter your birthday to get your date. For the exact second, add your birth time in the <a href="index.html">full calculator</a>.',
         math: [
-            '2,000,000,000 seconds ÷ 86,400 seconds per day = <strong>23,148 days</strong>',
-            '23,148 days ÷ 365.2425 days per year ≈ <strong>63.38 years</strong>',
-            'Bonus nerd milestone: at 68.1 years you pass 2³¹ seconds — the number that overflows a 32-bit Unix clock in 2038',
+            '2,000,000,000 seconds ÷ 86,400 seconds per day = <strong>23,148 days</strong>, plus 3 hours, 33 minutes and 20 seconds',
+            `23,148 days ÷ ${AVG_YEAR} = <strong>63.38 years</strong>`,
+            'At 68.05 years you pass 2³¹ seconds (2,147,483,648), one more than a signed 32-bit integer can hold. Computers that count seconds from 1970 that way run out on January 19, 2038',
         ],
-        fact: 'Going bigger: 3 billion seconds takes 95.1 years, and 8 billion would take 253½ — so 2 billion is realistically your last big seconds birthday. Earn the cake.',
+        fact: '3 billion seconds is 95.1 years, so for most people 2 billion is the last billion-second birthday they reach.',
         table: {
-            heading: 'When is your 2-billion-second birthday? By birth year',
-            headers: ['Born', '2-billion-second birthday'],
+            heading: '2-billion-second birthday by birth year',
+            headers: ['Born', 'Turns 2 billion seconds old'],
             rows: yearRows(23148.148, 1945, 1980),
             note: JAN1_NOTE,
         },
@@ -88,19 +93,19 @@ export const PAGES = [
     {
         slug: '10000-days',
         emoji: '📆',
-        title: '10,000 Days Is 27.4 Years: Find Your Date',
-        heading: 'How long is 10,000 days? About 27.4 years',
-        description: '10,000 days is 27.4 years — 27 years and roughly 4½ months. Find the exact date you turn 10,000 days old, or what was 10,000 days ago.',
-        intro: 'How many years is 10,000 days? <strong>27.38</strong> — you hit day 10,000 about 27 years and 4½ months after you were born, a once-in-a-lifetime round number that almost everyone misses. It works in reverse, too: 10,000 days ago is 27-and-a-bit years back. Enter your birthday to find your date.',
+        title: '10,000 days is 27.4 years: find your date',
+        heading: 'You turn 10,000 days old at 27.4 years',
+        description: '10,000 days is 27.4 years: about 4½ months after your 27th birthday. Enter your birthday to get the date you turn 10,000 days old.',
+        intro: '10,000 days is <strong>27.38 years</strong>, so you reach day 10,000 about 4½ months after your 27th birthday. Enter your birthday to get the exact date.',
         math: [
-            '10,000 days ÷ 365.2425 days per year ≈ <strong>27.38 years</strong>',
-            'That lands roughly 4 months and 17 days after your 27th birthday',
-            'Next stops: 20,000 days (~54.8 years) and 30,000 days (~82.1 years)',
+            `10,000 days ÷ ${AVG_YEAR} = <strong>27.38 years</strong>`,
+            '0.38 of a year is about 4½ months',
+            'The next round numbers: 20,000 days at 54.8 years, 30,000 days at 82.1 years',
         ],
-        fact: 'A well-lived life is about 30,000 days long, so day 10,000 is a good moment to check the scoreboard. (100,000 days would be 273.8 years — the calculator will happily print that date; biology will not cooperate.)',
+        fact: 'An 80-year life is about 29,220 days, so day 10,000 comes roughly a third of the way through.',
         table: {
-            heading: 'When is your 10,000th day? By birth year',
-            headers: ['Born', '10,000th day'],
+            heading: '10,000th day by birth year',
+            headers: ['Born', 'Turns 10,000 days old'],
             rows: yearRows(10000, 1985, 2010),
             note: JAN1_NOTE,
         },
@@ -108,19 +113,19 @@ export const PAGES = [
     {
         slug: '20000-days',
         emoji: '🗓️',
-        title: '20,000 Days Is 54.8 Years: Find Your Date',
-        heading: 'How long is 20,000 days? About 54.8 years',
-        description: '20,000 days is 54.8 years — day 20,000 lands about 9 months after your 54th birthday. Find your exact date and put it on the calendar.',
-        intro: 'How many years is 20,000 days? <strong>54.76</strong> — about 54 years and 9 months. Day 20,000 is the rare big round number that lands mid-life rather than at the start or end of it, and it deserves more than a normal Tuesday. Enter your birthday to find yours.',
+        title: '20,000 days is 54.8 years: find your date',
+        heading: 'You turn 20,000 days old at 54.8 years',
+        description: '20,000 days is 54.8 years: about 9 months after your 54th birthday. Enter your birthday to get the date you turn 20,000 days old.',
+        intro: '20,000 days is <strong>54.76 years</strong>, so you reach day 20,000 about 9 months after your 54th birthday. Enter your birthday to get the exact date.',
         math: [
-            '20,000 days ÷ 365.2425 days per year ≈ <strong>54.76 years</strong>',
-            'That lands about 9 months after your 54th birthday',
-            'You passed 10,000 days at ~27.4 years; 30,000 days waits at ~82.1',
+            `20,000 days ÷ ${AVG_YEAR} = <strong>54.76 years</strong>`,
+            '0.76 of a year is about 9 months',
+            'You reach 10,000 days at 27.4 years and 30,000 days at 82.1 years',
         ],
-        fact: 'By day 20,000 your heart has beaten roughly 2 billion times. Throwing it a party seems like the least you can do.',
+        fact: 'At an average of 70 beats a minute, a heart beats about 2 billion times in 20,000 days.',
         table: {
-            heading: 'When is your 20,000th day? By birth year',
-            headers: ['Born', '20,000th day'],
+            heading: '20,000th day by birth year',
+            headers: ['Born', 'Turns 20,000 days old'],
             rows: yearRows(20000, 1955, 1985),
             note: JAN1_NOTE,
         },
@@ -128,19 +133,19 @@ export const PAGES = [
     {
         slug: '1000-days',
         emoji: '👶',
-        title: '1,000 Days Old Is 2.74 Years: Baby Milestone',
-        heading: 'Your baby turns 1,000 days old at 2 years, 9 months',
-        description: '1,000 days old is 2.74 years — about 2 years and 9 months. Find the exact date your child hits day 1,000, the classic first big round number.',
-        intro: 'How long is 1,000 days? <strong>2 years and 9 months</strong>, near enough — the first big round number of a life, and a favorite excuse for a tiny party. (Child-development researchers talk about "the first 1,000 days" too, though they usually count from conception — this calculator counts from birth.) Enter a birthday to find the date.',
+        title: '1,000 days old is 2.74 years: find the date',
+        heading: 'A child turns 1,000 days old at 2.74 years',
+        description: '1,000 days is 2.74 years: in the week before a child turns 2 years and 9 months. Enter the birthday to get the date they turn 1,000 days old.',
+        intro: '1,000 days is <strong>2.74 years</strong>, so a child reaches it in the week before turning 2 years and 9 months. Child-health researchers also talk about “the first 1,000 days”, but they count from conception, so their 1,000 days end around the second birthday. This page counts from birth.',
         math: [
-            '1,000 days ÷ 365.2425 days per year ≈ <strong>2.74 years</strong>',
-            'That lands about 8.9 months after the second birthday',
-            'Next stops: 2,000 days (~5.5 years) and 5,000 days (~13.7 years)',
+            `1,000 days ÷ ${AVG_YEAR} = <strong>2.74 years</strong>`,
+            'That is about 8.9 months after the second birthday',
+            'The next round numbers: 2,000 days at 5.5 years, 5,000 days at 13.7 years',
         ],
-        fact: 'A 1,000-day-old has slept roughly 13,000 hours — and so, approximately, have the parents. In shifts.',
+        fact: '1,000 days is also 24,000 hours, or 86.4 million seconds.',
         table: {
-            heading: 'When is day 1,000? By birth year',
-            headers: ['Born', '1,000th day'],
+            heading: '1,000th day by birth year',
+            headers: ['Born', 'Turns 1,000 days old'],
             rows: yearRows(1000, 2020, 2026),
             note: JAN1_NOTE,
         },
@@ -148,89 +153,88 @@ export const PAGES = [
     {
         slug: 'half-birthday',
         emoji: '🎂',
-        title: 'Your Half Birthday Is 182.6 Days Later',
-        heading: 'Your half birthday lands 182.6 days after your birthday',
-        description: 'Your half birthday falls 182.6 days after your birthday — not simply "same day, six months later." Find your exact half, quarter, and ¾ birthdays.',
-        intro: 'Your half birthday is the day you turn exactly <strong>N½ years old</strong> — 182.6 days after the real one, which is why it can land a day off the "same date, six months on" guess. Celebrated by summer babies with winter parties, and by anyone who thinks one birthday a year is not enough. This calculator finds your half, quarter, and three-quarter birthdays for every year of your life.',
+        title: 'Half birthday: 182.6 days after your birthday',
+        heading: 'Your half birthday is 182.6 days after your birthday',
+        description: 'Your half birthday is 182.6 days after your birthday, which can be up to 2 days off “same date, 6 months later”. Get your ½, ¼ and ¾ birthdays.',
+        intro: 'Your half birthday is the day you turn some-and-a-half years old (<strong>5½, 10½, 30½</strong> and so on): 182.6 days after your birthday. Counting “same date, six months later” can be up to 2 days off, because months run from 28 to 31 days. Enter your birthday to get your half, quarter and three-quarter birthdays for every year.',
         math: [
-            'A half year here is half of 365.2425 days: <strong>182.62 days</strong> — not just “same day, six months later”',
-            'That is why your true half birthday can drift a day from the naive date',
-            'You also get ¼ (91.3 days) and ¾ (273.9 days) birthdays for extra celebrations',
+            'A year averages 365.2425 days once leap days are counted. Half of that is <strong>182.62 days</strong>',
+            'Six calendar months range from 181 to 184 days, which is why the “same date” shortcut drifts',
+            'Quarter birthday: 91.3 days after your birthday. Three-quarter birthday: 273.9 days after',
         ],
-        fact: 'Half birthdays are the gateway drug to nerdy milestones. Once you celebrate 29½, you are ready for 1 billion seconds.',
+        fact: 'Children with summer birthdays often celebrate their half birthday at school instead, since their real one falls in the holidays.',
         table: {
-            heading: 'Half birthday examples by birth month',
-            headers: ['Born', 'Half birthday (≈182.6 days later)'],
+            heading: 'Half birthday by birth month',
+            headers: ['Born', 'Half birthday (182.6 days later)'],
             rows: Array.from({ length: 12 }, (_, m) => {
                 const born = new Date(Date.UTC(2025, m, 1));
                 const half = new Date(born.getTime() + Math.round(182.62125 * MS_PER_DAY));
                 const opts = { month: 'long', day: 'numeric', timeZone: 'UTC' };
                 return [born.toLocaleDateString('en-US', opts), half.toLocaleDateString('en-US', opts)];
             }),
-            note: 'Examples use the 1st of each month — born later in the month, your half birthday shifts by the same number of days.',
+            note: 'Examples use the 1st of each month in a non-leap year. Born later in the month? Add the same number of days.',
         },
     },
     {
         slug: 'mars-year',
         emoji: '♂️',
-        title: 'A Mars Year Is 687 Days: Your Age on Mars',
-        heading: 'How old are you in Mars years? Divide by 1.88',
-        description: 'One Mars year is 687 Earth days — 1.88 Earth years — so a 30-year-old is 15.9 on Mars. Calculate your Martian age and your next Mars birthday.',
-        intro: 'A year on Mars lasts <strong>687 Earth days</strong> — about 1.88 Earth years — so your age in Mars years is your Earth age divided by 1.88. Mars birthdays are rarer and stranger than the Earth kind, and yes, you are much younger there. Enter your birthday to find your Martian age and your next Mars-year milestone.',
+        title: 'A Mars year is 687 days: your age on Mars',
+        heading: 'Your age in Mars years is your Earth age ÷ 1.88',
+        description: 'A Mars year is 687 Earth days, or 1.88 Earth years, so a 30-year-old is 15.9 in Mars years. Enter your birthday to get the date of each Mars birthday.',
+        intro: 'Mars takes <strong>687 Earth days</strong> (1.88 Earth years) to go around the Sun once. That is one Mars year, so your age in Mars years is your Earth age divided by 1.88. Enter your birthday to get the date of each of your Mars birthdays.',
         math: [
-            'Mars orbits the Sun every <strong>686.98 Earth days</strong>',
-            'Your age in Mars years = your age in Earth days ÷ 686.98',
-            'A 30-year-old Earthling is a spry 15.9 in Mars years',
+            'Mars orbits the Sun once every <strong>686.98 Earth days</strong>',
+            'Age in Mars years = age in Earth days ÷ 686.98',
+            'A 30-year-old is 30 × 365.2425 = 10,957 days old, which is 15.9 Mars years',
         ],
-        fact: 'The calculator does all seven other planets too. Mercury birthdays come every 88 days; if you make it to one Neptune year (165 Earth years), notify the press.',
+        fact: 'The same calculation works for every planet. A Mercury year is 88 Earth days, so Mercury birthdays come about four times a year. A Neptune year is 165 Earth years, so nobody has had one.',
         table: {
-            heading: 'Every Mars birthday, in Earth years',
-            headers: ['Mars birthday', 'Earth age'],
+            heading: 'Mars years in Earth years',
+            headers: ['Age on Mars', 'Age on Earth'],
             rows: Array.from({ length: 16 }, (_, i) => {
                 const n = i + 1;
                 const years = (n * 686.98) / DAYS_PER_YEAR;
-                const suffix = n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th';
-                return [`${n}${suffix} Mars year`, `${years.toFixed(1)} Earth years`];
+                return [`${n} Mars year${n === 1 ? '' : 's'}`, `${years.toFixed(1)} Earth years`];
             }),
-            note: 'One Mars year = 686.98 Earth days (1.88 Earth years).',
+            note: 'One Mars year = 686.98 Earth days = 1.88 Earth years.',
         },
     },
     {
         slug: 'saturn-return',
         emoji: '🪐',
-        title: 'Saturn Return Age Is 29.5: Find Your Date',
-        heading: 'Your Saturn return arrives at age 29½',
-        description: 'Your first Saturn return hits at age 29.5 — one full Saturn orbit (10,759 days) after your birth. Find your exact date, plus the second and third.',
-        intro: 'What age is your Saturn return? About <strong>29½</strong> — Saturn takes 29.46 Earth years to circle the Sun, so that is when it first returns to the spot it occupied at your birth. Astrologers call it a rite of passage into real adulthood; astronomers call it one full Saturnian orbit. Either way, it happens exactly once every three decades, and this calculator finds your date.',
+        title: 'Saturn return is at age 29.5: find your date',
+        heading: 'Your first Saturn return is at age 29½',
+        description: 'Your first Saturn return is at age 29.5, one Saturn orbit (10,759 days) after birth. Enter your birthday to get the date, plus the second and third.',
+        intro: 'Saturn takes <strong>29.46 Earth years</strong> to go around the Sun, so at about 29½ it is back where it was when you were born. That is your Saturn return. It is the same date as your first Saturn birthday: the day you turn 1 in Saturn years, one Saturn year being 29.46 Earth years. Astrologers tie it to the start of adulthood. Enter your birthday to get your date.',
         math: [
-            'Saturn’s orbital period is <strong>10,759 Earth days</strong> — 29.46 years',
-            'First Saturn return: ~age 29½ · second: ~58.9 · third: ~88.4',
-            'The astrological return (Saturn re-entering your natal position) can drift a few months either way because Saturn appears to move backwards — retrograde — for about 4½ months each year',
+            'Saturn’s orbital period is <strong>10,759 Earth days</strong>, or 29.46 years',
+            'First return: age 29.5. Second: 58.9. Third: 88.4',
+            'Astrologers date the return from when Saturn gets back to its birth position in the zodiac. That can differ from the orbital date by a few months, because for about 4½ months each year Saturn appears to move backwards across the sky (retrograde) as Earth overtakes it',
         ],
-        fact: 'Whether or not the planets run your life, "one Saturn orbit old" is an objectively great birthday. It is also one of hundreds of planetary milestones this site tracks — Mercury years to Neptune years.',
+        fact: 'This site uses the orbital date. The same calculation gives your birthdays on every other planet, from Mercury (every 88 days) to Neptune (every 165 years).',
         table: {
-            heading: 'Your first Saturn return by birth year',
-            headers: ['Born', 'First Saturn return (astronomical)'],
+            heading: 'First Saturn return by birth year',
+            headers: ['Born', 'First Saturn return (orbital)'],
             rows: yearRows(10759.22, 1970, 2005),
-            note: 'Dates assume a January 1 birth and Saturn’s mean orbital period; the astrological return can shift by a few months. Enter your birthday above for your date.',
+            note: 'These dates assume a January 1 birth and Saturn’s average orbital period. The astrological date can differ by a few months. Enter your birthday above to get yours.',
         },
     },
     {
         slug: '1000-weeks',
         emoji: '📅',
-        title: '1,000 Weeks Old Is 19.2 Years: Your Date',
-        heading: '1,000 weeks old is 19.2 years old',
-        description: '1,000 weeks is 19.2 years, or 7,000 days — you turn 1,000 weeks old just after your 19th birthday. Find the date, or what was 1,000 weeks ago.',
-        intro: 'How long is 1,000 weeks? <strong>7,000 days</strong> — 19.2 years, which means you turn 1,000 weeks old a couple of months past your 19th birthday, before your brain has even finished wiring itself. (And 1,000 weeks ago? A hair over 19 years back.) Enter a birthday to find this and every other week-count milestone.',
+        title: '1,000 weeks old is 19.2 years: your date',
+        heading: 'You turn 1,000 weeks old at 19.2 years',
+        description: '1,000 weeks is 7,000 days, or 19.2 years: about 2 months after your 19th birthday. Enter your birthday to get the date you turn 1,000 weeks old.',
+        intro: '1,000 weeks is <strong>7,000 days</strong>, or 19.17 years, so you turn 1,000 weeks old about 2 months after your 19th birthday. Enter your birthday to get the exact date.',
         math: [
-            '1,000 weeks × 7 = <strong>7,000 days</strong>',
-            '7,000 ÷ 365.2425 ≈ <strong>19.16 years</strong> — about 2 months after turning 19',
-            '2,000 weeks lands at ~38.3 years; 3,000 weeks at ~57.5; 4,000 weeks is a stretch goal',
+            '1,000 weeks × 7 days = <strong>7,000 days</strong>',
+            `7,000 days ÷ ${AVG_YEAR} = <strong>19.17 years</strong>`,
+            '2,000 weeks: 38.3 years. 3,000 weeks: 57.5 years. 4,000 weeks: 76.7 years',
         ],
-        fact: 'The average human life is about 4,000 weeks — the number Oliver Burkeman built a whole book around. Knowing which week you are on is clarifying.',
+        fact: 'An 80-year life is about 4,174 weeks. Oliver Burkeman’s book on time management, <em>Four Thousand Weeks</em>, is named after that number.',
         table: {
-            heading: 'When is your 1,000th week? By birth year',
-            headers: ['Born', '1,000th week'],
+            heading: '1,000th week by birth year',
+            headers: ['Born', 'Turns 1,000 weeks old'],
             rows: yearRows(7000, 1995, 2015),
             note: JAN1_NOTE,
         },
@@ -238,19 +242,19 @@ export const PAGES = [
     {
         slug: 'million-minutes',
         emoji: '⏱️',
-        title: '1 Million Minutes Is 1.9 Years: The Date',
-        heading: 'Your kid turns 1 million minutes old at 1.9 years',
-        description: '1 million minutes is 1.9 years — 1 year and 328 days — so the millionth minute lands a few weeks before the second birthday. Find the exact moment.',
-        intro: 'How long is a million minutes? <strong>1 year and 328 days</strong> — which parks the million-minute birthday a few weeks shy of the second one. It is a perfect nerdy milestone for toddlers, and a favorite of spreadsheet-inclined parents. Enter a birthday (birth time recommended — minutes matter here) to find the exact moment.',
+        title: '1 million minutes is 1.9 years: the date',
+        heading: 'A child turns 1 million minutes old at 1.9 years',
+        description: '1 million minutes is 694 days, or 1.9 years: about 5 weeks before the second birthday. Enter a birthday to get the date.',
+        intro: 'A million minutes is <strong>694 days, 10 hours and 40 minutes</strong>, or 1.9 years. A child reaches it about 5 weeks before their second birthday. Enter the birthday to get the date. For the exact minute, add the birth time in the <a href="index.html">full calculator</a>.',
         math: [
-            '1,000,000 minutes ÷ 1,440 minutes per day ≈ <strong>694.4 days</strong>',
-            '694.4 ÷ 365.2425 ≈ <strong>1.90 years</strong> — a few weeks before the second birthday',
-            'The million-second birthday comes much sooner: 11.6 days old',
+            '1,000,000 minutes ÷ 1,440 minutes per day = <strong>694.4 days</strong>',
+            `694.4 days ÷ ${AVG_YEAR} = <strong>1.90 years</strong>`,
+            'For comparison, a million seconds is only 11.6 days',
         ],
-        fact: 'Broadway did the math first: 525,600 minutes is one year. A million minutes is one year, ten months, and a lot more diapers.',
+        fact: 'A 365-day year is 525,600 minutes, the number sung in “Seasons of Love” from the musical <em>Rent</em>. A million minutes is just under two of those.',
         table: {
-            heading: 'When is the millionth minute? By birth year',
-            headers: ['Born', 'Millionth minute'],
+            heading: 'Millionth minute by birth year',
+            headers: ['Born', 'Turns 1 million minutes old'],
             rows: yearRows(694.444, 2019, 2026),
             note: JAN1_NOTE,
         },
@@ -258,20 +262,20 @@ export const PAGES = [
     {
         slug: 'how-many-days-old',
         emoji: '🧮',
-        title: 'How Many Days Old Am I? Live Counter',
-        heading: 'How many days old are you? Watch it tick',
-        description: 'Enter your birthday, see your age in days instantly — plus weeks, hours, minutes, and live-ticking seconds, and your next round-number milestone.',
+        title: 'How many days old am I? Live counter',
+        heading: 'How many days old are you?',
+        description: 'Enter your birthday to see your age in days, weeks, hours, minutes and seconds, counting up live. 10,000 days is 27.4 years; 20,000 is 54.8.',
         live: true,
-        cta: 'How Old Am I?',
-        intro: 'Enter your birthday and your age in days appears right here — plus weeks, hours, minutes, and seconds ticking live on the page. Counting in days makes age more interesting: a birthday only comes once a year, but a round thousand days comes around every 2¾ years.',
+        cta: 'Count my days',
+        intro: 'Enter your birthday and your age in days appears here, with weeks, hours, minutes and seconds counting up live. A round thousand days comes every 2.74 years, so you get one far more often than a birthday ending in zero.',
         math: [
-            'Days old = days elapsed since your birth date (this calculator counts calendar days from midnight)',
-            'An 80-year life is about <strong>29,200 days</strong> — or 4,170 weeks, or 2.5 billion seconds',
-            'The famous ones: 10,000 days ≈ 27.4 years, 20,000 days ≈ 54.8 years, 30,000 days ≈ 82.1 years',
+            'Days old = full days since midnight on your birth date, in your time zone',
+            'An 80-year life is about <strong>29,220 days</strong>: 4,174 weeks, or 2.5 billion seconds',
+            '10,000 days = 27.4 years. 20,000 days = 54.8 years. 30,000 days = 82.1 years',
         ],
-        fact: 'Know your day count and you unlock the good milestones: day 12,345, day 11,111, day 16,384 (2¹⁴), and every palindrome in between.',
+        fact: 'Some day counts are worth marking even though they are not round: day 11,111 (age 30.4), day 12,345 (age 33.8), and day 16,384 (age 44.9), which is 2¹⁴, a power of two.',
         table: {
-            heading: 'Days old to years: the cheat sheet',
+            heading: 'Days old in years',
             headers: ['Days old', 'Age in years'],
             rows: [
                 ['1,000 days', '2.7 years'],
@@ -283,7 +287,7 @@ export const PAGES = [
                 ['25,000 days', '68.4 years'],
                 ['30,000 days', '82.1 years'],
             ],
-            note: 'Enter your birthday above to see exactly where you are on this ladder.',
+            note: 'Enter your birthday above to see where you are on this list.',
         },
     },
 ];

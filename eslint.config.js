@@ -8,16 +8,9 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      globals: {
-        ...globals.browser,
-        // App globals - used across files (read from other script tags in browser)
-        Milestones: 'readonly',
-        Calculator: 'readonly',
-        Nerdiversary: 'readonly',
-      }
+      globals: globals.browser,
     },
     rules: {
-
       // Possible Errors
       'no-console': 'off',
       'no-debugger': 'error',
@@ -148,7 +141,8 @@ export default [
     }
   },
   {
-    // Worker runs in Cloudflare Workers (similar to Node.js environment)
+    // Cloudflare Workers runtime: web-standard APIs, no DOM. It also imports
+    // js/calculator.js and js/shared.js, which are linted under the block above.
     files: ['worker/**/*.js'],
     languageOptions: {
       sourceType: 'module',
@@ -160,17 +154,16 @@ export default [
       }
     },
     rules: {
-      // Allow underscore-prefixed unused variables (common pattern for unused callback params)
+      // Handler signatures are fixed by the runtime; prefix an unused one with _
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     }
   },
   {
-    // Test files - include browser globals for page.evaluate() callbacks
+    // Node for the unit tests; browser for code inside Playwright's page.evaluate()
     files: ['test/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.mocha,
         ...globals.browser,
       }
     }

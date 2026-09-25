@@ -1,6 +1,15 @@
 /**
- * Storage module with IndexedDB fallback for iOS PWA persistence
- * iOS aggressively evicts localStorage for PWAs - IndexedDB is more resilient
+ * Keeps the entered birthdays on this device so a returning visitor skips the
+ * form. Used by js/main.js (save on submit, load to prefill and auto-open
+ * results) and js/results.js (load when the URL has no `family` parameter,
+ * as when a push notification opens results.html).
+ *
+ * Every save goes to both localStorage and IndexedDB. iOS can clear a home-screen
+ * app's localStorage while keeping IndexedDB, so a load falls back to IndexedDB
+ * and copies what it finds back into localStorage.
+ *
+ * Stored value: Array<{name: string, date: 'YYYY-MM-DD', time: 'HH:MM' | '', timezone: string}>,
+ * the same fields as one entry of the `family` URL parameter.
  */
 
 const DB_NAME = 'nerdiversary';
@@ -11,10 +20,11 @@ const STORAGE_KEY = 'nerdiversary_family';
 let db = null;
 
 /**
- * Race a promise against a timeout
- * @param {Promise} promise - The promise to race
- * @param {number} ms - Timeout in milliseconds
- * @param {string} label - Label for error message
+ * Reject if `promise` has not settled after `ms`. IndexedDB requests can hang
+ * without ever firing success or error, most often in iOS home-screen apps.
+ * @param {Promise} promise
+ * @param {number} ms
+ * @param {string} label - Names the step in the rejection message
  * @returns {Promise}
  */
 function withTimeout(promise, ms, label) {
@@ -27,7 +37,8 @@ function withTimeout(promise, ms, label) {
 }
 
 /**
- * Initialize IndexedDB
+ * Open the database once and reuse the connection. One object store, `family`,
+ * holding a single record under STORAGE_KEY.
  * @returns {Promise<IDBDatabase>}
  */
 function initDB() {
@@ -60,8 +71,9 @@ function initDB() {
 }
 
 /**
- * Save to IndexedDB. Throws on failure so callers can report accurately.
- * @param {Array} family - Family data to save
+ * Write the family record. Rejects on failure or after 3 s per step, so
+ * saveFamily can tell whether this copy exists.
+ * @param {Array<Object>} family
  * @returns {Promise<void>}
  */
 async function saveToIndexedDB(family) {
@@ -77,8 +89,9 @@ async function saveToIndexedDB(family) {
 }
 
 /**
- * Load from IndexedDB
- * @returns {Promise<Array|null>}
+ * Read the family record. Never rejects: any failure or timeout is logged and
+ * returns null.
+ * @returns {Promise<Array<Object>|null>}
  */
 async function loadFromIndexedDB() {
     try {
@@ -98,7 +111,8 @@ async function loadFromIndexedDB() {
 }
 
 /**
- * Check if localStorage is available and working
+ * True if a localStorage write can be read back. It can throw or be missing
+ * altogether in private browsing and when storage is disabled.
  * @returns {boolean}
  */
 function isLocalStorageAvailable() {
@@ -114,15 +128,15 @@ function isLocalStorageAvailable() {
 }
 
 /**
- * Save family data to both localStorage and IndexedDB
- * @param {Array} family - Family data to save
- * @returns {Promise<boolean>} - True if at least one save succeeded
+ * Save to both stores.
+ * @param {Array<Object>} family
+ * @returns {Promise<boolean>} True if at least one store now holds the data;
+ *   false means the birthdays will be gone on the next visit
  */
 async function saveFamily(family) {
     let localStorageOk = false;
     let indexedDBOk = false;
 
-    // Try localStorage first
     if (isLocalStorageAvailable()) {
         try {
             const dataToSave = JSON.stringify(family);
@@ -134,7 +148,6 @@ async function saveFamily(family) {
         }
     }
 
-    // Also save to IndexedDB as backup
     try {
         await saveToIndexedDB(family);
         indexedDBOk = true;
@@ -146,11 +159,11 @@ async function saveFamily(family) {
 }
 
 /**
- * Load family data from localStorage or IndexedDB fallback
- * @returns {Promise<Array|null>}
+ * Load from localStorage, or from IndexedDB if localStorage has nothing usable.
+ * Members whose date is not YYYY-MM-DD are dropped.
+ * @returns {Promise<Array<Object>|null>} null if neither store has a member with a valid date
  */
 async function loadFamily() {
-    // Try localStorage first (faster)
     if (isLocalStorageAvailable()) {
         try {
             const storedFamily = localStorage.getItem(STORAGE_KEY);
@@ -168,18 +181,16 @@ async function loadFamily() {
         }
     }
 
-    // Fall back to IndexedDB
     try {
         const family = await loadFromIndexedDB();
         if (Array.isArray(family) && family.length > 0) {
             const validFamily = family.filter(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
             if (validFamily.length > 0) {
-                // Restore to localStorage if it was missing
                 if (isLocalStorageAvailable()) {
                     try {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(validFamily));
                     } catch {
-                        // Ignore - at least we have IndexedDB
+                        // The IndexedDB copy is enough to return
                     }
                 }
                 return validFamily;
@@ -192,4 +203,4 @@ async function loadFamily() {
     return null;
 }
 
-export { saveFamily, loadFamily, isLocalStorageAvailable };
+export { saveFamily, loadFamily };

@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Milestone Dates - Nerdiversary</title>
-    <meta name="description" content="The exact dates you turn 1 billion seconds, 10,000 days, and a Mars year old, plus dozens more.">
+    <title>Your milestone dates - Nerdiversary</title>
+    <meta name="description" content="The exact dates you turn 1 billion seconds, 10,000 days and 1 Mars year old, plus 2,000 more milestones over 100 years.">
     <meta name="robots" content="noindex,follow">
     <link rel="canonical" href="https://paultarjan.com/nerdiversary/">
 
-    <!-- Open Graph — previews for directly-shared results links (noindex doesn't affect scrapers) -->
+    <!-- Link preview for a results URL shared as is. The per-milestone share button links to the worker's /share page instead, which has its own tags. noindex does not stop link-preview scrapers. -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Nerdy Milestone Dates - Nerdiversary">
-    <meta property="og:description" content="The exact dates for 1 billion seconds, a Mars year, 10,000 days, and dozens more nerdy milestones.">
+    <meta property="og:title" content="Billion-second, 10,000-day and Mars birthday dates">
+    <meta property="og:description" content="The date each person in this link turns 1 billion seconds, 10,000 days and 1 Mars year old, plus 2,000 more milestones.">
     <meta property="og:image" content="https://paultarjan.com/nerdiversary/assets/og/default.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#7c3aed">
 
-    <!-- PWA -->
+    <!-- Installable app: manifest plus iOS home-screen settings -->
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -43,7 +43,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script>
-        // Prevent FOUT by hiding content until fonts load
+        // Keep the page invisible (.fonts-loading in css/style.css) until the
+        // web fonts arrive, so text never visibly switches font.
         document.documentElement.classList.add('fonts-loading');
         Promise.all([
             document.fonts.load('400 1em Orbitron'),
@@ -55,7 +56,7 @@
         }).catch(() => {
             document.documentElement.classList.remove('fonts-loading');
         });
-        // Fallback: show content after 1s even if fonts haven't loaded
+        // Show the page after 1 s whether or not the fonts have loaded.
         setTimeout(() => document.documentElement.classList.remove('fonts-loading'), 1000);
     </script>
 </head>
@@ -65,16 +66,16 @@
 
     <nav class="navbar">
         <a href="index.html" class="nav-logo">
-            <img src="assets/logo.svg" alt="Nerdiversary" class="nav-logo-img">
+            <img src="assets/logo.svg" alt="" class="nav-logo-img">
             <span>Nerdiversary</span>
         </a>
-        <a href="index.html?new=1" class="nav-link">← Edit dates</a>
+        <a href="index.html?new=1" class="nav-link">← Edit birthdays</a>
     </nav>
 
     <main class="container results-container">
         <header class="results-header">
-            <h1>Your Nerdiversaries</h1>
-            <div class="family-info" id="family-info">Counting the seconds...</div>
+            <h1>Your milestone dates</h1>
+            <div class="family-info" id="family-info">Calculating…</div>
             <div class="action-buttons">
                 <button id="enable-notifications" class="action-btn notification-btn">
                     <span class="btn-icon">🔔</span>
@@ -82,11 +83,11 @@
                 </button>
                 <button id="subscribe-calendar" class="action-btn primary">
                     <span class="btn-icon">📅</span>
-                    <span>Subscribe to calendar</span>
+                    <span>Add live calendar feed</span>
                 </button>
                 <button id="download-ical" class="action-btn">
                     <span class="btn-icon">📥</span>
-                    <span>Download .ics</span>
+                    <span>Download calendar file (.ics)</span>
                 </button>
                 <button id="share-results" class="action-btn">
                     <span class="btn-icon">🔗</span>
@@ -96,9 +97,9 @@
         </header>
 
         <section class="next-celebration" id="next-celebration">
-            <h2>🎉 Your next nerdiversary</h2>
+            <h2>🎉 Next milestone</h2>
             <div class="countdown-card" id="next-event">
-                <div class="countdown-loading">Doing the math...</div>
+                <div class="countdown-loading">Calculating…</div>
             </div>
         </section>
 
@@ -115,11 +116,11 @@
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="planetary">🪐 Planetary</button>
                 <button class="filter-btn" data-filter="decimal">🔢 Decimal</button>
-                <button class="filter-btn" data-filter="binary">💻 Number Bases</button>
+                <button class="filter-btn" data-filter="binary">💻 Number bases</button>
                 <button class="filter-btn" data-filter="mathematical">π Mathematical</button>
                 <button class="filter-btn" data-filter="fibonacci">🌀 Fibonacci</button>
                 <button class="filter-btn" data-filter="scientific">🔬 Scientific</button>
-                <button class="filter-btn" data-filter="pop-culture">🎬 Pop Culture</button>
+                <button class="filter-btn" data-filter="pop-culture">🎬 Pop culture</button>
             </div>
         </section>
 
@@ -133,14 +134,14 @@
             <div class="timeline" id="timeline">
                 <div class="timeline-loading">
                     <div class="loading-spinner"></div>
-                    <p>Converting your birthday into seconds, Mars years, and powers of two...</p>
+                    <p>Working out over 2,000 milestone dates…</p>
                 </div>
             </div>
         </section>
 
         <footer class="footer">
-            <p class="footer-note">Because celebrating every 365.2425 days is so mainstream</p>
-            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Feedback</a></p>
+            <p class="footer-note">Dates are exact to the minute when you add a birth time, and shown in your device's time zone.</p>
+            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">Source code on GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Report a problem</a></p>
         </footer>
     </main>
 

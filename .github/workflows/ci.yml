@@ -1,4 +1,5 @@
-# Run CI checks on every commit
+# Lint, typecheck, unit tests and Playwright tests on every push, pull request
+# and merge-queue run.
 name: CI
 
 on:

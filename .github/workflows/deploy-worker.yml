@@ -1,4 +1,7 @@
-# Deploy Cloudflare Worker on every push
+# Deploy worker/ to Cloudflare after the unit tests pass. Runs on pushes to
+# main that touch the worker, the js/ modules it bundles, or the tests. Needs
+# the CLOUDFLARE_API_TOKEN repo secret. D1 schema changes are not applied
+# here; run worker/schema.sql by hand (see worker/wrangler.toml).
 name: Deploy Cloudflare Worker
 
 on:

@@ -1,11 +1,24 @@
 /**
- * Main page script - handles birthday form submission
+ * The birthday form on index.html: add and remove people, pick a birth time
+ * zone, save to device storage (js/storage.js) and go to results.html with the
+ * birthdays in the `family` URL parameter (format: parseFamilyParam in
+ * js/shared.js).
+ *
+ * If birthdays are already stored, the page goes straight to results unless
+ * the URL has `?new=1` (results.html's "Edit birthdays" link adds it).
+ *
+ * Each person's inputs are ids suffixed with a numeric index (`name-0`,
+ * `birthdate-0`, `birthtime-0`, `birthtz-0`); person 0 is in the HTML, the rest
+ * are added by addFamilyMember.
  */
 
 import * as Storage from './storage.js';
+import { buildFamilyParam } from './shared.js';
 
 /**
- * Find the next available member index
+ * Lowest index not used by any person on the form, so a removed person's
+ * index is reused.
+ * @returns {number}
  */
 function getNextMemberIndex() {
     const members = document.querySelectorAll('.family-member');
@@ -20,7 +33,9 @@ function getNextMemberIndex() {
 }
 
 /**
- * Get short timezone name for display (e.g., "PST", "MST", "EST")
+ * The device's time zone abbreviation for the "Birth time (optional, in PDT)"
+ * label, e.g. "PDT", or "GMT+2" where no abbreviation exists.
+ * @returns {string}
  */
 function getTimezoneName() {
     try {
@@ -36,7 +51,8 @@ function getTimezoneName() {
 }
 
 /**
- * Get the device's IANA timezone (e.g., "America/Denver")
+ * The device's IANA time zone, e.g. "America/Denver", or '' if unavailable.
+ * @returns {string}
  */
 function getIANATimezone() {
     try {
@@ -46,10 +62,8 @@ function getIANATimezone() {
     }
 }
 
-/**
- * Populate a timezone select element with all IANA timezones
- */
-// Common timezones — one per unique offset + DST variation
+// Choices for the birth time zone select: one zone per distinct UTC offset and
+// DST rule. The comment on each is its standard/daylight offset from UTC.
 const COMMON_TIMEZONES = [
     'Pacific/Pago_Pago', // -11
     'Pacific/Honolulu', // -10
@@ -99,16 +113,21 @@ const COMMON_TIMEZONES = [
     'Pacific/Tongatapu', // +13
 ];
 
+/**
+ * Fill a birth time zone select with COMMON_TIMEZONES plus the device's own
+ * zone, sorted by today's UTC offset and labelled "(GMT-07:00) America / Denver".
+ * The device's zone is selected.
+ * @param {HTMLSelectElement} selectEl
+ */
 function populateTimezoneSelect(selectEl) {
     const deviceTz = getIANATimezone();
 
-    // Use common list, but ensure the device timezone is included
     const timezones = [...COMMON_TIMEZONES];
     if (deviceTz && !timezones.includes(deviceTz)) {
         timezones.push(deviceTz);
     }
 
-    // Build entries with UTC offset for sorting and display
+    // Offsets are today's, so a DST zone is listed at its current offset.
     const now = new Date();
     const entries = timezones.map(tz => {
         const formatter = new Intl.DateTimeFormat('en-US', {
@@ -149,7 +168,9 @@ function populateTimezoneSelect(selectEl) {
 }
 
 /**
- * Toggle visibility of the timezone select for a member
+ * Show or hide one person's time zone select, filling it on first show.
+ * Whether it is visible decides whether the zone is saved (see submitForm).
+ * @param {number} index
  */
 function toggleTimezoneSelect(index) {
     const selectEl = document.getElementById(`birthtz-${index}`);
@@ -166,7 +187,7 @@ function toggleTimezoneSelect(index) {
 }
 
 /**
- * Populate all timezone labels on the page
+ * Write the device's zone abbreviation into every person's time zone link.
  */
 function updateTimezoneLabels() {
     const tz = getTimezoneName();
@@ -179,28 +200,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('birthday-form');
     const addMemberBtn = document.getElementById('add-member');
 
-    // Set date constraints and timezone labels for first member
     setupDateConstraints(0);
     updateTimezoneLabels();
 
-    // Check URL parameters first - if present, use those (shared link)
-    // Otherwise load from storage (localStorage + IndexedDB fallback)
+    // A `family` parameter prefills the form and wins over stored birthdays.
     const hasUrlParams = loadFromUrlParams();
     let hasStoredData = false;
     if (!hasUrlParams) {
         hasStoredData = await loadStoredData();
     }
 
-    // Auto-navigate to results if we have stored data (unless user clicked "New Calculation")
-    // This improves the experience - users see their nerdiversaries immediately
+    // Returning visitors go straight to their results; ?new=1 keeps them on the form.
     const urlParams = new URLSearchParams(window.location.search);
     const isNewCalculation = urlParams.get('new') === '1';
     if (hasStoredData && !isNewCalculation) {
         submitForm();
-        return; // Skip rest of initialization since we're navigating away
+        return;
     }
 
-    // Timezone toggle — event delegation so it works for dynamically added members
+    // Delegated so it also covers people added later.
     if (form) {
         form.addEventListener('click', e => {
             const toggle = e.target.closest('.timezone-toggle');
@@ -210,14 +228,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Add family member button
     if (addMemberBtn) {
         addMemberBtn.addEventListener('click', () => {
             addFamilyMember();
         });
     }
 
-    // Form submission
     if (form) {
         form.addEventListener('submit', e => {
             e.preventDefault();
@@ -225,36 +241,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Add some interactive effects
     addStarfieldInteractivity();
 });
 
 /**
- * Set up date constraints for a member's birthdate input
+ * Limit a birthday input to the last 150 years, up to today (dates in UTC).
+ * @param {number} index
  */
 function setupDateConstraints(index) {
     const birthdateInput = document.getElementById(`birthdate-${index}`);
     if (!birthdateInput) { return; }
 
-    // Set max date to today
     const today = new Date();
     birthdateInput.max = today.toISOString().split('T')[0];
 
-    // Set a reasonable min date (150 years ago)
     const minDate = new Date();
     minDate.setFullYear(minDate.getFullYear() - 150);
     birthdateInput.min = minDate.toISOString().split('T')[0];
 }
 
 /**
- * Load stored family data from localStorage/IndexedDB
- * @returns {Promise<boolean>} true if valid data was loaded, false otherwise
+ * Prefill the form from device storage.
+ * @returns {Promise<boolean>} true if at least one person with a valid date was loaded
  */
 async function loadStoredData() {
     try {
         const family = await Storage.loadFamily();
         if (family && family.length > 0) {
-            // Load first member
             const first = family[0];
             const nameEl = document.getElementById('name-0');
             const dateEl = document.getElementById('birthdate-0');
@@ -272,12 +285,10 @@ async function loadStoredData() {
                 }
             }
 
-            // Add and load additional members
             for (let i = 1; i < family.length; i++) {
                 addFamilyMember(family[i]);
             }
 
-            // Return true if at least one member has a valid date
             return family.some(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
         }
     } catch (e) {
@@ -287,13 +298,15 @@ async function loadStoredData() {
 }
 
 /**
- * Load family data from URL parameters
- * @returns {boolean} true if valid URL params were loaded, false otherwise
+ * Prefill the form from a `family` URL parameter on index.html. Parses the
+ * format itself rather than with parseFamilyParam because the form wants the
+ * raw date, time and zone strings, not a computed Date. Entries without a
+ * YYYY-MM-DD date are dropped.
+ * @returns {boolean} true if at least one person was loaded
  */
 function loadFromUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
 
-    // Check for new family format
     const familyParam = urlParams.get('family');
     if (familyParam) {
         try {
@@ -303,7 +316,7 @@ function loadFromUrlParams() {
                 try {
                     name = decodeURIComponent(parts[0] || '');
                 } catch {
-                    // Raw % in legacy URLs — keep as-is rather than dropping everyone
+                    // A bare % that is not an escape: keep the name as typed
                     name = parts[0] || '';
                 }
                 return {
@@ -314,10 +327,8 @@ function loadFromUrlParams() {
                 };
             });
 
-            // Only use URL params if they contain valid data (at least one member with a date)
             const validMembers = members.filter(m => m.date && m.date.match(/^\d{4}-\d{2}-\d{2}$/));
             if (validMembers.length > 0) {
-                // Load first member
                 const nameEl = document.getElementById('name-0');
                 const dateEl = document.getElementById('birthdate-0');
                 const timeEl = document.getElementById('birthtime-0');
@@ -334,7 +345,6 @@ function loadFromUrlParams() {
                     }
                 }
 
-                // Add additional members
                 for (let i = 1; i < validMembers.length; i++) {
                     addFamilyMember(validMembers[i]);
                 }
@@ -347,8 +357,8 @@ function loadFromUrlParams() {
     return false;
 }
 
-// Name placeholders for injected members; index 0 matches the
-// "Grace Hopper" placeholder on Person 1 in index.html
+// Name placeholders, picked by person index; entry 0 matches the placeholder
+// hard-coded on person 1 in index.html.
 const PLACEHOLDER_NAMES = [
     'Grace Hopper',
     'Alan Turing',
@@ -359,7 +369,8 @@ const PLACEHOLDER_NAMES = [
 ];
 
 /**
- * Add a new family member to the form
+ * Append a person to the form, optionally prefilled.
+ * @param {{name?: string, date?: string, time?: string, timezone?: string}|null} [data]
  */
 function addFamilyMember(data = null) {
     const familyMembers = document.getElementById('family-members');
@@ -373,7 +384,7 @@ function addFamilyMember(data = null) {
     memberDiv.innerHTML = `
         <div class="member-header">
             <span class="member-label">Person ${index + 1}</span>
-            <button type="button" class="remove-member-btn" onclick="removeFamilyMember(${index})">✕</button>
+            <button type="button" class="remove-member-btn" aria-label="Remove this person" title="Remove this person" onclick="removeFamilyMember(${index})">✕</button>
         </div>
         <div class="form-group">
             <label for="name-${index}">Name</label>
@@ -385,14 +396,15 @@ function addFamilyMember(data = null) {
         </div>
         <div class="form-group optional">
             <label for="birthtime-${index}">
-                Birth time <span class="optional-label">(optional, <span class="timezone-toggle" data-index="${index}"><span class="timezone-label"></span></span>)</span>
+                Birth time <span class="optional-label">(optional, in <span class="timezone-toggle" data-index="${index}" title="Change the time zone of the birth time"><span class="timezone-label"></span></span>)</span>
             </label>
             <input type="time" id="birthtime-${index}" name="birthtime" step="60">
             <select id="birthtz-${index}" name="birthtz" class="birth-timezone-select" style="display:none"></select>
         </div>
     `;
 
-    // Set values via DOM properties to prevent XSS
+    // Values come from the URL or storage, so they are set as properties,
+    // never interpolated into the innerHTML above.
     if (data) {
         if (data.name) { memberDiv.querySelector(`#name-${index}`).value = data.name; }
         if (data.date) { memberDiv.querySelector(`#birthdate-${index}`).value = data.date; }
@@ -409,13 +421,14 @@ function addFamilyMember(data = null) {
     setupDateConstraints(index);
     updateTimezoneLabels();
 
-    // Show remove button on first member and make first name required
     updateRemoveButtons();
     updateNameRequired();
 }
 
 /**
- * Remove a family member from the form
+ * Remove a person from the form. Called from the remove button's inline
+ * onclick, hence the window global below.
+ * @param {number} index
  */
 function removeFamilyMember(index) {
     const memberDiv = document.querySelector(`.family-member[data-index="${index}"]`);
@@ -428,7 +441,8 @@ function removeFamilyMember(index) {
 }
 
 /**
- * Update visibility of remove buttons
+ * Person 1's remove button is in no HTML template: add it when there are two
+ * or more people and remove it when person 1 is alone.
  */
 function updateRemoveButtons() {
     const members = document.querySelectorAll('.family-member');
@@ -436,7 +450,6 @@ function updateRemoveButtons() {
     if (!firstMember) { return; }
 
     if (members.length > 1) {
-        // Add remove button to first member if not present
         if (!firstMember.querySelector('.remove-member-btn')) {
             const header = firstMember.querySelector('.member-header');
             const { index } = firstMember.dataset;
@@ -444,31 +457,32 @@ function updateRemoveButtons() {
             btn.type = 'button';
             btn.className = 'remove-member-btn';
             btn.textContent = '✕';
+            btn.setAttribute('aria-label', 'Remove this person');
+            btn.title = 'Remove this person';
             btn.onclick = () => removeFamilyMember(parseInt(index, 10));
             header.appendChild(btn);
         }
     } else {
-        // Remove the button from first member if only one left
         const btn = firstMember.querySelector('.remove-member-btn');
         if (btn) { btn.remove(); }
     }
 }
 
 /**
- * Update name required status - only required when multiple members
+ * Person 1's name is optional when alone (submitForm saves them as "You")
+ * and required once there are others. Added people always require a name.
  */
 function updateNameRequired() {
     const members = document.querySelectorAll('.family-member');
     const firstNameInput = document.getElementById('name-0');
 
     if (firstNameInput) {
-        // Name is required only when there are multiple members
         firstNameInput.required = members.length > 1;
     }
 }
 
 /**
- * Renumber member labels after removal
+ * Relabel "Person N" by position. Element ids keep their original index.
  */
 function renumberMembers() {
     const members = document.querySelectorAll('.family-member');
@@ -481,7 +495,10 @@ function renumberMembers() {
 }
 
 /**
- * Submit the form and navigate to results
+ * Collect the form, save it to device storage and open results.html. People
+ * without a birthday are skipped; so are people without a name, unless there is
+ * only one person, who becomes "You". If saving fails the user is asked
+ * whether to continue anyway.
  */
 async function submitForm() {
     const members = document.querySelectorAll('.family-member');
@@ -499,11 +516,11 @@ async function submitForm() {
         const name = nameEl ? nameEl.value.trim() : '';
         const birthdate = dateEl.value;
         const birthtime = timeEl ? timeEl.value : '';
-        // Only include timezone if the select is visible (user explicitly chose it)
+        // A zone is saved only if the user opened the select. Without one, the
+        // birth time is read in the zone of whichever device shows the results.
         const timezone = (tzEl && tzEl.style.display !== 'none') ? tzEl.value : '';
 
         if (birthdate) {
-            // Use "You" as default name for single person
             const displayName = name || (members.length === 1 ? 'You' : '');
             if (displayName) {
                 family.push({
@@ -517,48 +534,34 @@ async function submitForm() {
     });
 
     if (family.length === 0) {
-        alert('Add at least one birthday. The math needs a starting point.');
+        alert('Enter at least one birthday.');
         return;
     }
 
-    // Store in localStorage + IndexedDB for iOS PWA persistence
     const saveSucceeded = await Storage.saveFamily(family);
 
-    // Warn user if save failed (they can still view results via URL)
+    // The results still work from the URL; only the next visit loses them.
     if (!saveSucceeded) {
         const proceed = confirm(
-            'Saving failed, most likely because this browser is in private browsing mode. ' +
-            'Your milestones will still show on the next page, but the birthdays won\'t be remembered on your next visit.\n\n' +
-            'Continue anyway?'
+            'This browser could not save the birthdays, probably because it is in private browsing mode. ' +
+            'Your milestones will still show on the next page, but you will need to enter the birthdays again next time.\n\n' +
+            'Continue?'
         );
         if (!proceed) {
             return;
         }
     }
 
-    // Build URL params
-    const familyParam = family.map(m => {
-        let param = `${encodeURIComponent(m.name)}|${m.date}`;
-        if (m.time || m.timezone) {
-            param += `|${m.time || ''}`;
-        }
-        if (m.timezone) {
-            param += `|${m.timezone}`;
-        }
-        return param;
-    }).join(',');
-
-    // Use relative URL - works regardless of subdirectory.
-    // Encode the whole param value: URLSearchParams.get() decodes it once on read,
-    // which restores the per-name encoding so names containing , | % survive parsing.
-    window.location.href = `results.html?family=${encodeURIComponent(familyParam)}`;
+    // Relative, so the site works under any path.
+    window.location.href = `results.html?family=${encodeURIComponent(buildFamilyParam(family))}`;
 }
 
-// Make removeFamilyMember available globally for onclick
+// For the inline onclick on added people's remove buttons.
 window.removeFamilyMember = removeFamilyMember;
 
 /**
- * Add mouse-following parallax to starfield
+ * Shift the two background star layers with the mouse, the twinkling layer by
+ * half as much, for a parallax effect.
  */
 function addStarfieldInteractivity() {
     const stars = document.querySelector('.stars');

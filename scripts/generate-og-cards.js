@@ -1,11 +1,14 @@
 /**
- * Generate Open Graph share-card PNGs (1200×630) — one per milestone category
- * plus a default, plus one per SEO landing page (lp-<slug>.jpg). Rendered
- * with Playwright so emoji and gradients look right.
+ * Render the 1200x630 JPEG link-preview cards into assets/og/:
+ *   default.jpg and <category>.jpg  used by the worker's /share page, which
+ *                                   picks one by the milestone's category
+ *   lp-<slug>.jpg                   one per landing page in landing-pages-data.js
+ * Headless Chromium draws them, so emoji render as they do in a browser.
+ * The output is committed; rerun after changing a label, a landing page's
+ * heading or emoji, or the category list (which must match
+ * OG_CARD_CATEGORIES in worker/worker.js).
  *
- * Run: node scripts/generate-og-cards.js
- * Output: assets/og/<name>.jpg (committed — the worker /share route and
- * the static pages reference them by URL)
+ * Run: npm run generate:og
  */
 
 import { chromium } from '@playwright/test';
@@ -18,14 +21,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.join(__dirname, '..', 'assets', 'og');
 
 const CARDS = [
-    { name: 'default', emoji: '🎉', label: 'Nerdy milestone incoming!' },
-    { name: 'planetary', emoji: '🪐', label: 'A planetary birthday approaches' },
-    { name: 'decimal', emoji: '🔢', label: 'A big round number approaches' },
-    { name: 'binary', emoji: '💻', label: 'A power-of-two moment approaches' },
-    { name: 'mathematical', emoji: '📐', label: 'A mathematical moment approaches' },
-    { name: 'fibonacci', emoji: '🌀', label: 'A Fibonacci moment approaches' },
-    { name: 'scientific', emoji: '🔬', label: 'A cosmic milestone approaches' },
-    { name: 'pop-culture', emoji: '🎬', label: 'A legendary moment approaches' },
+    { name: 'default', emoji: '🎉', label: 'Birthdays counted in seconds, planets and more' },
+    { name: 'planetary', emoji: '🪐', label: 'A birthday on Earth or another planet is coming up' },
+    { name: 'decimal', emoji: '🔢', label: 'A round-number milestone is coming up' },
+    { name: 'binary', emoji: '💻', label: 'A power-of-two milestone is coming up' },
+    { name: 'mathematical', emoji: '📐', label: 'A math milestone: π, palindromes, perfect numbers and more' },
+    { name: 'fibonacci', emoji: '🌀', label: 'A Fibonacci-number milestone is coming up' },
+    { name: 'scientific', emoji: '🔬', label: 'A physics or astronomy milestone is coming up' },
+    { name: 'pop-culture', emoji: '🎬', label: 'A pop-culture milestone is coming up' },
     ...PAGES.map(p => ({ name: `lp-${p.slug}`, emoji: p.emoji, label: p.heading })),
 ];
 

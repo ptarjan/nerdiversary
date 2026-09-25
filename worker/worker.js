@@ -1,22 +1,68 @@
 /**
- * Nerdiversary Cloudflare Worker
- * Generates .ics calendar files for nerdiversary events
- * Handles push notification subscriptions with D1 database
+ * Nerdiversary Cloudflare Worker: calendar feed, share-link previews and push
+ * notifications. It imports the site's own Calculator and shared.js, so every
+ * date it serves or pushes is computed by the same code as the results page.
+ * Config, secrets and the cron schedule are in wrangler.toml.
  *
- * Architecture: Birthday-indexed D1 queries (scales to 1M+ users)
- * - On subscribe: store subscription + family birthdates in D1
- * - Every minute: query birthdates matching any milestone offset, send notifications
- * - Cost: ~1 query/minute regardless of user count
+ * Routes
+ *   GET  *?family=...[&format=json]  .ics feed (or JSON) for the family, from
+ *                                    30 days ago to 2 years ahead
+ *   GET  /share?t=&d=&i=&c=&n=&f=    link-preview page: OG tags for scrapers,
+ *                                    redirect to results.html for people
+ *   GET  /push/vapid-public-key      public key the browser subscribes with
+ *   POST /push/subscribe             save a subscription and its family
+ *   POST /push/unsubscribe           delete a subscription and its family
+ *   GET  /push/notification-log      recent sends; needs Bearer ADMIN_TOKEN
+ *   OPTIONS (any path)               CORS preflight
+ *   anything else                    400 with usage help
+ *   /push/vapid-public-key answers 503 without VAPID_PUBLIC_KEY, the other
+ *   /push/* routes without the DB binding.
+ *
+ * D1 tables (binding DB, schema in schema.sql)
+ *   subscriptions     one row per browser push endpoint; id is the first 32
+ *                     hex chars of SHA-256(endpoint). /push/unsubscribe deletes
+ *                     the row; a 404/410 from the push service only sets
+ *                     deleted_at, and re-subscribing clears it.
+ *   family_members    name + birth_datetime (UTC, "YYYY-MM-DDTHH:MM"), at most
+ *                     20 per subscription, replaced wholesale on each subscribe.
+ *   notification_log  one row per push the service accepted; rows older than
+ *                     90 days are deleted by the 00:00 UTC cron run.
+ *
+ * Cron (every minute)
+ *   Skipped unless both DB and VAPID_PRIVATE_KEY are set. Each run looks at
+ *   the current UTC minute, reads all active family members, and sends what is
+ *   due. There is no catch-up: a minute the cron misses sends nothing.
+ *
+ * Push timing
+ *   Every lead time is checked each run: 1440 (a day before), 60 and 0 minutes.
+ *   A subscription only gets the lead times listed in its notification_times.
+ *   An event is due when (current minute + lead time) is its minute. Three
+ *   kinds of event, found three ways:
+ *   - Fixed-duration milestones (seconds, planet years, powers of two...):
+ *     each is a constant offset from birth, so generateMilestoneOffsets()
+ *     lists them once per isolate, rounded to the minute, and a member is due
+ *     when now + lead - birth equals an offset. A milestone at 10:46:40 is
+ *     sent in the 10:47 run.
+ *   - Earth birthdays: not a fixed offset (leap days), so they match on the
+ *     birth's UTC month, day and HH:MM instead.
+ *   - Nerdy holidays: the same date for everyone, so they fire at 00:00 in
+ *     the subscription's time zone (the browser's zone at subscribe time),
+ *     once per subscription, with no person named.
+ *   Birth times are stored in UTC to the minute. The browser converts from
+ *   the birth time zone (with that date's DST) before posting, because
+ *   subscribe ignores a zone in the family string. With no birth time a
+ *   member counts as born at 00:00 in the browser's zone.
+ *   Each push carries a TTL so a late delivery is dropped instead of shown
+ *   stale: lead time minus one minute, or 10 minutes for "happening now".
  */
 
-// Import shared modules
 import Calculator from '../js/calculator.js';
-import { parseFamilyParam, formatNotificationTitle, generateICal, SITE_URL } from '../js/shared.js';
+import { parseFamilyParam, formatNotificationTitle, generateICal, escapeHtml, SITE_URL } from '../js/shared.js';
 
-// ============================================================================
-// CORS Headers
-// ============================================================================
+const FAMILY_USAGE = '?family=Name|YYYY-MM-DD, optionally |HH:MM (24-hour birth time) and |Area/City (birth time zone). Separate people with commas.';
 
+// The site (GitHub Pages) calls these endpoints cross-origin. Nothing here
+// uses cookies, so any origin is allowed.
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -24,33 +70,32 @@ const CORS_HEADERS = {
 };
 
 // ============================================================================
-// MILESTONE OFFSETS (precomputed for cron queries)
+// MILESTONE OFFSETS
 // ============================================================================
 
 /**
- * Generate all milestone offsets in milliseconds from birth.
- * Uses Calculator.calculate() with a reference date to match the frontend exactly,
- * except for Earth birthdays (approximated with MS_PER_YEAR) and nerdy holidays
- * (calendar-based, not offset-based — skipped for now).
+ * List every fixed-duration milestone as its offset from birth, in ms rounded
+ * to the minute: [{ ms, label, icon }]. Computed by running Calculator.calculate
+ * for a reference birth, which is valid because these milestones are the same
+ * duration for every birth date. Earth birthdays and nerdy holidays depend on
+ * the calendar, so they are left out and handled by handleCalendarEvents().
+ * Exported for tests.
  */
-// Exported for tests
 export function generateMilestoneOffsets() {
   const refBirth = new Date('2000-01-01T00:00:00Z');
   const events = Calculator.calculate(refBirth, { yearsAhead: 120, includePast: true });
 
-  // Distinct milestones can land on the same minute (e.g. "1 AU" and
-  // "Light Speed to the Sun", or 0xFFFFFF vs 2^24 seconds after rounding).
-  // Merge them into one notification instead of silently dropping all but one.
+  // Distinct milestones can round to the same minute (0xFFFFFF and 2^24
+  // seconds, for example). They share one notification with joined labels.
   const byMs = new Map();
   for (const event of events) {
-    // Skip calendar-based events that can't be expressed as fixed offsets
     if (event.isSharedHoliday) continue;
     if (event.id.startsWith('earth-birthday-')) continue;
 
     const ms = event.date.getTime() - refBirth.getTime();
     if (ms <= 0) continue;
 
-    // Round to nearest minute for consistent matching with minute-precision birth_datetime in DB
+    // birth_datetime and the cron clock are whole minutes, so offsets must be too
     const msRounded = Math.round(ms / 60000) * 60000;
     const existing = byMs.get(msRounded);
     if (existing) {
@@ -62,13 +107,10 @@ export function generateMilestoneOffsets() {
     }
   }
 
-  // Earth birthdays and nerdy holidays are calendar-based (same month/day each year),
-  // not fixed offsets. They are handled separately via handleCalendarEvents().
-
   return [...byMs.entries()].map(([ms, o]) => ({ ms, label: o.labels.join(' + '), icon: o.icon }));
 }
 
-// Cache milestone offsets (generated once per worker instance)
+// Computed on first use and kept for the life of the isolate
 let MILESTONE_OFFSETS = null;
 function getMilestoneOffsets() {
   if (!MILESTONE_OFFSETS) {
@@ -85,12 +127,10 @@ const workerHandler = {
   async fetch(request, env, _ctx) {
     const url = new URL(request.url);
 
-    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });
     }
 
-    // Route push notification endpoints
     if (url.pathname === '/push/vapid-public-key') {
       return handleVapidPublicKey(env);
     }
@@ -107,22 +147,19 @@ const workerHandler = {
       return handleNotificationLog(request, url, env);
     }
 
-    // Milestone share pages: social scrapers get real OG tags, humans get redirected
     if (url.pathname === '/share') {
       return handleShareRedirect(url);
     }
 
-    // Calendar feed - require family format
     const familyParam = url.searchParams.get('family');
     if (familyParam) {
       return handleFamilyRequest(url, familyParam);
     }
 
-    // No valid parameters provided
     return new Response(JSON.stringify({
-      error: 'Missing family parameter',
-      usage: '?family=Name|YYYY-MM-DD or ?family=Name|YYYY-MM-DD,Name2|YYYY-MM-DD',
-      example: url.origin + '/?family=Alice|1990-05-15'
+      error: 'Add a family parameter to get a calendar feed.',
+      usage: FAMILY_USAGE,
+      example: url.origin + '/?family=Alice|1990-05-15|08:30,Bob|1988-11-02'
     }), {
       status: 400,
       headers: {
@@ -137,27 +174,21 @@ const workerHandler = {
 // MILESTONE SHARE PAGES
 // ============================================================================
 
-/** Escape text for safe interpolation into HTML (params are user-controlled) */
-function escapeHtmlText(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-// Categories that have a pre-rendered OG card in assets/og/
+// Categories with a card in assets/og/; must match CARDS in
+// scripts/generate-og-cards.js. Any other category gets default.jpg.
 const OG_CARD_CATEGORIES = new Set([
   'planetary', 'decimal', 'binary', 'mathematical', 'fibonacci', 'scientific', 'pop-culture'
 ]);
 
 /**
- * Build the share-page HTML for one milestone. GitHub Pages can't emit per-URL
- * meta tags and scrapers don't run JS, so shared links route through the
- * worker: bots read the OG tags, humans get redirected to the results page.
- * Query params: t=title, d=ISO date, i=icon emoji, c=category, n=person name,
- * f=family param (redirect target on the site — never an arbitrary URL).
+ * Build the share-page HTML for one milestone. GitHub Pages serves the same
+ * meta tags for every URL and scrapers don't run JS, so shared milestone links
+ * point here: scrapers read the OG tags, browsers follow the redirect to the
+ * results page.
+ * Query params (all attacker-controlled, so escaped and length-capped):
+ * t=title, d=ISO date, i=icon emoji, c=category (picks assets/og/<c>.jpg,
+ * else default.jpg), n=person name, f=family param. f only fills the
+ * results.html query string, so the redirect can never leave the site.
  * Exported for tests.
  */
 export function buildSharePage(url) {
@@ -172,32 +203,33 @@ export function buildSharePage(url) {
     ? ''
     : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
-  // Redirect target is always our results page — f is data, not a URL
   const target = familyParam
     ? `${SITE_URL}results.html?family=${encodeURIComponent(familyParam)}`
     : SITE_URL;
 
-  const ogTitle = `${icon} ${name ? `${name} reaches` : 'Countdown to'} ${title}${dateStr ? ` on ${dateStr}` : ''}!`;
+  const ogTitle = name
+    ? `${icon} ${name} reaches ${title}${dateStr ? ` on ${dateStr}` : ''}`
+    : `${icon} ${title}${dateStr ? `: ${dateStr}` : ''}`;
   const ogImage = `${SITE_URL}assets/og/${OG_CARD_CATEGORIES.has(category) ? category : 'default'}.jpg`;
-  const ogDescription = 'Nerdiversary finds your billion-second birthday, planetary years, and other gloriously nerdy milestones.';
+  const ogDescription = 'Enter a birth date to see when you turn 1 billion seconds old, have a birthday counted in Mars years, and hit round numbers in binary.';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${escapeHtmlText(ogTitle)}</title>
+<title>${escapeHtml(ogTitle)}</title>
 <meta property="og:type" content="website">
-<meta property="og:title" content="${escapeHtmlText(ogTitle)}">
-<meta property="og:description" content="${escapeHtmlText(ogDescription)}">
-<meta property="og:image" content="${escapeHtmlText(ogImage)}">
+<meta property="og:title" content="${escapeHtml(ogTitle)}">
+<meta property="og:description" content="${escapeHtml(ogDescription)}">
+<meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="description" content="${escapeHtmlText(ogDescription)}">
-<meta http-equiv="refresh" content="0;url=${escapeHtmlText(target)}">
+<meta name="description" content="${escapeHtml(ogDescription)}">
+<meta http-equiv="refresh" content="0;url=${escapeHtml(target)}">
 </head>
 <body>
-<p>Redirecting to <a href="${escapeHtmlText(target)}">Nerdiversary</a>…</p>
+<p>Opening <a href="${escapeHtml(target)}">Nerdiversary</a>…</p>
 <script>location.replace(${JSON.stringify(target)});</script>
 </body>
 </html>`;
@@ -218,16 +250,13 @@ function handleShareRedirect(url) {
 // PUSH NOTIFICATION HANDLERS (D1-based)
 // ============================================================================
 
-/**
- * Return VAPID public key for push subscription
- */
 function handleVapidPublicKey(env) {
   const publicKey = env.VAPID_PUBLIC_KEY;
 
   if (!publicKey) {
     return new Response(JSON.stringify({
-      error: 'Push notifications not configured',
-      message: 'VAPID keys not set up on server'
+      error: 'Push notifications are unavailable.',
+      message: 'The server has no VAPID_PUBLIC_KEY set.'
     }), {
       status: 503,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -240,14 +269,15 @@ function handleVapidPublicKey(env) {
 }
 
 /**
- * Handle push subscription - stores in D1
+ * Body: { subscription, family, notificationTimes, timezoneOffset, timezone }.
+ * family is the site's family string with birth times already in UTC;
+ * timezone is the browser's IANA zone, used for nerdy-holiday timing.
  */
 async function handlePushSubscribe(request, env) {
-  // Check if D1 is configured
   if (!env.DB) {
     return new Response(JSON.stringify({
-      error: 'Push notifications not configured',
-      message: 'D1 database not set up'
+      error: 'Push notifications are unavailable.',
+      message: 'The server has no D1 database bound as DB.'
     }), {
       status: 503,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -259,19 +289,18 @@ async function handlePushSubscribe(request, env) {
 
     if (!subscription || !subscription.endpoint) {
       return new Response(JSON.stringify({
-        error: 'Invalid subscription',
-        message: 'Missing subscription endpoint'
+        error: 'Invalid subscription.',
+        message: 'The subscription has no endpoint.'
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
       });
     }
 
-    // Generate subscription ID from endpoint hash
     const subscriptionId = await hashEndpoint(subscription.endpoint);
     const times = JSON.stringify(notificationTimes || [1440, 60, 0]);
 
-    // Upsert subscription (clear deleted_at on re-subscribe)
+    // Re-subscribing revives a row the cron had soft-deleted
     const tz = timezone || 'UTC';
     await env.DB.prepare(`
       INSERT INTO subscriptions (id, endpoint, p256dh, auth, notification_times, timezone, updated_at)
@@ -293,15 +322,12 @@ async function handlePushSubscribe(request, env) {
       tz
     ).run();
 
-    // Delete existing family members for this subscription
     await env.DB.prepare('DELETE FROM family_members WHERE subscription_id = ?')
       .bind(subscriptionId)
       .run();
 
-    // Parse and insert family members
-    // Use timezone offset to convert local times to UTC for consistent event calculation
-    // Cap member count and name length — the cron scans every row each minute,
-    // so unbounded input from this public endpoint could degrade it for everyone
+    // Capped because the cron scans every row each minute and this endpoint
+    // is public: one oversized family would slow the run for everyone.
     if (family) {
       const members = parseFamilyParam(family).slice(0, 20);
       const offset = typeof timezoneOffset === 'number' ? timezoneOffset : 0;
@@ -320,7 +346,7 @@ async function handlePushSubscribe(request, env) {
   } catch (e) {
     console.error('Subscribe error:', e);
     return new Response(JSON.stringify({
-      error: 'Failed to save subscription',
+      error: 'Could not save the subscription.',
       message: e.message
     }), {
       status: 500,
@@ -334,7 +360,10 @@ async function handlePushSubscribe(request, env) {
  */
 async function handlePushUnsubscribe(request, env) {
   if (!env.DB) {
-    return new Response(JSON.stringify({ error: 'D1 not configured' }), {
+    return new Response(JSON.stringify({
+      error: 'Push notifications are unavailable.',
+      message: 'The server has no D1 database bound as DB.'
+    }), {
       status: 503,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
@@ -344,7 +373,7 @@ async function handlePushUnsubscribe(request, env) {
     const { endpoint } = await request.json();
     const subscriptionId = await hashEndpoint(endpoint);
 
-    // Delete cascade will remove family_members too
+    // ON DELETE CASCADE removes the family_members and notification_log rows
     await env.DB.prepare('DELETE FROM subscriptions WHERE id = ?')
       .bind(subscriptionId)
       .run();
@@ -353,7 +382,7 @@ async function handlePushUnsubscribe(request, env) {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: 'Could not remove the subscription.', message: e.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
@@ -361,17 +390,16 @@ async function handlePushUnsubscribe(request, env) {
 }
 
 /**
- * Return recent notification log entries.
- * Debug endpoint — contains every user's name and notification history, so it
- * requires an admin token: set with `wrangler secret put ADMIN_TOKEN` and call
- * with `Authorization: Bearer <token>`.
+ * Newest notification_log rows, ?limit= up to 1000 (default 100).
+ * The log holds every user's names, so this needs the ADMIN_TOKEN secret sent
+ * as `Authorization: Bearer <token>`; with no secret set it always answers 403.
  */
 async function handleNotificationLog(request, url, env) {
   const auth = request.headers.get('Authorization') || '';
   if (!env.ADMIN_TOKEN || auth !== `Bearer ${env.ADMIN_TOKEN}`) {
     return new Response(JSON.stringify({
-      error: 'Unauthorized',
-      message: 'Requires Authorization: Bearer <ADMIN_TOKEN>'
+      error: 'Unauthorized.',
+      message: 'Send the header Authorization: Bearer <ADMIN_TOKEN>.'
     }), {
       status: 403,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -379,7 +407,10 @@ async function handleNotificationLog(request, url, env) {
   }
 
   if (!env.DB) {
-    return new Response(JSON.stringify({ error: 'D1 not configured' }), {
+    return new Response(JSON.stringify({
+      error: 'Push notifications are unavailable.',
+      message: 'The server has no D1 database bound as DB.'
+    }), {
       status: 503,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
@@ -395,16 +426,14 @@ async function handleNotificationLog(request, url, env) {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: 'Could not read the notification log.', message: e.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 }
 
-/**
- * Hash endpoint to create subscription ID
- */
+/** Subscription id: first 32 hex chars of SHA-256(endpoint). */
 async function hashEndpoint(endpoint) {
   const encoder = new TextEncoder();
   const data = encoder.encode(endpoint);
@@ -414,14 +443,13 @@ async function hashEndpoint(endpoint) {
 }
 
 /**
- * Format birth date to YYYY-MM-DDTHH:MM for DB storage (in UTC)
- * The client converts local birth times to UTC before sending (accounting for
- * historical DST on the birth date), so timezoneOffset is typically 0.
- * Kept for backwards compatibility with older clients that send local times.
- * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @param {string} timeStr - Time string in HH:MM format (UTC if client converts, local if legacy)
- * @param {number} timezoneOffset - Minutes to add to convert to UTC (0 if already UTC)
- * @returns {string} UTC datetime in YYYY-MM-DDTHH:MM format
+ * Build the birth_datetime column value. The site sends times already in UTC
+ * with timezoneOffset 0; a client that sends local times passes the minutes
+ * to add to reach UTC.
+ * @param {string} dateStr - YYYY-MM-DD
+ * @param {string} timeStr - HH:MM
+ * @param {number} timezoneOffset - minutes to add to reach UTC
+ * @returns {string} UTC "YYYY-MM-DDTHH:MM"
  */
 function formatBirthDatetime(dateStr, timeStr, timezoneOffset = 0) {
   const asUtc = new Date(`${dateStr}T${timeStr}:00Z`);
@@ -430,44 +458,40 @@ function formatBirthDatetime(dateStr, timeStr, timezoneOffset = 0) {
 }
 
 // ============================================================================
-// SCHEDULED HANDLER - Birthday-indexed queries
+// SCHEDULED HANDLER (timing rules are in the header comment)
 // ============================================================================
 
 /**
- * Parse a subscription row's notification_times JSON.
- * Defensive: one corrupt row must not crash the whole cron run.
+ * A subscription's lead times in minutes. Falls back to the default rather
+ * than throwing, so one corrupt row cannot stop the run for everyone.
  */
 function parseNotificationTimes(row) {
   try {
-    const times = parseNotificationTimes(row);
+    const times = JSON.parse(row.notification_times);
     return Array.isArray(times) ? times : [1440, 60, 0];
   } catch {
     return [1440, 60, 0];
   }
 }
 
-/**
- * Scheduled handler - runs every minute
- * Queries D1 for birthdates matching any milestone offset
- */
-async function handleScheduled(env) {
+/** One cron run. Exported so tests can pass a fake env and clock. */
+export async function handleScheduled(env, now = new Date()) {
   if (!env.DB || !env.VAPID_PRIVATE_KEY) {
     console.log('Push notifications not configured - skipping');
     return;
   }
 
-  const now = new Date();
-  // Truncate to start of current minute for deterministic matching
-  // Without this, sub-second cron jitter can shift target birthdates into the wrong minute
+  now = new Date(now);
+  // Cron start time jitters by seconds; matching is by whole minute
   now.setSeconds(0, 0);
   const currentMinute = now.toISOString().slice(0, 16); // "2024-01-15T10:30"
   console.log(`Checking notifications for ${currentMinute}`);
 
   const offsets = getMilestoneOffsets();
-  const notificationTimes = [0, 60, 1440]; // At event, 1 hour before, 1 day before
+  const notificationTimes = [0, 60, 1440]; // lead times in minutes
 
-  // Fetch ALL family members once (typically few rows), then match in-memory
-  // This avoids 26+ D1 queries that were causing CPU limit exceeded errors
+  // One query for everyone, matched in memory against ~1,500 offsets. A query
+  // per offset would cost far more D1 round trips and Worker CPU per run.
   const allMembers = await env.DB.prepare(`
     SELECT fm.name, fm.birth_datetime, s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times
     FROM family_members fm
@@ -481,13 +505,11 @@ async function handleScheduled(env) {
   let totalNotifications = 0;
   const logEntries = [];
 
-  // Build a Map from offset ms -> offset info for O(1) lookup
   const offsetMap = new Map();
   for (const offset of offsets) {
     offsetMap.set(offset.ms, offset);
   }
 
-  // For each member, check if their birth datetime matches any milestone offset
   for (const row of members) {
     const birthMs = new Date(row.birth_datetime + ':00Z').getTime();
     const times = parseNotificationTimes(row);
@@ -495,7 +517,7 @@ async function handleScheduled(env) {
     for (const notifMinutes of notificationTimes) {
       if (!times.includes(notifMinutes)) continue;
 
-      // milestone_offset = now + notifLeadTime - birthTime
+      // How old the member will be when this lead time runs out
       const elapsedMs = now.getTime() - birthMs + (notifMinutes * 60 * 1000);
       const offset = offsetMap.get(elapsedMs);
 
@@ -521,10 +543,8 @@ async function handleScheduled(env) {
     }
   }
 
-  // Handle calendar-based events (earth birthdays + nerdy holidays) using shared Calculator
   totalNotifications += await handleCalendarEvents(env, now, notificationTimes, logEntries);
 
-  // Batch-insert notification log entries
   if (logEntries.length > 0) {
     const stmts = logEntries.map(e =>
       env.DB.prepare(
@@ -534,7 +554,7 @@ async function handleScheduled(env) {
     await env.DB.batch(stmts);
   }
 
-  // Prune old log entries once a day so the table doesn't grow unbounded
+  // Once a day, keep the log to 90 days
   if (now.getUTCHours() === 0 && now.getUTCMinutes() === 0) {
     await env.DB.prepare(
       "DELETE FROM notification_log WHERE sent_at < datetime('now', '-90 days')"
@@ -545,15 +565,17 @@ async function handleScheduled(env) {
 }
 
 /**
- * Handle calendar-based events using shared Calculator.
- * Two sub-paths:
- *   1. Earth birthdays — fire at the user's birth time (UTC)
- *   2. Shared holidays — fire at midnight in the user's local timezone
+ * Send the events that repeat on a calendar date rather than after a fixed
+ * duration. Returns the number of pushes sent and appends to logEntries.
+ *   Earth birthdays: due when now + lead has the birth's UTC month, day and
+ *     HH:MM. The SQL filters on HH:MM; Calculator checks the date.
+ *   Nerdy holidays: due when now + lead is 00:00 in the subscription's time
+ *     zone; sent once per subscription, not once per family member.
  */
 async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
   let totalNotifications = 0;
 
-  // --- Earth birthdays: match on birth HH:MM ---
+  // Earth birthdays
   for (const notifMinutes of notificationTimes) {
     const eventTime = new Date(now.getTime() + notifMinutes * 60 * 1000);
     const eventHHMM = eventTime.toISOString().slice(11, 16);
@@ -582,11 +604,9 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
     }
   }
 
-  // --- Shared holidays: match on midnight in user's local timezone ---
-  // Get all active subscriptions once (deduplicated — one notification per subscription, not per family member)
+  // Nerdy holidays
   const subsResult = await env.DB.prepare(`
-    SELECT DISTINCT s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times, s.timezone,
-      (SELECT fm.name FROM family_members fm WHERE fm.subscription_id = s.id LIMIT 1) as name
+    SELECT s.id as subscription_id, s.endpoint, s.p256dh, s.auth, s.notification_times, s.timezone
     FROM subscriptions s
     WHERE s.deleted_at IS NULL
   `).all();
@@ -599,14 +619,13 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
       const times = parseNotificationTimes(row);
       if (!times.includes(notifMinutes)) continue;
 
-      // Check if eventTime is midnight (00:00) in the user's timezone
       const tz = row.timezone || 'UTC';
       const localHHMM = eventTime.toLocaleString('en-GB', {
         timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false
       });
       if (localHHMM !== '00:00') continue;
 
-      // Build a UTC date for the local date (for month/day matching)
+      // getHolidaysAt reads UTC month/day, so express the local date as UTC midnight
       const localDateStr = eventTime.toLocaleString('en-CA', {
         timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
       });
@@ -625,8 +644,11 @@ async function handleCalendarEvents(env, now, notificationTimes, logEntries) {
 }
 
 async function sendCalendarNotification(row, event, notifMinutes, env, logEntries) {
+  // Nerdy holidays are for everyone, so they name no one, in the push or in
+  // the log (person_name is NOT NULL, hence '' rather than null)
+  const personName = event.isSharedHoliday ? '' : row.name;
   const { title, body } = generateNotificationContent(
-    row.name, { label: event.title, icon: event.icon }, notifMinutes
+    personName, { label: event.title, icon: event.icon }, notifMinutes
   );
   const subscription = {
     endpoint: row.endpoint,
@@ -634,26 +656,30 @@ async function sendCalendarNotification(row, event, notifMinutes, env, logEntrie
   };
   const success = await sendPushNotification(subscription, { title, body }, env, row.subscription_id, notifMinutes);
   if (success) {
-    logEntries.push({ subscriptionId: row.subscription_id, personName: row.name, title, body });
-    console.log(`Sent: ${title} to ${row.name}`);
+    logEntries.push({ subscriptionId: row.subscription_id, personName, title, body });
+    console.log(`Sent: ${title} to ${row.subscription_id}`);
     return 1;
   }
   return 0;
 }
 
-/**
- * Generate notification content
- */
+/** Push payload: title says when (icon + lead time), body says who and what. */
 function generateNotificationContent(personName, offset, minutesBefore) {
   const title = formatNotificationTitle(offset.icon, minutesBefore);
-  const body = `${personName}: ${offset.label}`;
+  const body = personName ? `${personName}: ${offset.label}` : offset.label;
   return { title, body };
 }
 
 // ============================================================================
-// WEB PUSH IMPLEMENTATION
+// WEB PUSH: RFC 8291 payload encryption and RFC 8292 VAPID auth, written on
+// Web Crypto so the Worker has no dependencies.
 // ============================================================================
 
+/**
+ * Encrypt and POST one push. Returns true when the push service accepts it.
+ * A 404 or 410 means the browser dropped the subscription, so the row is
+ * soft-deleted and the cron stops sending to it.
+ */
 async function sendPushNotification(subscription, payload, env, subscriptionId = null, minutesBefore = 0) {
   try {
     const vapidHeaders = await createVapidHeaders(subscription.endpoint, env);
@@ -663,8 +689,8 @@ async function sendPushNotification(subscription, payload, env, subscriptionId =
       subscription.keys.auth
     );
 
-    // TTL = time until the notification becomes stale
-    // 1-day alert: useful for up to 23 hours; 1-hour: up to 59 min; at-time: 10 min
+    // Seconds the push service may hold an undelivered push before dropping it:
+    // until one minute before the event, or 10 minutes for "happening now"
     const ttl = minutesBefore > 0 ? (minutesBefore - 1) * 60 : 600;
 
     const response = await fetch(subscription.endpoint, {
@@ -722,7 +748,9 @@ async function signJWT(header, payload, privateKeyBase64) {
   const payloadB64 = base64urlEncode(JSON.stringify(payload));
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // web-push generates raw 32-byte EC private keys, wrap in PKCS8 for import
+  // `npx web-push generate-vapid-keys` prints a raw 32-byte P-256 scalar;
+  // Web Crypto only imports private keys as PKCS8 (or JWK), so prepend the
+  // fixed PKCS8 prefix for a P-256 key.
   const privateKeyRaw = base64urlDecode(privateKeyBase64);
   const pkcs8Header = new Uint8Array([
     0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48,
@@ -745,10 +773,11 @@ async function signJWT(header, payload, privateKeyBase64) {
     new TextEncoder().encode(unsignedToken)
   );
 
-  // Web Crypto returns raw r||s format (64 bytes), which is what JWT expects
+  // Web Crypto signs as raw r||s (64 bytes), the format ES256 JWTs use
   return `${unsignedToken}.${base64urlEncode(new Uint8Array(signature))}`;
 }
 
+/** aes128gcm body per RFC 8291: an 86-byte header then one encrypted record. */
 async function encryptPayload(payload, p256dhBase64, authBase64) {
   const p256dh = base64urlDecode(p256dhBase64);
   const auth = base64urlDecode(authBase64);
@@ -775,6 +804,8 @@ async function encryptPayload(payload, p256dhBase64, authBase64) {
   const nonce = await deriveKey(ikm, salt, 'Content-Encoding: nonce\0', 12);
 
   const payloadBytes = new TextEncoder().encode(payload);
+  // Plaintext + 0x02 (last-record delimiter). The extra trailing zero byte
+  // is padding, which the receiver strips.
   const paddedPayload = new Uint8Array(payloadBytes.length + 2);
   paddedPayload.set(payloadBytes);
   paddedPayload[payloadBytes.length] = 2;
@@ -791,6 +822,7 @@ async function encryptPayload(payload, p256dhBase64, authBase64) {
   const recordSize = new Uint8Array(4);
   new DataView(recordSize.buffer).setUint32(0, encrypted.byteLength + 86, false);
 
+  // salt(16) | record size(4) | key id length(1) = 65 | our public key(65)
   const header = new Uint8Array(86);
   header.set(salt, 0);
   header.set(recordSize, 16);
@@ -803,6 +835,7 @@ async function encryptPayload(payload, p256dhBase64, authBase64) {
   return result;
 }
 
+/** RFC 8291 input keying material: HKDF over the ECDH secret, salted with auth. */
 async function deriveIKM(sharedSecret, auth, localPublicKey, subscriberPublicKey) {
   const sharedSecretKey = await crypto.subtle.importKey(
     'raw', sharedSecret, { name: 'HKDF' }, false, ['deriveBits']
@@ -821,6 +854,7 @@ async function deriveIKM(sharedSecret, auth, localPublicKey, subscriberPublicKey
   return new Uint8Array(ikm);
 }
 
+/** HKDF-SHA-256 of `length` bytes; derives the content key and the nonce. */
 async function deriveKey(ikm, salt, info, length) {
   const key = await crypto.subtle.importKey(
     'raw', ikm, { name: 'HKDF' }, false, ['deriveBits']
@@ -851,12 +885,11 @@ function base64urlDecode(input) {
 // ============================================================================
 
 /**
- * Build the calendar-feed event list for a family.
- * Includes events from 30 days in the past to 2 years ahead of `now`
- * (yearsAhead in Calculator.calculate is measured from BIRTH, so the
- * window filter is what keeps the feed relevant for adults).
- * Shared holidays are deduplicated across members, and every other event
- * gets a per-person unique id so iCal UIDs don't collide in family feeds.
+ * Build the calendar-feed event list for a family, sorted by date.
+ * Keeps events from 30 days before `now` to 2 years after. Calculator's
+ * yearsAhead counts from birth, not from now, so this window is what bounds
+ * the feed. Nerdy holidays appear once for the family; every other event id
+ * is prefixed with the person's name so iCal UIDs stay unique per person.
  * Exported for tests.
  */
 export function buildFamilyEvents(members, now = new Date()) {
@@ -873,12 +906,11 @@ export function buildFamilyEvents(members, now = new Date()) {
       transformEvent: event => {
         if (event.date < windowStart || event.date > windowEnd) { return null; }
         if (event.isSharedHoliday) {
-          // Shared holidays are the same for everyone — include once, unprefixed
           if (seenHolidays.has(event.id)) { return null; }
           seenHolidays.add(event.id);
           return event;
         }
-        // Person prefix on the title is added by generateICal for family feeds
+        // generateICal adds the name to the title when the feed has several people
         return {
           ...event,
           id: `${encodeURIComponent(member.name)}-${event.id}`,
@@ -893,13 +925,17 @@ export function buildFamilyEvents(members, now = new Date()) {
   return allEvents;
 }
 
+/**
+ * Serve the family feed as .ics, or as JSON with ?format=json. A birth time
+ * with no zone in the family string is read as UTC (the Workers runtime zone).
+ */
 function handleFamilyRequest(url, familyParam) {
   const members = parseFamilyParam(familyParam);
 
   if (members.length === 0) {
     return new Response(JSON.stringify({
-      error: 'Invalid family parameter format',
-      usage: '?family=Name|YYYY-MM-DD|HH:MM',
+      error: 'No valid person in the family parameter. Each person needs a name and a YYYY-MM-DD date.',
+      usage: FAMILY_USAGE,
     }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

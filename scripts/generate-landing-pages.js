@@ -1,11 +1,11 @@
 /**
- * Generate SEO landing pages — one per high-search-volume milestone — plus
- * sitemap.xml and robots.txt. Output is committed so deploys stay build-free.
+ * Write the search landing pages (<slug>.html in the repo root, one per entry
+ * in landing-pages-data.js), sitemap.xml and robots.txt. The output is
+ * committed and deploy.yml copies it as-is, so rerun this after editing
+ * landing-pages-data.js or the template below. npm test fails when a page's
+ * <title> or heading no longer matches the data.
  *
- * Page copy and date tables live in landing-pages-data.js (shared with
- * generate-og-cards.js, which renders each page's share card).
- *
- * Run: node scripts/generate-landing-pages.js
+ * Run: npm run generate:landing
  */
 
 import fs from 'fs';
@@ -61,7 +61,7 @@ ${table.rows.map(r => `                        <tr>${r.map(c => `<td>${c}</td>`)
 `;
 }
 
-/** Redirect to the full results page with the entered birthday. */
+/** Default form behavior: open results.html for the entered birthday. */
 const redirectScript = `
         const maxEl = document.getElementById('lp-date');
         maxEl.max = new Date().toISOString().split('T')[0];
@@ -73,7 +73,8 @@ const redirectScript = `
             }
         });`;
 
-/** Show the age breakdown right on the page (with ticking seconds). */
+/** For pages with `live: true`: show the age in days, weeks, hours, minutes
+ * and seconds on the page, updating every second, plus a link to results. */
 const liveScript = `
         const maxEl = document.getElementById('lp-date');
         maxEl.max = new Date().toISOString().split('T')[0];
@@ -97,7 +98,7 @@ const liveScript = `
                     '<span>' + fmt(Math.floor(ms / 1000)) + ' seconds</span>' +
                     '</div>' +
                     '<a class="answer-link" href="results.html?family=' +
-                    encodeURIComponent('You|' + d) + '">See all your nerdy milestones →</a>';
+                    encodeURIComponent('You|' + d) + '">See every milestone for this birthday →</a>';
             };
             box.hidden = false;
             render();
@@ -149,7 +150,7 @@ function pageHtml(page) {
             <img src="assets/logo.svg" alt="Nerdiversary" class="nav-logo-img">
             <span>Nerdiversary</span>
         </a>
-        <a href="index.html" class="nav-link">All milestones →</a>
+        <a href="index.html" class="nav-link">Full calculator →</a>
     </nav>
 
     <main class="container landing-container">
@@ -165,7 +166,7 @@ function pageHtml(page) {
                     <input type="date" id="lp-date" required>
                 </div>
                 <button type="submit" class="submit-btn">
-                    <span class="btn-text">${page.cta || 'Find My Milestone'}</span>
+                    <span class="btn-text">${page.cta || 'Show my milestones'}</span>
                     <span class="btn-icon">🚀</span>
                 </button>
             </form>${page.live ? `
@@ -182,17 +183,17 @@ function pageHtml(page) {
 
             <p>${page.fact}</p>
 ${tableHtml(page.table)}
-            <p>This is one of hundreds of milestones <a href="index.html">Nerdiversary</a> tracks — billion-second birthdays, planetary years, Fibonacci days, powers of two, and more. You can subscribe to your milestones as a calendar feed or get push notifications when one is coming up.</p>
+            <p><a href="index.html">Nerdiversary</a> finds hundreds of dates like this for any birthday: billion-second birthdays, birthdays on other planets, Fibonacci-number days (1, 2, 3, 5, 8, 13…, each number the sum of the two before it), powers of two, and more. You can add them to your calendar as a feed that keeps itself up to date, or get a push notification before each one.</p>
 
-            <h2>More milestone calculators</h2>
+            <h2>Other milestones</h2>
             <ul class="landing-links">
                 ${others.map(p => `<li><a href="${p.slug}.html">${p.title}</a></li>`).join('\n                ')}
             </ul>
         </section>
 
         <footer class="footer">
-            <p class="footer-note">Because celebrating every 365.2425 days is so mainstream</p>
-            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">GitHub</a></p>
+            <p class="footer-note">Dates are exact to the minute when you add a birth time, and shown in your device's time zone.</p>
+            <p class="footer-link"><a href="https://github.com/ptarjan/nerdiversary" target="_blank">Source code on GitHub</a> · <a href="https://github.com/ptarjan/nerdiversary/issues" target="_blank">Report a problem</a></p>
         </footer>
     </main>
 
@@ -203,14 +204,14 @@ ${tableHtml(page.table)}
 `;
 }
 
-// Write landing pages
 for (const page of PAGES) {
     const file = path.join(ROOT, `${page.slug}.html`);
     fs.writeFileSync(file, pageHtml(page));
     console.log(`✓ ${page.slug}.html`);
 }
 
-// Sitemap (results.html is noindex — personal data in the URL — so it's excluded)
+// results.html is left out: its URL carries names and birth dates, so it is
+// noindex and disallowed in robots.txt.
 const lastmod = new Date().toISOString().split('T')[0];
 const urls = ['', ...PAGES.map(p => `${p.slug}.html`)];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -221,7 +222,6 @@ ${urls.map(u => `  <url><loc>${SITE_URL}${u}</loc><lastmod>${lastmod}</lastmod><
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), sitemap);
 console.log('✓ sitemap.xml');
 
-// Robots
 fs.writeFileSync(path.join(ROOT, 'robots.txt'),
     `User-agent: *\nAllow: /\nDisallow: /results.html\n\nSitemap: ${SITE_URL}sitemap.xml\n`);
 console.log('✓ robots.txt');

@@ -1,20 +1,20 @@
-# Deploy to GitHub Pages on every push to main branch
+# Publish the static site to GitHub Pages on every push to main. There is no
+# build: generated files (landing pages, sitemap, OG cards) are committed, and
+# this job copies the served files into dist/.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
-  # Allow manual trigger
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
+# A newer push cancels a deployment still in progress
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -31,10 +31,9 @@ jobs:
 
       - name: Build site
         run: |
-          # Create dist directory
           mkdir -p dist
 
-          # Copy all static files (*.html includes the SEO landing pages)
+          # Only what is copied here is published; a new top-level file (other than *.html) or directory needs adding
           cp *.html sw.js robots.txt sitemap.xml dist/
           cp -r css dist/
           cp -r js dist/
@@ -42,17 +41,17 @@ jobs:
           cp manifest.json favicon.ico dist/
           cp .nojekyll dist/
 
-          # Create a simple 404 page that redirects to index
+          # Unknown paths under /nerdiversary/ send the reader to the app, not the domain root
           cat > dist/404.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
               <meta charset="UTF-8">
-              <meta http-equiv="refresh" content="0; url=/">
-              <title>Redirecting...</title>
+              <meta http-equiv="refresh" content="0; url=/nerdiversary/">
+              <title>Page not found - Nerdiversary</title>
           </head>
           <body>
-              <p>Redirecting to <a href="/">Nerdiversary</a>...</p>
+              <p>That page doesn't exist. Taking you to <a href="/nerdiversary/">Nerdiversary</a>.</p>
           </body>
           </html>
           EOF

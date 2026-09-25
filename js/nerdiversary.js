@@ -1,6 +1,9 @@
 /**
- * Nerdiversary Calculator
- * Wrapper around shared Calculator for website use
+ * Browser-side wrapper around the shared Calculator (js/calculator.js).
+ *
+ * Adds the fields the results page needs on top of each event (isPast,
+ * daysFromNow) and the display formatters for dates. Used by js/results.js;
+ * the worker calls Calculator directly and does not load this file.
  */
 
 import MilestonesRef from './milestones.js';
@@ -9,21 +12,21 @@ import CalculatorRef from './calculator.js';
 const Nerdiversary = {
 
     /**
-     * Calculate all nerdiversaries for a given birthdate
-     * @param {Date} birthDate - The birth date/time
-     * @param {number} yearsAhead - How many years ahead to calculate (default 100)
-     * @returns {Array} Array of nerdiversary objects with relative time info
+     * Every milestone from birth up to `yearsAhead` years after birth, past ones
+     * included, sorted by date.
+     * @param {Date} birthDate - Birth instant
+     * @param {number} [yearsAhead=100] - Horizon, counted from the birth date (not from today)
+     * @returns {Array<Object>} Calculator events, each with `isPast` and `daysFromNow`
+     *   (whole days, floored, so negative for anything earlier than now) added
      */
     calculate(birthDate, yearsAhead = 100) {
         const now = new Date();
 
-        // Use shared calculator
         const events = CalculatorRef.calculate(birthDate, {
             yearsAhead,
             includePast: true
         });
 
-        // Add relative time info for website display
         return events.map(event => ({
             ...event,
             isPast: event.date < now,
@@ -32,23 +35,31 @@ const Nerdiversary = {
     },
 
     /**
-     * Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
+     * Same as Milestones.getOrdinal: 1 -> "1st", 22 -> "22nd".
+     * @param {number} n
+     * @returns {string}
      */
     getOrdinal(n) {
         return MilestonesRef.getOrdinal(n);
     },
 
     /**
-     * Convert number to superscript string
+     * Same as Milestones.toSuperscript: 20 -> "²⁰".
+     * @param {number} num
+     * @returns {string}
      */
     toSuperscript(num) {
         return MilestonesRef.toSuperscript(num);
     },
 
     /**
-     * Format a date for display
+     * Date and time in the device's time zone, e.g.
+     * "Friday, September 25, 2026 at 12:01 AM".
+     * @param {Date} date
+     * @returns {string}
      */
     formatDate(date) {
+        /** @type {Intl.DateTimeFormatOptions} */
         const options = {
             weekday: 'long',
             year: 'numeric',
@@ -61,25 +72,27 @@ const Nerdiversary = {
     },
 
     /**
-     * Format relative time (days until/since)
+     * Distance from today in the largest whole unit: "Tomorrow", "In 3 weeks",
+     * "5 months ago", "In 12.3 years". Months are 30 days and years 365.
+     * @param {number} days - Signed day count, e.g. an event's `daysFromNow`
+     * @returns {string}
      */
     formatRelative(days) {
-        if (days === 0) { return 'Today!'; }
-        if (days === 1) { return 'Tomorrow!'; }
+        if (days === 0) { return 'Today'; }
+        if (days === 1) { return 'Tomorrow'; }
         if (days === -1) { return 'Yesterday'; }
-        if (days > 0) {
-            if (days < 7) { return `In ${days} days`; }
-            if (days < 30) { return `In ${Math.floor(days / 7)} weeks`; }
-            if (days < 365) { return `In ${Math.floor(days / 30)} months`; }
-            return `In ${(days / 365).toFixed(1)} years`;
+        const absDays = Math.abs(days);
+        const count = (n, unit) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+        let span = `${(absDays / 365).toFixed(1)} years`;
+        if (absDays < 7) {
+            span = count(absDays, 'day');
+        } else if (absDays < 30) {
+            span = count(Math.floor(absDays / 7), 'week');
+        } else if (absDays < 365) {
+            span = count(Math.floor(absDays / 30), 'month');
         }
-            const absDays = Math.abs(days);
-            if (absDays < 7) { return `${absDays} days ago`; }
-            if (absDays < 30) { return `${Math.floor(absDays / 7)} weeks ago`; }
-            if (absDays < 365) { return `${Math.floor(absDays / 30)} months ago`; }
-            return `${(absDays / 365).toFixed(1)} years ago`;
+        return days > 0 ? `In ${span}` : `${span} ago`;
     }
 };
 
-// ESM export
 export default Nerdiversary;
