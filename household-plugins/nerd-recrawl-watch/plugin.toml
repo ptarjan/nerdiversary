@@ -1,0 +1,6 @@
+about    = "Wakes #nerdiversary once Googlebot recrawls the pages whose titles were rewritten on 2026-09-02, then disarms itself"
+room     = "nerdiversary"
+schedule = "15 8 * * *"
+# The service-account key and the google libraries are both in here, so the
+# script sits beside its manifest and runs on the container's python3.
+run      = "watch.py"
